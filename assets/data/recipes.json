@@ -1,0 +1,37 @@
+[
+  {
+    "id": "1",
+    "title": "Sıfır Atık Sebze Sote",
+    "image_url": null,
+    "ingredients": ["Artık sebzeler", "Soya sosu", "Sarımsak", "Yağ"],
+    "instructions": [
+      "Sebzeleri eşit parçalar halinde doğrayın.",
+      "Tavada yağı kızdırın, sarımsak ekleyin.",
+      "Sebzeleri yumuşayana kadar soteleyin.",
+      "Soya sosu ekleyip servis edin."
+    ]
+  },
+  {
+    "id": "2",
+    "title": "Mutfak Artığı Suyu",
+    "image_url": null,
+    "ingredients": ["Soğan kabukları", "Havuç yaprakları", "Kereviz uçları", "Ot sapları", "Su", "Tuz"],
+    "instructions": [
+      "Sebze artıklarını dondurucuda bir poşette biriktirin.",
+      "Artıkları tencereye alın, suyla örtün.",
+      "1–2 saat kısık ateşte kaynatın.",
+      "Süzün, kullanın veya dondurucuya atın."
+    ]
+  },
+  {
+    "id": "3",
+    "title": "Artık Tahıl Kasesi",
+    "image_url": null,
+    "ingredients": ["Pişmiş pirinç veya kinoa", "Artık fırın sebzeleri", "Limon", "Taze otlar", "Zeytinyağı"],
+    "instructions": [
+      "Tahılları ve sebzeleri ısıtın.",
+      "Zeytinyağı ve limon suyuyla harmanlayın.",
+      "Üzerine taze ot serpip servis edin."
+    ]
+  }
+]
