@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
+import 'app_typography.dart';
 
 /// Material 3 theme with nature-friendly pastel green and earth tone palette.
 abstract final class AppTheme {
@@ -65,7 +66,27 @@ abstract final class AppTheme {
           borderSide: const BorderSide(color: AppColors.fern, width: 2),
         ),
       ),
-      fontFamily: 'Roboto',
+      fontFamily: AppTextStyle.fontFamily,
+      textTheme: TextTheme(
+        displayLarge: AppTextStyle.displayLarge,
+        displayMedium: AppTextStyle.displayMedium,
+        displaySmall: AppTextStyle.displaySmall,
+        headlineLarge: AppTextStyle.headlineLarge,
+        headlineMedium: AppTextStyle.headlineMedium,
+        headlineSmall: AppTextStyle.headlineSmall,
+        titleLarge: AppTextStyle.titleLarge,
+        titleMedium: AppTextStyle.titleMedium,
+        titleSmall: AppTextStyle.titleSmall,
+        bodyLarge: AppTextStyle.bodyLarge,
+        bodyMedium: AppTextStyle.bodyMedium,
+        bodySmall: AppTextStyle.bodySmall,
+        labelLarge: AppTextStyle.labelLarge,
+        labelMedium: AppTextStyle.labelMedium,
+        labelSmall: AppTextStyle.labelSmall,
+      ).apply(
+        bodyColor: colorScheme.onSurface,
+        displayColor: colorScheme.onSurface,
+      ),
     );
   }
 }
