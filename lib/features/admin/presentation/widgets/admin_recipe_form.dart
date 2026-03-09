@@ -184,7 +184,7 @@ class _AdminRecipeFormState extends State<AdminRecipeForm> {
                         }
                       },
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.fern,
+                  backgroundColor: AppColors.brandOrange,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(

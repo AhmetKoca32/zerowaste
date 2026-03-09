@@ -6,7 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/recipe.dart';
 
-/// Modal bottom sheet: alttan açılır, ekranın tamamını kapatmaz (DraggableScrollableSheet).
 void showRecipeDetailSheet(
   BuildContext context, {
   required Recipe recipe,
@@ -15,7 +14,6 @@ void showRecipeDetailSheet(
   VoidCallback? onSave,
   bool canAddPhoto = false,
   Future<String?> Function(XFile file)? onImagePicked,
-  /// When set, shows a delete button (for saved recipes). Callback should remove and then pop.
   Future<void> Function()? onDelete,
 }) {
   showModalBottomSheet<void>(
@@ -23,9 +21,9 @@ void showRecipeDetailSheet(
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (context) => DraggableScrollableSheet(
-      initialChildSize: 0.6,
+      initialChildSize: 0.85,
       minChildSize: 0.35,
-      maxChildSize: 0.9,
+      maxChildSize: 0.95,
       builder: (context, scrollController) => _RecipeDetailContent(
         recipe: recipe,
         localImagePath: localImagePath,
@@ -84,7 +82,8 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
 
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
-    final file = await picker.pickImage(source: source, maxWidth: 1200, imageQuality: 85);
+    final file =
+        await picker.pickImage(source: source, maxWidth: 1200, imageQuality: 85);
     if (file == null || !mounted || widget.onImagePicked == null) return;
     final path = await widget.onImagePicked!(file);
     if (path != null && mounted) setState(() => _localImagePath = path);
@@ -95,21 +94,35 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Tarifi sil'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Tarifi sil',
+          style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700),
+        ),
         content: const Text(
           'Bu tarifi kaydettiğiniz listeden silmek istediğinize emin misiniz?',
+          style: TextStyle(fontFamily: 'Manrope'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
+            child: const Text(
+              'İptal',
+              style: TextStyle(fontFamily: 'Manrope', color: AppColors.inkLight),
+            ),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.terracotta,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
-            child: const Text('Sil'),
+            child: const Text(
+              'Sil',
+              style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),
@@ -123,21 +136,30 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
   void _showImageSourcePicker() {
     showModalBottomSheet<void>(
       context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Galeriden seç'),
+              leading: const Icon(Icons.photo_library, color: AppColors.brandOrange),
+              title: const Text(
+                'Galeriden seç',
+                style: TextStyle(fontFamily: 'Manrope'),
+              ),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickImage(ImageSource.gallery);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Fotoğraf çek'),
+              leading: const Icon(Icons.camera_alt, color: AppColors.brandOrange),
+              title: const Text(
+                'Fotoğraf çek',
+                style: TextStyle(fontFamily: 'Manrope'),
+              ),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickImage(ImageSource.camera);
@@ -149,7 +171,7 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
     );
   }
 
-  Widget _buildImage(BuildContext context) {
+  Widget _buildImage() {
     final path = _localImagePath;
     if (path != null) {
       final file = File(path);
@@ -161,7 +183,7 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
               borderRadius: BorderRadius.circular(16),
               child: Image.file(
                 file,
-                height: 200,
+                height: 220,
                 width: double.infinity,
                 fit: BoxFit.cover,
               ),
@@ -171,14 +193,14 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                 right: 12,
                 bottom: 12,
                 child: Material(
-                  color: AppColors.fern.withOpacity(0.9),
+                  color: AppColors.brandOrange.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(24),
                   child: InkWell(
                     onTap: _showImageSourcePicker,
                     borderRadius: BorderRadius.circular(24),
                     child: const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: Icon(Icons.add_a_photo, color: Colors.white),
+                      padding: EdgeInsets.all(10),
+                      child: Icon(Icons.add_a_photo, color: Colors.white, size: 20),
                     ),
                   ),
                 ),
@@ -187,24 +209,35 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
         );
       }
     }
+
     final networkUrl = widget.recipe.imageUrl;
-    if (networkUrl != null && networkUrl.isNotEmpty && !networkUrl.startsWith('file')) {
+    if (networkUrl != null &&
+        networkUrl.isNotEmpty &&
+        !networkUrl.startsWith('file')) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: Image.network(
           networkUrl,
-          height: 200,
+          height: 220,
           width: double.infinity,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _buildImageBlock(context),
+          errorBuilder: (_, __, ___) => _buildImageWithAddOption(),
         ),
       );
     }
-    return _buildImageBlock(context);
+    return _buildImageWithAddOption();
   }
 
-  Widget _buildImageBlock(BuildContext context) {
-    final placeholder = _buildImagePlaceholder(context);
+  Widget _buildImageWithAddOption() {
+    final placeholder = ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Image.asset(
+        'assets/images/image/yemek.png',
+        height: 220,
+        width: double.infinity,
+        fit: BoxFit.cover,
+      ),
+    );
     if (widget.canAddPhoto && widget.onImagePicked != null) {
       return Stack(
         fit: StackFit.passthrough,
@@ -215,20 +248,30 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
               color: Colors.transparent,
               child: InkWell(
                 onTap: _showImageSourcePicker,
+                borderRadius: BorderRadius.circular(16),
                 child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.add_a_photo, size: 48, color: AppColors.fern.withOpacity(0.8)),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Fotoğraf ekle veya çek',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.forest,
-                              fontWeight: FontWeight.w500,
-                            ),
-                      ),
-                    ],
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add_a_photo, color: Colors.white, size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'Fotoğraf ekle',
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -244,14 +287,14 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
   Widget build(BuildContext context) {
     final recipe = widget.recipe;
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.paper,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.forest,
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 20,
-            offset: Offset(0, -4),
+            offset: const Offset(0, -4),
           ),
         ],
       ),
@@ -262,34 +305,35 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.stone,
+              color: AppColors.stone.withOpacity(0.5),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
+          const SizedBox(height: 8),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+            padding: const EdgeInsets.fromLTRB(20, 8, 12, 0),
             child: Row(
               children: [
-                Icon(Icons.menu_book, color: AppColors.fern, size: 28),
-                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     recipe.title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.forest,
-                        ),
+                    style: const TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.ink,
+                    ),
                   ),
                 ),
                 if (widget.onDelete != null)
                   IconButton(
-                    icon: const Icon(Icons.delete_outline),
+                    icon: const Icon(Icons.delete_outline, size: 22),
                     onPressed: () => _confirmDelete(context),
                     color: AppColors.terracotta,
                     tooltip: 'Tarifi sil',
                   ),
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(Icons.close, size: 22),
                   onPressed: () => Navigator.of(context).pop(),
                   color: AppColors.inkLight,
                 ),
@@ -298,31 +342,43 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
           ),
           if (widget.showSavePrompt && widget.onSave != null)
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
               child: Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton.icon(
+                    child: OutlinedButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close, size: 20),
-                      label: const Text('Kapat'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.inkLight,
+                        side: BorderSide(color: AppColors.stone.withOpacity(0.5)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Kapat',
+                        style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: FilledButton.icon(
+                    child: ElevatedButton(
                       onPressed: () {
                         widget.onSave!();
                         Navigator.of(context).pop();
                       },
-                      icon: const Icon(Icons.save, size: 20),
-                      label: const Text('Kaydet'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.fern,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.brandOrange,
                         foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Kaydet',
+                        style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -332,161 +388,136 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
           Expanded(
             child: ListView(
               controller: widget.scrollController,
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
               children: [
-                _buildImage(context),
-                if (recipe.description != null && recipe.description!.isNotEmpty) ...[
+                _buildImage(),
+                if (recipe.description != null &&
+                    recipe.description!.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Text(
-                      recipe.description!,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: AppColors.inkLight,
-                            height: 1.5,
-                          ),
+                  Text(
+                    recipe.description!,
+                    style: const TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.inkLight,
+                      height: 1.5,
                     ),
                   ),
                 ],
-                const SizedBox(height: 20),
-                _SectionBlock(
-                  icon: Icons.shopping_basket_outlined,
-                  label: 'Malzemeler',
-                  color: AppColors.fern,
-                  children: recipe.ingredients
-                      .map(
-                        (e) => Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '• ',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyLarge
-                                    ?.copyWith(color: AppColors.fern),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  e,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyLarge
-                                      ?.copyWith(color: AppColors.ink),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                      .toList(),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Image.asset(
+                      'assets/images/icons/alisveris_icon.png',
+                      width: 18,
+                      height: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Malzemeler',
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                _SectionBlock(
-                  icon: Icons.menu_book_outlined,
-                  label: 'Yapılış',
-                  color: AppColors.fern,
-                  children: recipe.instructions.asMap().entries.map((e) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 28,
-                            height: 28,
-                            alignment: Alignment.center,
-                            decoration: const BoxDecoration(
-                              color: AppColors.sage,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Text(
-                              '${e.key + 1}',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelMedium
-                                  ?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              e.value,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge
-                                  ?.copyWith(
-                                    color: AppColors.ink,
-                                    height: 1.4,
-                                  ),
-                            ),
-                          ),
-                        ],
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: recipe.ingredients.map((e) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.brandOrange),
+                      ),
+                      child: Text(
+                        e,
+                        style: const TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.ink,
+                        ),
                       ),
                     );
                   }).toList(),
                 ),
+                const SizedBox(height: 28),
+                const Row(
+                  children: [
+                    Icon(Icons.menu_book_outlined, size: 18, color: AppColors.brandOrange),
+                    SizedBox(width: 8),
+                    Text(
+                      'Yapılış',
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                ...recipe.instructions.asMap().entries.map((e) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 28,
+                          height: 28,
+                          alignment: Alignment.center,
+                          decoration: const BoxDecoration(
+                            color: AppColors.brandOrange,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '${e.key + 1}',
+                            style: const TextStyle(
+                              fontFamily: 'Manrope',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              e.value,
+                              style: const TextStyle(
+                                fontFamily: 'Manrope',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.ink,
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
               ],
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-Widget _buildImagePlaceholder(BuildContext context) {
-  return Container(
-    height: 200,
-    width: double.infinity,
-    color: AppColors.mint.withOpacity(0.4),
-    child: Icon(
-      Icons.restaurant,
-      size: 64,
-      color: AppColors.fern.withOpacity(0.6),
-    ),
-  );
-}
-
-class _SectionBlock extends StatelessWidget {
-  const _SectionBlock({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.children,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        ...children,
-      ],
     );
   }
 }

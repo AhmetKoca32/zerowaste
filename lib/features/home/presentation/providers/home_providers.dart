@@ -11,7 +11,7 @@ RecipeRepository recipeRepository(RecipeRepositoryRef ref) {
   return RecipeRepository(useFirestore: true);
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 Future<List<Recipe>> recipeList(RecipeListRef ref) async {
   final repo = ref.watch(recipeRepositoryProvider);
   final fromRepo = await repo.getRecipes();

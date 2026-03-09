@@ -27,6 +27,7 @@ class EmptyPlaceholder extends StatelessWidget {
               message,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontFamily: 'Manrope',
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
             ),

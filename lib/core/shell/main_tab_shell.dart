@@ -71,18 +71,19 @@ class _MainTabShellState extends ConsumerState<MainTabShell>
         title: Text(
           AppConstants.appName,
           style: const TextStyle(
+            fontFamily: 'Manrope',
             color: AppColors.ink,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [
-          HomePage(inTabs: true),
-          RecipeGeneratorPage(inTabs: true),
-          ChatPage(inTabs: true),
-          PointsPage(inTabs: true),
+        children: [
+          const HomePage(inTabs: true),
+          const RecipeGeneratorPage(inTabs: true),
+          const ChatPage(inTabs: true),
+          const PointsPage(inTabs: true),
         ],
       ),
       bottomNavigationBar: CustomBottomNav(
@@ -92,10 +93,10 @@ class _MainTabShellState extends ConsumerState<MainTabShell>
           _tabController.animateTo(index);
         },
         items: const [
-          CustomNavItem(icon: Icons.menu_book, label: 'Tarifler'),
-          CustomNavItem(icon: Icons.eco, label: 'Oluştur'),
-          CustomNavItem(icon: Icons.chat_bubble_outline, label: 'Leafy'),
-          CustomNavItem(icon: Icons.emoji_events_outlined, label: 'Puan'),
+          CustomNavItem(assetPath: 'assets/images/icons/tarifler_icon.png', label: 'Tarifler'),
+          CustomNavItem(assetPath: 'assets/images/icons/oluştur_icon.png', label: 'Oluştur'),
+          CustomNavItem(assetPath: 'assets/images/icons/chat_icon.png', label: 'Leafy'),
+          CustomNavItem(assetPath: 'assets/images/icons/puan_icon.png', label: 'Puan'),
         ],
       ),
     );

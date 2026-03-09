@@ -57,11 +57,11 @@ class _ChefLoadingOverlayState extends State<ChefLoadingOverlay>
                   child: Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: AppColors.mint.withOpacity(0.5),
+                      color: AppColors.brandCream.withOpacity(0.5),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.fern.withOpacity(0.3),
+                          color: AppColors.brandOrange.withOpacity(0.3),
                           blurRadius: 20,
                           spreadRadius: 2,
                         ),
@@ -70,7 +70,7 @@ class _ChefLoadingOverlayState extends State<ChefLoadingOverlay>
                     child: Icon(
                       Icons.restaurant_menu,
                       size: 56,
-                      color: AppColors.forest,
+                      color: AppColors.brandOrange,
                     ),
                   ),
                 );
@@ -81,14 +81,14 @@ class _ChefLoadingOverlayState extends State<ChefLoadingOverlay>
               'Şef pişiriyor',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: AppColors.forest,
+                    color: AppColors.brandOrange,
                   ),
             ),
             const SizedBox(height: 4),
             Text(
               '${'.' * _dotCount}   ',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.fern,
+                    color: AppColors.brandOrange,
                     letterSpacing: 2,
                   ),
             ),
@@ -97,7 +97,7 @@ class _ChefLoadingOverlayState extends State<ChefLoadingOverlay>
               width: 160,
               child: LinearProgressIndicator(
                 backgroundColor: AppColors.cream,
-                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.fern),
+                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.brandOrange),
               ),
             ),
           ],

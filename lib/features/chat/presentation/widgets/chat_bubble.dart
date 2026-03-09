@@ -28,7 +28,7 @@ class ChatBubble extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: isUser
-                    ? AppColors.fern.withOpacity(0.9)
+                    ? AppColors.brandOrange.withOpacity(0.9)
                     : AppColors.cream,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(20),
@@ -38,13 +38,13 @@ class ChatBubble extends StatelessWidget {
                 ),
                 border: Border.all(
                   color: isUser
-                      ? AppColors.moss.withOpacity(0.5)
-                      : AppColors.mint,
+                      ? AppColors.brandOrange70.withOpacity(0.5)
+                      : AppColors.brandCream,
                   width: 1,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.forest.withOpacity(0.08),
+                    color: AppColors.brandOrange.withOpacity(0.08),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -71,17 +71,17 @@ class ChatBubble extends StatelessWidget {
       width: 36,
       height: 36,
       decoration: BoxDecoration(
-        color: AppColors.mint,
+        color: AppColors.brandCream,
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.sage),
+        border: Border.all(color: AppColors.brandCream),
         boxShadow: [
           BoxShadow(
-            color: AppColors.fern.withOpacity(0.2),
+            color: AppColors.brandOrange.withOpacity(0.2),
             blurRadius: 6,
           ),
         ],
       ),
-      child: const Icon(Icons.eco, color: AppColors.forest, size: 22),
+      child: const Icon(Icons.eco, color: AppColors.brandOrange, size: 22),
     );
   }
 
@@ -90,11 +90,11 @@ class ChatBubble extends StatelessWidget {
       width: 36,
       height: 36,
       decoration: BoxDecoration(
-        color: AppColors.sage.withOpacity(0.6),
+        color: AppColors.brandCream.withOpacity(0.6),
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.fern.withOpacity(0.5)),
+        border: Border.all(color: AppColors.brandOrange.withOpacity(0.5)),
       ),
-      child: const Icon(Icons.person, color: AppColors.forest, size: 20),
+      child: const Icon(Icons.person, color: AppColors.brandOrange, size: 20),
     );
   }
 }

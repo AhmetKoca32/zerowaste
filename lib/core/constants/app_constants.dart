@@ -25,5 +25,5 @@ abstract final class AppConstants {
       String.fromEnvironment('DEEPSEEK_API_KEY', defaultValue: '');
 
   /// App display name.
-  static const String appName = 'ZeroWaste Mutfak';
+  static const String appName = 'Sıfır Atık Mutfak';
 }

@@ -9,10 +9,10 @@ abstract final class AppTheme {
 
   static ThemeData get light {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: AppColors.fern,
-      primary: AppColors.fern,
+      seedColor: AppColors.brandOrange,
+      primary: AppColors.brandOrange,
       secondary: AppColors.terracotta,
-      tertiary: AppColors.sage,
+      tertiary: AppColors.brandCream,
       surface: AppColors.paper,
       surfaceContainerHighest: AppColors.cream,
       onPrimary: Colors.white,
@@ -43,7 +43,7 @@ abstract final class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.fern,
+          backgroundColor: AppColors.brandOrange,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
@@ -63,7 +63,7 @@ abstract final class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.fern, width: 2),
+          borderSide: const BorderSide(color: AppColors.brandOrange, width: 2),
         ),
       ),
       fontFamily: AppTextStyle.fontFamily,

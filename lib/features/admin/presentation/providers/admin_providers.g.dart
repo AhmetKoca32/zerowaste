@@ -6,7 +6,7 @@ part of 'admin_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$adminAuthServiceHash() => r'admin_auth_service';
+String _$adminAuthServiceHash() => r'2a70a30aab5309cb894ca48cbaf1a389ff81455b';
 
 /// See also [adminAuthService].
 @ProviderFor(adminAuthService)
@@ -23,8 +23,7 @@ final adminAuthServiceProvider = Provider<AdminAuthService>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AdminAuthServiceRef = ProviderRef<AdminAuthService>;
-
-String _$adminUserHash() => r'admin_user';
+String _$adminUserHash() => r'9bbfbf3024815f3707ad5f44cdbda1a0986be586';
 
 /// See also [adminUser].
 @ProviderFor(adminUser)
@@ -41,8 +40,7 @@ final adminUserProvider = StreamProvider<User?>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AdminUserRef = StreamProviderRef<User?>;
-
-String _$isAdminHash() => r'is_admin';
+String _$isAdminHash() => r'4471abc65c413b8ff071582659b992819807297a';
 
 /// See also [isAdmin].
 @ProviderFor(isAdmin)
@@ -59,10 +57,12 @@ final isAdminProvider = FutureProvider<bool>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef IsAdminRef = FutureProviderRef<bool>;
+String _$adminRecipeRepositoryHash() =>
+    r'e626670d1497affc576a8522bb167cd2e1a95577';
 
-String _$adminRecipeRepositoryHash() => r'admin_recipe_repository';
-
-/// See also [adminRecipeRepository].
+/// Recipe repository for admin (Firestore only).
+///
+/// Copied from [adminRecipeRepository].
 @ProviderFor(adminRecipeRepository)
 final adminRecipeRepositoryProvider = Provider<RecipeRepository>.internal(
   adminRecipeRepository,
@@ -77,10 +77,11 @@ final adminRecipeRepositoryProvider = Provider<RecipeRepository>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AdminRecipeRepositoryRef = ProviderRef<RecipeRepository>;
+String _$adminRecipeListHash() => r'6ddc3315facfefb71b05facd03ce19f4998eae54';
 
-String _$adminRecipeListHash() => r'admin_recipe_list';
-
-/// See also [adminRecipeList].
+/// Recipe list for admin panel (Firestore only, no in-memory generated).
+///
+/// Copied from [adminRecipeList].
 @ProviderFor(adminRecipeList)
 final adminRecipeListProvider = FutureProvider<List<Recipe>>.internal(
   adminRecipeList,

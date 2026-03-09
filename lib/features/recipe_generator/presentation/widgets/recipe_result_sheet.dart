@@ -23,7 +23,7 @@ void showRecipeResultSheet(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           boxShadow: [
             BoxShadow(
-              color: AppColors.forest,
+              color: AppColors.brandOrange,
               blurRadius: 20,
               offset: Offset(0, -4),
             ),
@@ -46,7 +46,7 @@ void showRecipeResultSheet(
                 children: [
                   Icon(
                     isError ? Icons.error_outline : Icons.menu_book,
-                    color: isError ? AppColors.terracotta : AppColors.fern,
+                    color: isError ? AppColors.terracotta : AppColors.brandOrange,
                     size: 28,
                   ),
                   const SizedBox(width: 10),
@@ -55,7 +55,7 @@ void showRecipeResultSheet(
                       isError ? 'Bir hata oluştu' : 'Tarifiniz',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: AppColors.forest,
+                            color: AppColors.brandOrange,
                           ),
                     ),
                   ),
@@ -77,7 +77,7 @@ void showRecipeResultSheet(
                   decoration: BoxDecoration(
                     color: AppColors.cream,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.mint),
+                    border: Border.all(color: AppColors.brandCream),
                   ),
                   child: MarkdownBody(
                     data: content,
@@ -89,23 +89,23 @@ void showRecipeResultSheet(
                           ),
                       h1: Theme.of(context).textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: AppColors.forest,
+                            color: AppColors.brandOrange,
                           ),
                       h2: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: AppColors.forest,
+                            color: AppColors.brandOrange,
                           ),
                       h3: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: AppColors.forest,
+                            color: AppColors.brandOrange,
                           ),
                       listBullet: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: AppColors.fern,
+                            color: AppColors.brandOrange,
                             height: 1.5,
                           ),
                       strong: Theme.of(context).textTheme.bodyLarge?.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: AppColors.forest,
+                            color: AppColors.brandOrange,
                             height: 1.5,
                           ),
                     ),

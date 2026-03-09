@@ -38,6 +38,8 @@ flutter:
   assets:
     - assets/data/
     - assets/fonts/
+    - assets/images/icons/
+    - assets/images/image/
     - .env
   fonts:
     - family: Manrope

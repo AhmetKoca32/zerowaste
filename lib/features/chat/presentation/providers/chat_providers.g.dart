@@ -6,7 +6,7 @@ part of 'chat_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$chatMessagesHash() => r'6fbe05e67d0b5e8d0cfb915b0d80e5b0baa3d3f4';
+String _$chatMessagesHash() => r'5b05e2118d88e8a82a647d1517b8b7fbdc49cf3b';
 
 /// Placeholder: will hold chat messages and AI mascot conversation state.
 ///

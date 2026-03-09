@@ -1,0 +1,19 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Tarifler: herkes okuyabilir (mobil uygulama), sadece admin yazabilir
+    match /recipes/{recipeId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Admin listesi: giriş yapmış kullanıcı sadece kendi kaydını okuyabilir (admin mi kontrolü)
+    match /admins/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
+  }
+}

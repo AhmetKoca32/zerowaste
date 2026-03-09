@@ -27,7 +27,7 @@ class AdminSidebar extends StatelessWidget {
         Container(
           width: sidebarWidth,
           decoration: BoxDecoration(
-            color: AppColors.forest,
+            color: AppColors.brandOrange,
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.08),

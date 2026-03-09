@@ -3,175 +3,186 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/recipe.dart';
 
-/// Material 3 recipe card with pastel green accents.
 class RecipeBlogCard extends StatelessWidget {
-  const RecipeBlogCard({super.key, required this.recipe});
+  const RecipeBlogCard({
+    super.key,
+    required this.recipe,
+    this.matchCount,
+    this.totalSelected,
+  });
 
   final Recipe recipe;
+  final int? matchCount;
+  final int? totalSelected;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 20),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: AppColors.mint, width: 1),
+        side: BorderSide(color: AppColors.stone.withOpacity(0.3)),
       ),
-      color: AppColors.cream,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty)
-              Image.network(
-                recipe.imageUrl!,
-                height: 160,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _buildPlaceholderHeader(context),
-              )
-            else
-              _buildPlaceholderHeader(context),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    recipe.title,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.forest,
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: _buildImage(),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (totalSelected != null && totalSelected! > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle_rounded,
+                          size: 16,
+                          color: matchCount != null && matchCount! > 0
+                              ? AppColors.brandOrange
+                              : AppColors.inkLight,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '$matchCount/${recipe.ingredients.length} malzeme elinizde',
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: matchCount != null && matchCount! > 0
+                                ? AppColors.brandOrange
+                                : AppColors.inkLight,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  _SectionLabel(
-                    icon: Icons.shopping_basket_outlined,
-                    label: 'Malzemeler',
-                    color: AppColors.fern,
+                Text(
+                  recipe.title,
+                  style: const TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink,
                   ),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: recipe.ingredients
-                        .map(
-                          (e) => Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.mint.withOpacity(0.5),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: AppColors.sage.withOpacity(0.6),
-                              ),
-                            ),
-                            child: Text(
-                              e,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: AppColors.ink,
-                              ),
-                            ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Image.asset(
+                      'assets/images/icons/alisveris_icon.png',
+                      width: 16,
+                      height: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Malzemeler',
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.inkLight,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: recipe.ingredients.map((e) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppColors.brandOrange,
                           ),
-                        )
-                        .toList(),
-                  ),
-                  const SizedBox(height: 14),
-                  _SectionLabel(
-                    icon: Icons.menu_book_outlined,
-                    label: 'Yapılış',
-                    color: AppColors.fern,
-                  ),
-                  const SizedBox(height: 6),
-                  ...recipe.instructions.asMap().entries.map((entry) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 24,
-                            height: 24,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: AppColors.sage,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Text(
-                              '${entry.key + 1}',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              entry.value,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: AppColors.inkLight,
-                              ),
-                            ),
-                          ),
-                        ],
+                      ),
+                      child: Text(
+                        e,
+                        style: const TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.ink,
+                        ),
                       ),
                     );
-                  }),
-                ],
-              ),
+                  }).toList(),
+                ),
+                const SizedBox(height: 18),
+                Center(
+                  child: SizedBox(
+                    width: 200,
+                    height: 44,
+                    child: ElevatedButton(
+                      onPressed: null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.brandOrange,
+                        disabledBackgroundColor: AppColors.brandOrange,
+                        disabledForegroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'Tarifi İncele',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPlaceholderHeader(BuildContext context) {
-    return Container(
-      height: 120,
-      width: double.infinity,
-      color: AppColors.mint.withOpacity(0.4),
-      child: Icon(
-        Icons.restaurant,
-        size: 48,
-        color: AppColors.fern.withOpacity(0.6),
-      ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: color),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: color,
           ),
-        ),
-      ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImage() {
+    if (recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty) {
+      return Image.network(
+        recipe.imageUrl!,
+        height: 220,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _buildPlaceholder(),
+      );
+    }
+    return _buildPlaceholder();
+  }
+
+  Widget _buildPlaceholder() {
+    return Image.asset(
+      'assets/images/image/yemek.png',
+      height: 250,
+      width: double.infinity,
+      fit: BoxFit.cover,
     );
   }
 }

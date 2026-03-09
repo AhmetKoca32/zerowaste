@@ -11,11 +11,9 @@ class PointsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-          child: Column(
+    final bodyContent = SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(20, 20, 20, inTabs ? 120 : 32),
+        child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildHeader(context),
@@ -49,9 +47,11 @@ class PointsPage extends StatelessWidget {
               const SizedBox(height: 24),
               _buildRecentSection(context),
             ],
-          ),
         ),
-      ),
+    );
+    if (inTabs) return bodyContent;
+    return Scaffold(
+      body: bodyContent,
     );
   }
 
@@ -61,10 +61,10 @@ class PointsPage extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: AppColors.mint.withOpacity(0.5),
+            color: AppColors.brandCream.withOpacity(0.5),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Icon(Icons.emoji_events_outlined, color: AppColors.forest, size: 28),
+          child: Icon(Icons.emoji_events_outlined, color: AppColors.brandOrange, size: 28),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -75,7 +75,7 @@ class PointsPage extends StatelessWidget {
                 'Puanlarım',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.forest,
+                      color: AppColors.brandOrange,
                     ),
               ),
               const SizedBox(height: 2),
@@ -100,15 +100,15 @@ class PointsPage extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.mint.withOpacity(0.6),
-            AppColors.sage.withOpacity(0.4),
+            AppColors.brandCream.withOpacity(0.6),
+            AppColors.brandCream.withOpacity(0.4),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.fern.withOpacity(0.3), width: 1),
+        border: Border.all(color: AppColors.brandOrange.withOpacity(0.3), width: 1),
         boxShadow: [
           BoxShadow(
-            color: AppColors.forest.withOpacity(0.08),
+            color: AppColors.brandOrange.withOpacity(0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -119,7 +119,7 @@ class PointsPage extends StatelessWidget {
           Text(
             'Toplam puan',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.forest,
+                  color: AppColors.brandOrange,
                   fontWeight: FontWeight.w600,
                 ),
           ),
@@ -128,7 +128,7 @@ class PointsPage extends StatelessWidget {
             '0',
             style: Theme.of(context).textTheme.displaySmall?.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: AppColors.forest,
+                  color: AppColors.brandOrange,
                   letterSpacing: -1,
                 ),
           ),
@@ -148,7 +148,7 @@ class PointsPage extends StatelessWidget {
     return Text(
       text,
       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: AppColors.forest,
+            color: AppColors.brandOrange,
             fontWeight: FontWeight.w600,
           ),
     );
@@ -165,7 +165,7 @@ class PointsPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.cream,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.mint.withOpacity(0.6)),
+        border: Border.all(color: AppColors.brandCream.withOpacity(0.6)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -179,10 +179,10 @@ class PointsPage extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.mint.withOpacity(0.5),
+              color: AppColors.brandCream.withOpacity(0.5),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: AppColors.fern, size: 24),
+            child: Icon(icon, color: AppColors.brandOrange, size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -193,7 +193,7 @@ class PointsPage extends StatelessWidget {
                   title,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: AppColors.forest,
+                        color: AppColors.brandOrange,
                       ),
                 ),
                 const SizedBox(height: 4),
@@ -219,14 +219,14 @@ class PointsPage extends StatelessWidget {
           SnackBar(
             content: const Text('Gönderi özelliği yakında eklenecek.'),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: AppColors.fern,
+            backgroundColor: AppColors.brandOrange,
           ),
         );
       },
       icon: const Icon(Icons.add_photo_alternate_outlined, size: 22),
       label: const Text('Gönderi ekle'),
       style: FilledButton.styleFrom(
-        backgroundColor: AppColors.fern,
+        backgroundColor: AppColors.brandOrange,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(
@@ -243,7 +243,7 @@ class PointsPage extends StatelessWidget {
         Text(
           'Son gönderilerin',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColors.forest,
+                color: AppColors.brandOrange,
                 fontWeight: FontWeight.w600,
               ),
         ),

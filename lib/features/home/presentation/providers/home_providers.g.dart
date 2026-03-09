@@ -6,7 +6,7 @@ part of 'home_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$recipeRepositoryHash() => r'3e8ac3297ec5d0900c94b155f50365c3178a7f88';
+String _$recipeRepositoryHash() => r'c95bcbddf88d36b0b1f41d490d16d9e4193bf42f';
 
 /// See also [recipeRepository].
 @ProviderFor(recipeRepository)
@@ -23,11 +23,11 @@ final recipeRepositoryProvider = AutoDisposeProvider<RecipeRepository>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef RecipeRepositoryRef = AutoDisposeProviderRef<RecipeRepository>;
-String _$recipeListHash() => r'232dfcb7d755c3ea7a8229979903f59791fa5621';
+String _$recipeListHash() => r'f6c47b6753c9cdd8157a17ef00a5991094591726';
 
 /// See also [recipeList].
 @ProviderFor(recipeList)
-final recipeListProvider = AutoDisposeFutureProvider<List<Recipe>>.internal(
+final recipeListProvider = FutureProvider<List<Recipe>>.internal(
   recipeList,
   name: r'recipeListProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -39,6 +39,6 @@ final recipeListProvider = AutoDisposeFutureProvider<List<Recipe>>.internal(
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef RecipeListRef = AutoDisposeFutureProviderRef<List<Recipe>>;
+typedef RecipeListRef = FutureProviderRef<List<Recipe>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

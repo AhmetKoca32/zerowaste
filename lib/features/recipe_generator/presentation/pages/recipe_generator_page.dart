@@ -94,28 +94,15 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
     final generatedAsync = ref.watch(generatedRecipeProvider);
     final isLoading = generatedAsync.isLoading;
 
-    return Stack(
-      children: [
-        Scaffold(
-          appBar: (widget.inTabs == true)
-              ? null
-              : AppBar(
-                  title: const Text('Tarif Oluştur'),
-                  leading: IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => context.go(AppRouter.home),
-                  ),
-                ),
-          body: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+    final scrollBody = SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(20, 20, 20, widget.inTabs ? 120 : 20),
+        child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
                   Text(
                     'Elinizdeki malzemeleri ekleyin',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: AppColors.forest,
+                          color: AppColors.brandOrange,
                           fontWeight: FontWeight.w600,
                         ),
                   ),
@@ -130,7 +117,7 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
                             hintText: 'örn. domates, fesleğen',
                             suffixIcon: IconButton(
                               icon: const Icon(Icons.add_circle),
-                              color: AppColors.fern,
+                              color: AppColors.brandOrange,
                               onPressed: _addIngredient,
                             ),
                           ),
@@ -144,7 +131,7 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
                         icon: const Icon(Icons.add, size: 20),
                         label: const Text('Ekle'),
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.fern,
+                          backgroundColor: AppColors.brandOrange,
                           foregroundColor: Colors.white,
                         ),
                       ),
@@ -184,8 +171,8 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
                           onDeleted: () => ref
                               .read(ingredientListProvider.notifier)
                               .removeAt(e.key),
-                          backgroundColor: AppColors.mint.withOpacity(0.5),
-                          side: BorderSide(color: AppColors.sage),
+                          backgroundColor: AppColors.brandCream.withOpacity(0.5),
+                          side: BorderSide(color: AppColors.brandCream),
                         );
                       }).toList(),
                     ),
@@ -204,7 +191,7 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
                   Text(
                     'Mutfak (isteğe bağlı)',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: AppColors.forest,
+                          color: AppColors.brandOrange,
                           fontWeight: FontWeight.w600,
                         ),
                   ),
@@ -225,9 +212,9 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
                                 isNone ? null : cuisine,
                               );
                         },
-                        selectedColor: AppColors.mint.withOpacity(0.7),
+                        selectedColor: AppColors.brandCream.withOpacity(0.7),
                         side: BorderSide(
-                          color: isSelected ? AppColors.fern : AppColors.stone,
+                          color: isSelected ? AppColors.brandOrange : AppColors.stone,
                         ),
                       );
                     }).toList(),
@@ -240,7 +227,7 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
                     icon: const Icon(Icons.auto_awesome),
                     label: const Text('Tarif Oluştur'),
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.fern,
+                      backgroundColor: AppColors.brandOrange,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
@@ -252,11 +239,22 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
                   const _SavedRecipesSection(),
                 ],
               ),
-            ),
-          ),
-        ),
-        if (isLoading) const ChefLoadingOverlay(),
-      ],
+    );
+    return Stack(
+      children: [
+        widget.inTabs
+            ? scrollBody
+            : Scaffold(
+                appBar: AppBar(
+                  title: const Text('Tarif Oluştur'),
+                  leading: IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => context.go(AppRouter.home),
+                  ),
+                ),
+                body: scrollBody,
+              ),
+      ]..addAll(isLoading ? [const ChefLoadingOverlay()] : <Widget>[]),
     );
   }
 }
@@ -276,7 +274,7 @@ class _SavedRecipesSection extends ConsumerWidget {
             Text(
               'Kaydettiğim Tarifler',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.forest,
+                    color: AppColors.brandOrange,
                     fontWeight: FontWeight.w600,
                   ),
             ),
@@ -356,7 +354,7 @@ class _SavedRecipeCard extends StatelessWidget {
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: const BorderSide(color: AppColors.mint, width: 1),
+              side: const BorderSide(color: AppColors.brandCream, width: 1),
             ),
             color: AppColors.cream,
             clipBehavior: Clip.antiAlias,
@@ -384,7 +382,7 @@ class _SavedRecipeCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: AppColors.forest,
+                            color: AppColors.brandOrange,
                             fontWeight: FontWeight.w600,
                           ),
                     ),
@@ -401,11 +399,11 @@ class _SavedRecipeCard extends StatelessWidget {
   Widget _placeholder(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: AppColors.mint.withOpacity(0.4),
+      color: AppColors.brandCream.withOpacity(0.4),
       child: Icon(
         Icons.restaurant,
         size: 36,
-        color: AppColors.fern.withOpacity(0.6),
+        color: AppColors.brandOrange.withOpacity(0.6),
       ),
     );
   }

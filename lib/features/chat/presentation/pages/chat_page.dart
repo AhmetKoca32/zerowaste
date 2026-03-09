@@ -74,101 +74,110 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   Widget build(BuildContext context) {
     final messages = ref.watch(chatMessagesProvider);
 
-    return Scaffold(
-      appBar: (widget.inTabs == true)
-          ? null
-          : AppBar(
-              title: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: AppColors.mint.withOpacity(0.6),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.sage),
-                    ),
-                    child: const Icon(Icons.eco, color: AppColors.forest, size: 22),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text('Leafy'),
-                ],
-              ),
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => context.go(AppRouter.home),
-              ),
-            ),
-      body: Column(
+    final inputBar = Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      decoration: BoxDecoration(
+        color: AppColors.paper,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.brandOrange.withOpacity(0.06),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
         children: [
           Expanded(
-            child: messages.isEmpty && !_isSending
-                ? const EmptyPlaceholder(
-                    icon: Icons.chat_bubble_outline,
-                    message:
-                        'Merhaba! Ben Leafy, sıfır atık mutfak yardımcınız. Tarif, ipucu veya gıda israfını azaltma konusunda soru sorabilirsiniz!',
-                  )
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    itemCount: messages.length + (_isSending ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == messages.length) {
-                        return const LeafyTypingIndicator();
-                      }
-                      return ChatBubble(entry: messages[index]);
-                    },
-                  ),
-          ),
-          Container(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-            decoration: BoxDecoration(
-              color: AppColors.paper,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.forest.withOpacity(0.06),
-                  blurRadius: 8,
-                  offset: const Offset(0, -2),
+            child: TextField(
+              controller: _controller,
+              decoration: InputDecoration(
+                hintText: 'Leafy\'ye yazın...',
+                filled: true,
+                fillColor: AppColors.cream,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
                 ),
-              ],
-            ),
-            child: SafeArea(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      decoration: InputDecoration(
-                        hintText: 'Leafy\'ye yazın...',
-                        filled: true,
-                        fillColor: AppColors.cream,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
-                        ),
-                      ),
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => _sendMessage(),
-                      enabled: !_isSending,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton.filled(
-                    onPressed: _isSending ? null : _sendMessage,
-                    icon: const Icon(Icons.send_rounded),
-                    style: IconButton.styleFrom(
-                      backgroundColor: AppColors.fern,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.all(14),
-                    ),
-                  ),
-                ],
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
               ),
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) => _sendMessage(),
+              enabled: !_isSending,
             ),
           ),
+          const SizedBox(width: 8),
+          IconButton.filled(
+            onPressed: _isSending ? null : _sendMessage,
+            icon: const Icon(Icons.send_rounded),
+            style: IconButton.styleFrom(
+              backgroundColor: AppColors.brandOrange,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.all(14),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    final messageList = messages.isEmpty && !_isSending
+        ? const EmptyPlaceholder(
+            icon: Icons.chat_bubble_outline,
+            message:
+                'Merhaba! Ben Leafy, sıfır atık mutfak yardımcınız. Tarif, ipucu veya gıda israfını azaltma konusunda soru sorabilirsiniz!',
+          )
+        : ListView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            itemCount: messages.length + (_isSending ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (index == messages.length) {
+                return const LeafyTypingIndicator();
+              }
+              return ChatBubble(entry: messages[index]);
+            },
+          );
+
+    if (widget.inTabs) {
+      return Column(
+        children: [
+          Expanded(child: messageList),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 120),
+            child: inputBar,
+          ),
+        ],
+      );
+    }
+    return Scaffold(
+      appBar: AppBar(
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppColors.brandCream.withOpacity(0.6),
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.brandCream),
+              ),
+              child: const Icon(Icons.eco, color: AppColors.brandOrange, size: 22),
+            ),
+            const SizedBox(width: 10),
+            const Text('Leafy'),
+          ],
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go(AppRouter.home),
+        ),
+      ),
+      body: Column(
+        children: [
+          Expanded(child: messageList),
+          SafeArea(child: inputBar),
         ],
       ),
     );

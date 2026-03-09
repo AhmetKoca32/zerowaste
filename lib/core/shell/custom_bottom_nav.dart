@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 
-/// Floating navbar: fully rounded (pill shape), margin on sides and bottom.
+/// Floating navbar: pill shape, frosted glass (blur) so background shows through.
+/// Selected item: orange pill with white icon + label.
+/// Unselected items: white circles with orange outline icon only.
 class CustomBottomNav extends StatelessWidget {
   const CustomBottomNav({
     super.key,
@@ -22,103 +24,48 @@ class CustomBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bottomSafe = MediaQuery.of(context).padding.bottom;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         _horizontalMargin,
         0,
         _horizontalMargin,
-        _bottomMargin,
+        _bottomMargin + bottomSafe,
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(999),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
           child: Container(
             decoration: BoxDecoration(
-              color: Theme.of(
-                context,
-              ).colorScheme.surfaceContainerHighest.withOpacity(0.75),
-              borderRadius: BorderRadius.circular(28),
+              color: Colors.white.withOpacity(0.25),
+              borderRadius: BorderRadius.circular(999),
               border: Border.all(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withOpacity(0.35),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 8,
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 12,
                   offset: const Offset(0, 2),
                 ),
               ],
             ),
-            child: SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: SizedBox(
+                height: _circleSize,
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: List.generate(items.length, (index) {
                     final item = items[index];
                     final selected = index == currentIndex;
-                    return Expanded(
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () => onTap(index),
-                          borderRadius: BorderRadius.circular(32),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 220),
-                            curve: Curves.easeOutCubic,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: selected ? 20 : 12,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: selected
-                                  ? AppColors.mint.withOpacity(0.9)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(32),
-                              border: selected
-                                  ? Border.all(
-                                      color: AppColors.sage.withOpacity(0.5),
-                                      width: 1,
-                                    )
-                                  : null,
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  item.icon,
-                                  size: 24,
-                                  color: selected
-                                      ? AppColors.forest
-                                      : AppColors.inkLight,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  item.label,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: selected
-                                        ? FontWeight.w600
-                                        : FontWeight.w500,
-                                    color: selected
-                                        ? AppColors.forest
-                                        : AppColors.inkLight,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
+                    return _NavItem(
+                      item: item,
+                      selected: selected,
+                      onTap: () => onTap(index),
                     );
                   }),
                 ),
@@ -131,8 +78,101 @@ class CustomBottomNav extends StatelessWidget {
   }
 }
 
+/// Nav bar content height: icon (24) + equal space above/below.
+const double _circleSize = 66;
+
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final CustomNavItem item;
+  final bool selected;
+  final VoidCallback onTap;
+
+  static const double _iconSize = 24;
+
+  /// İkon (24) üst ve altında eşit boşluk: (54 - 24) / 2 = 15
+  static const double _iconVerticalPadding = 20;
+
+  Widget _buildIcon(Color color) {
+    if (item.assetPath != null) {
+      return Image.asset(
+        item.assetPath!,
+        width: _iconSize,
+        height: _iconSize,
+        color: color,
+      );
+    }
+    return Icon(item.icon, size: _iconSize, color: color);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          padding: selected
+              ? const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: _iconVerticalPadding,
+                )
+              : const EdgeInsets.all(0),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.brandOrange : Colors.white,
+            borderRadius: BorderRadius.circular(999),
+            boxShadow: selected
+                ? null
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 6,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+          ),
+          child: selected
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildIcon(AppColors.brandWhite),
+                    const SizedBox(width: 8),
+                    Text(
+                      item.label,
+                      style: const TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.brandWhite,
+                      ),
+                    ),
+                  ],
+                )
+              : SizedBox(
+                  width: _circleSize,
+                  height: _circleSize,
+                  child: Center(
+                    child: _buildIcon(AppColors.brandOrange),
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+}
+
 class CustomNavItem {
-  const CustomNavItem({required this.icon, required this.label});
-  final IconData icon;
+  const CustomNavItem({this.icon, this.assetPath, required this.label})
+      : assert(icon != null || assetPath != null);
+  final IconData? icon;
+  final String? assetPath;
   final String label;
 }

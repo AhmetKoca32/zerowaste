@@ -70,14 +70,14 @@ class _AdminLoginPageState extends ConsumerState<AdminLoginPage> {
                   Icon(
                     Icons.admin_panel_settings,
                     size: 64,
-                    color: AppColors.forest,
+                    color: AppColors.brandOrange,
                   ),
                   const SizedBox(height: 24),
                   Text(
                     'Admin Girişi',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: AppColors.forest,
+                          color: AppColors.brandOrange,
                         ),
                     textAlign: TextAlign.center,
                   ),
@@ -137,7 +137,7 @@ class _AdminLoginPageState extends ConsumerState<AdminLoginPage> {
                   FilledButton(
                     onPressed: _isLoading ? null : _handleLogin,
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.fern,
+                      backgroundColor: AppColors.brandOrange,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(

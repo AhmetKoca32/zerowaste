@@ -42,11 +42,11 @@ class _LeafyTypingIndicatorState extends State<LeafyTypingIndicator> {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: AppColors.mint,
+              color: AppColors.brandCream,
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.sage),
+              border: Border.all(color: AppColors.brandCream),
             ),
-            child: const Icon(Icons.eco, color: AppColors.forest, size: 22),
+            child: const Icon(Icons.eco, color: AppColors.brandOrange, size: 22),
           ),
           const SizedBox(width: 10),
           Container(
@@ -59,7 +59,7 @@ class _LeafyTypingIndicatorState extends State<LeafyTypingIndicator> {
                 bottomLeft: Radius.circular(4),
                 bottomRight: Radius.circular(20),
               ),
-              border: Border.all(color: AppColors.mint),
+              border: Border.all(color: AppColors.brandCream),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,

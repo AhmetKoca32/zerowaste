@@ -34,7 +34,7 @@ class AdminDashboardPage extends ConsumerWidget {
             onPressed: () => context.go(AppRouter.adminRecipeNew),
             icon: const Icon(Icons.add),
             label: const Text('Yeni Tarif'),
-            backgroundColor: AppColors.fern,
+            backgroundColor: AppColors.brandOrange,
             foregroundColor: Colors.white,
           ),
         ),
@@ -101,7 +101,7 @@ class _RecipeListContent extends ConsumerWidget {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.edit),
-                      color: AppColors.fern,
+                      color: AppColors.brandOrange,
                       onPressed: () =>
                           context.go(AppRouter.adminRecipeEdit(recipe.id)),
                     ),
