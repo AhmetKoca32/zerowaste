@@ -9,6 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/empty_placeholder.dart';
 import '../../data/models/recipe.dart';
 import '../providers/home_providers.dart';
+import '../widgets/ingredient_filter_sheet.dart';
 import '../widgets/recipe_blog_card.dart';
 import '../widgets/recipe_detail_sheet.dart';
 
@@ -88,8 +89,8 @@ class _HomePageState extends ConsumerState<HomePage> {
             if (index == 0) {
               return Column(
                 children: [
-                  _buildSearchBar(),
-                  _buildIngredientChips(allIngredients),
+                  _buildSearchBar(allIngredients),
+                  _buildSelectedChips(),
                   const SizedBox(height: 12),
                 ],
               );
@@ -166,155 +167,221 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Widget _buildIngredientChips(List<String> allIngredients) {
-    final isAllSelected = _selectedIngredients.isEmpty;
-    return SizedBox(
-      height: 44,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: allIngredients.length + 1,
-        itemBuilder: (context, index) {
-          if (index == 0) {
+  Widget _buildSelectedChips() {
+    if (_selectedIngredients.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: SizedBox(
+        height: 40,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: _selectedIngredients.length + 1,
+          itemBuilder: (context, index) {
+            if (index == _selectedIngredients.length) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedIngredients.clear()),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.stone.withOpacity(0.5)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.close, size: 14, color: AppColors.inkLight),
+                        SizedBox(width: 4),
+                        Text(
+                          'Temizle',
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.inkLight,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+            final ingredient = _selectedIngredients.elementAt(index);
             return Padding(
               padding: const EdgeInsets.only(right: 8),
               child: GestureDetector(
-                onTap: () => setState(() => _selectedIngredients.clear()),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
+                onTap: () => setState(() => _selectedIngredients.remove(ingredient)),
+                child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
+                    horizontal: 14,
+                    vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: isAllSelected
-                        ? AppColors.brandOrange
-                        : Colors.white,
+                    color: AppColors.brandOrange,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.brandOrange),
                   ),
-                  child: Text(
-                    'Tümü',
-                    style: TextStyle(
-                      fontFamily: 'Manrope',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isAllSelected
-                          ? Colors.white
-                          : AppColors.brandOrange,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        ingredient,
+                        style: const TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      const Icon(Icons.close, size: 12, color: Colors.white70),
+                    ],
                   ),
                 ),
               ),
             );
-          }
-
-          final ingredient = allIngredients[index - 1];
-          final isSelected = _selectedIngredients.contains(ingredient);
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  if (isSelected) {
-                    _selectedIngredients.remove(ingredient);
-                  } else {
-                    _selectedIngredients.add(ingredient);
-                  }
-                });
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColors.brandOrange
-                      : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.brandOrange),
-                ),
-                child: Text(
-                  ingredient,
-                  style: TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: isSelected
-                        ? Colors.white
-                        : AppColors.brandOrange,
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(List<String> allIngredients) {
     final radius = BorderRadius.circular(50);
+    final hasFilter = _selectedIngredients.isNotEmpty;
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 16, 0, 16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: radius,
-          border: Border.all(
-            color: const Color(0xFFE8E8E8),
-            width: 0.5,
-          ),
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: radius,
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.black.withOpacity(0.05),
-                Colors.transparent,
-                Colors.transparent,
-                Colors.black.withOpacity(0.02),
-              ],
-              stops: const [0.0, 0.15, 0.85, 1.0],
-            ),
-          ),
-          child: ClipRRect(
-            borderRadius: radius,
-            child: TextField(
-              onChanged: (value) => setState(() => _searchQuery = value),
-              style: const TextStyle(fontFamily: 'Manrope', fontSize: 14),
-              decoration: InputDecoration(
-                hintText: 'Tariflerde arayın',
-                hintStyle: TextStyle(
-                  color: AppColors.inkLight.withOpacity(0.6),
-                  fontFamily: 'Manrope',
-                  fontSize: 14,
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: radius,
+                border: Border.all(
+                  color: const Color(0xFFE8E8E8),
+                  width: 0.5,
                 ),
-                suffixIcon: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Image.asset(
-                    'assets/images/icons/search_icon.png',
-                    width: 20,
-                    height: 20,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: radius,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.05),
+                      Colors.transparent,
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.02),
+                    ],
+                    stops: const [0.0, 0.15, 0.85, 1.0],
                   ),
                 ),
-                filled: true,
-                fillColor: Colors.transparent,
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 14,
+                child: ClipRRect(
+                  borderRadius: radius,
+                  child: TextField(
+                    onChanged: (value) => setState(() => _searchQuery = value),
+                    style: const TextStyle(fontFamily: 'Manrope', fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: 'Tariflerde arayın',
+                      hintStyle: TextStyle(
+                        color: AppColors.inkLight.withOpacity(0.6),
+                        fontFamily: 'Manrope',
+                        fontSize: 14,
+                      ),
+                      suffixIcon: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Image.asset(
+                          'assets/images/icons/search_icon.png',
+                          width: 20,
+                          height: 20,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Colors.transparent,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 14,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+          const SizedBox(width: 10),
+          GestureDetector(
+            onTap: () async {
+              final result = await showIngredientFilterSheet(
+                context,
+                allIngredients: allIngredients,
+                selectedIngredients: _selectedIngredients,
+              );
+              if (result != null) {
+                setState(() => _selectedIngredients = result);
+              }
+            },
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: hasFilter
+                        ? AppColors.brandOrange
+                        : Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: hasFilter
+                          ? AppColors.brandOrange
+                          : const Color(0xFFE8E8E8),
+                      width: hasFilter ? 1.5 : 0.5,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.tune,
+                    size: 22,
+                    color: hasFilter ? Colors.white : AppColors.inkLight,
+                  ),
+                ),
+                if (hasFilter)
+                  Positioned(
+                    top: -4,
+                    right: -4,
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: const BoxDecoration(
+                        color: AppColors.ink,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${_selectedIngredients.length}',
+                          style: const TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
