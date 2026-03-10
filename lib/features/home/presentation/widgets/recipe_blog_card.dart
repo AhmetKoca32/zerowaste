@@ -76,6 +76,15 @@ class RecipeBlogCard extends StatelessWidget {
                     color: AppColors.ink,
                   ),
                 ),
+                const SizedBox(height: 6),
+                Text(
+                  '${recipe.ingredients.length} malzeme · ${recipe.instructions.length} adım',
+                  style: const TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 13,
+                    color: AppColors.inkLight,
+                  ),
+                ),
                 const SizedBox(height: 12),
                 Row(
                   children: [

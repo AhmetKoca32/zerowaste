@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/providers/core_providers.dart';
 import '../../data/saved_recipe.dart';
@@ -8,6 +9,9 @@ import '../../../home/data/models/recipe.dart';
 
 part 'recipe_generator_providers.g.dart';
 
+const _recentIngredientsKey = 'recent_ingredients';
+const _maxRecentIngredients = 10;
+
 /// Ingredient list for recipe generation (chips).
 @riverpod
 class IngredientList extends _$IngredientList {
@@ -15,8 +19,34 @@ class IngredientList extends _$IngredientList {
   List<String> build() => [];
 
   void add(String ingredient) => state = [...state, ingredient];
-  void removeAt(int index) => state = state..removeAt(index);
+  void removeAt(int index) => state = [...state]..removeAt(index);
   void clear() => state = [];
+}
+
+/// Previously used ingredients persisted across sessions.
+@Riverpod(keepAlive: true)
+class RecentIngredients extends _$RecentIngredients {
+  @override
+  Future<List<String>> build() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(_recentIngredientsKey) ?? [];
+  }
+
+  Future<void> addAll(List<String> ingredients) async {
+    final current = state.valueOrNull ?? [];
+    final updated = <String>[...ingredients];
+    for (final item in current) {
+      if (!updated.any((i) => i.toLowerCase() == item.toLowerCase())) {
+        updated.add(item);
+      }
+    }
+    if (updated.length > _maxRecentIngredients) {
+      updated.removeRange(_maxRecentIngredients, updated.length);
+    }
+    state = AsyncValue.data(updated);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_recentIngredientsKey, updated);
+  }
 }
 
 /// Optional selected cuisine for recipe generation (null = no preference).
@@ -88,6 +118,9 @@ class GeneratedRecipe extends _$GeneratedRecipe {
       );
       return;
     }
+    // Kullanılan malzemeleri geçmişe kaydet
+    ref.read(recentIngredientsProvider.notifier).addAll(ingredients);
+
     final cuisine = ref.read(selectedCuisineProvider);
     final deepSeek = ref.read(deepSeekServiceProvider);
     state = await AsyncValue.guard(

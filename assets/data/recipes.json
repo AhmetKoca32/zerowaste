@@ -3,35 +3,171 @@
     "id": "1",
     "title": "Sıfır Atık Sebze Sote",
     "image_url": null,
-    "ingredients": ["Artık sebzeler", "Soya sosu", "Sarımsak", "Yağ"],
+    "description": "Buzdolabında kalan sebze artıklarını değerlendirmenin en lezzetli yolu. Soğan uçları, havuç kabukları, brokoli sapları gibi genelde çöpe giden parçalar bu sotede harika bir lezzete dönüşür.",
+    "ingredients": [
+      "2 su bardağı artık sebze (havuç kabukları, brokoli sapları, soğan uçları vb.)",
+      "2 yemek kaşığı soya sosu",
+      "3 diş sarımsak (ince kıyılmış)",
+      "2 yemek kaşığı zeytinyağı",
+      "1 tatlı kaşığı susam yağı (isteğe bağlı)",
+      "1 çay kaşığı kırmızı pul biber",
+      "Tuz ve karabiber"
+    ],
     "instructions": [
-      "Sebzeleri eşit parçalar halinde doğrayın.",
-      "Tavada yağı kızdırın, sarımsak ekleyin.",
-      "Sebzeleri yumuşayana kadar soteleyin.",
-      "Soya sosu ekleyip servis edin."
+      "Artık sebzeleri yıkayın ve kabaca doğrayın. Sert kısımları ince dilimleyin ki eşit pişsin.",
+      "Geniş bir tavada zeytinyağını orta ateşte kızdırın.",
+      "Sarımsakları ekleyip 30 saniye kadar, kokusu çıkana kadar kavurun.",
+      "Sert sebzeleri (havuç kabukları, brokoli sapları) önce ekleyin, 3-4 dakika soteleyin.",
+      "Yumuşak sebzeleri (soğan uçları, yapraklar) ekleyip 2 dakika daha pişirin.",
+      "Soya sosu, pul biber, tuz ve karabiberi ekleyip karıştırın.",
+      "İsteğe bağlı susam yağını ekleyip ateşten alın. Sıcak servis edin."
     ]
   },
   {
     "id": "2",
-    "title": "Mutfak Artığı Suyu",
+    "title": "Mutfak Artığı Sebze Suyu",
     "image_url": null,
-    "ingredients": ["Soğan kabukları", "Havuç yaprakları", "Kereviz uçları", "Ot sapları", "Su", "Tuz"],
+    "description": "Haftalar boyunca biriktirdiğiniz sebze artıklarından yapılan ev yapımı sebze suyu, hem market ürünlerinden çok daha lezzetli hem de tamamen ücretsiz. Çorbalarda, pilavlarda ve sosların temelinde kullanabilirsiniz.",
+    "ingredients": [
+      "4-5 su bardağı biriktirilmiş sebze artığı (soğan kabukları, havuç uçları, kereviz yaprakları, mantar sapları vb.)",
+      "8 su bardağı soğuk su",
+      "2 defne yaprağı",
+      "5-6 tane karabiber",
+      "1 çay kaşığı tuz",
+      "2-3 dal taze kekik veya maydanoz sapları",
+      "1 yemek kaşığı elma sirkesi (isteğe bağlı, berraklık için)"
+    ],
     "instructions": [
-      "Sebze artıklarını dondurucuda bir poşette biriktirin.",
-      "Artıkları tencereye alın, suyla örtün.",
-      "1–2 saat kısık ateşte kaynatın.",
-      "Süzün, kullanın veya dondurucuya atın."
+      "Dondurucuda biriktirdiğiniz sebze artıklarını bir tencereye aktarın. Donmuş kullanabilirsiniz, çözülmesi gerekmez.",
+      "Üzerine soğuk suyu ekleyin. Su, sebzelerin 3-4 cm üzerinde olmalı.",
+      "Defne yaprağı, karabiber taneleri ve taze otları ekleyin.",
+      "Orta ateşte kaynatın, ardından kısık ateşe alıp kapağı aralık bırakın.",
+      "45 dakika - 1 saat kısık ateşte kaynatın. Ara sıra köpükleri alın.",
+      "Tuz ve isteğe bağlı elma sirkesini ekleyin.",
+      "İnce bir süzgeç veya tülbentten geçirerek süzün.",
+      "Soğutup cam kavanozlara doldurun. Buzdolabında 5 gün, dondurucuda 3 ay saklanabilir."
     ]
   },
   {
     "id": "3",
     "title": "Artık Tahıl Kasesi",
     "image_url": null,
-    "ingredients": ["Pişmiş pirinç veya kinoa", "Artık fırın sebzeleri", "Limon", "Taze otlar", "Zeytinyağı"],
+    "description": "Önceki günden kalan pirinç, bulgur veya kinoa artıklarını taze bir öğüne çevirin. Fırından kalan sebzelerle birleşince hem doyurucu hem besleyici bir kase ortaya çıkar.",
+    "ingredients": [
+      "1.5 su bardağı pişmiş pirinç, bulgur veya kinoa (önceki günden kalan)",
+      "1 su bardağı artık fırın sebzeleri (patlıcan, kabak, biber vb.)",
+      "1 adet limon (suyu ve kabuğu rendesi)",
+      "Bir tutam taze maydanoz veya dereotu",
+      "2 yemek kaşığı zeytinyağı",
+      "1 yemek kaşığı nar ekşisi",
+      "Tuz, karabiber, sumak"
+    ],
     "instructions": [
-      "Tahılları ve sebzeleri ısıtın.",
-      "Zeytinyağı ve limon suyuyla harmanlayın.",
-      "Üzerine taze ot serpip servis edin."
+      "Pişmiş tahılları bir tavada 2-3 dakika orta ateşte ısıtın veya mikrodalga ile 1 dakika ısıtın.",
+      "Artık fırın sebzelerini küçük parçalar halinde doğrayın. Soğuk da kullanabilirsiniz.",
+      "Geniş bir kaseye tahılları ve sebzeleri yerleştirin.",
+      "Zeytinyağı, limon suyu, nar ekşisi, tuz ve karabiberi karıştırarak sos hazırlayın.",
+      "Sosu kasenin üzerine gezdirin ve hafifçe karıştırın.",
+      "Üzerine limon kabuğu rendesi, taze otlar ve bir tutam sumak serpin.",
+      "Hemen servis edin veya öğle yemeği için kapla."
+    ]
+  },
+  {
+    "id": "4",
+    "title": "Bayat Ekmek Köftesi",
+    "image_url": null,
+    "description": "Türk mutfağının sıfır atık klasiği! Bayat ekmekleri çöpe atmak yerine, bu nefis ve besleyici köftelere dönüştürün. Hem ekonomik hem de inanılmaz lezzetli.",
+    "ingredients": [
+      "3-4 dilim bayat ekmek (kurutulmuş veya taze bayat)",
+      "1 adet yumurta",
+      "1 adet küçük soğan (rendelenmiş)",
+      "2 yemek kaşığı domates salçası",
+      "Yarım demet maydanoz (ince kıyılmış)",
+      "1 çay kaşığı kimyon",
+      "1 çay kaşığı kırmızı pul biber",
+      "Tuz ve karabiber",
+      "3-4 yemek kaşığı ince bulgur"
+    ],
+    "instructions": [
+      "Bayat ekmekleri küçük parçalara ayırın ve üzerine sıcak su dökün. 10 dakika bekletin.",
+      "Islanan ekmekleri iyice sıkarak suyunu süzün.",
+      "Geniş bir kaba ekmek, yumurta, rendelenmiş soğan, salça, maydanoz ve baharatları ekleyin.",
+      "İnce bulguru da ekleyip iyice yoğurun. Kıvam yapışkan olmamalı; gerekirse biraz daha bulgur ekleyin.",
+      "Ceviz büyüklüğünde parçalar koparıp avuç içinde yuvarlayın.",
+      "Yağlanmış bir tepsiye dizin veya tavada az yağla kızartın.",
+      "Fırında yapıyorsanız 180°C'de 20-25 dakika, altları kızarana kadar pişirin.",
+      "Yanında yeşillik ve limon ile servis edin."
+    ]
+  },
+  {
+    "id": "5",
+    "title": "Meyve Kabuğu Sirkesi",
+    "image_url": null,
+    "description": "Elma, armut veya ayva kabuklarını çöpe atmayın! Doğal fermentasyon ile kendi sirkenizi yapabilirsiniz. Hem salatalarda hem temizlikte kullanılabilecek çok yönlü bir ürün.",
+    "ingredients": [
+      "3-4 adet elma veya armut kabuğu ve çekirdek yuvaları",
+      "1 litre kaynatılıp soğutulmuş su",
+      "2 yemek kaşığı şeker veya bal",
+      "1 adet cam kavanoz (geniş ağızlı, en az 1.5 litre)",
+      "Tülbent veya temiz bir bez"
+    ],
+    "instructions": [
+      "Meyve kabuklarını ve çekirdek yuvalarını cam kavanoza yerleştirin. Kavanozun yarısını dolduracak kadar olmalı.",
+      "Ilık suya şekeri ekleyip karıştırarak eritin.",
+      "Şekerli suyu kavanozdaki kabukların üzerine dökün. Kabuklar tamamen suyun altında kalmalı.",
+      "Kavanozun ağzını tülbentle kapatıp lastikle sabitleyin. Hava alması gerekir, kapak kullanmayın.",
+      "Karanlık ve serin bir yerde 2 hafta bekletin. İlk 1 hafta her gün karıştırın.",
+      "2 hafta sonra kabukları süzün ve sıvıyı aynı kavanoza geri koyun.",
+      "Tülbentle kapatıp 4-6 hafta daha bekletin. Sirke kokusu alana kadar fermente edin.",
+      "Süzüp cam şişelere doldurun. Oda sıcaklığında veya buzdolabında saklayın."
+    ]
+  },
+  {
+    "id": "6",
+    "title": "Kabuk ve Sap Cipsi",
+    "image_url": null,
+    "description": "Patates kabukları, havuç kabukları, pancar yaprakları... Normalde çöpe attığınız bu kısımlar fırında harika bir atıştırmalığa dönüşür. Çocuklar bile bayılır!",
+    "ingredients": [
+      "2 su bardağı sebze kabukları (patates, havuç, pancar, kabak vb.)",
+      "1-2 yemek kaşığı zeytinyağı",
+      "1 çay kaşığı tuz",
+      "Yarım çay kaşığı sarımsak tozu",
+      "Yarım çay kaşığı kırmızı toz biber",
+      "İsteğe bağlı: kekik, biberiye veya sumak"
+    ],
+    "instructions": [
+      "Fırını 200°C'ye önceden ısıtın.",
+      "Kabukları iyice yıkayıp kurulayın. Nemli kalırsa çıtır olmaz.",
+      "Geniş bir kaba kabukları alıp zeytinyağı ve baharatları ekleyin, iyice karıştırın.",
+      "Fırın tepsisine yağlı kağıt serin ve kabukları tek sıra halinde dizin. Üst üste gelmemesine dikkat edin.",
+      "200°C fırında 15-20 dakika, kenarları kızarana ve çıtırlaşana kadar pişirin.",
+      "10. dakikada bir kontrol edip ince kabukları çıtırlaşanları ayırın.",
+      "Fırından çıkarınca 5 dakika soğumasını bekleyin; soğudukça daha da çıtırlaşır.",
+      "Yanında yoğurtlu sos ile servis edin."
+    ]
+  },
+  {
+    "id": "7",
+    "title": "Sıfır Atık Smoothie",
+    "image_url": null,
+    "description": "Yumuşamış meyveler, meyve kabukları ve sebze sapları ile hazırlanan bu smoothie, hem besleyici hem de israfı önleyen mükemmel bir içecek. Kahvaltıda veya ara öğünde ideal.",
+    "ingredients": [
+      "1 adet olgunlaşmış muz (kabukları kahverengileşmiş olabilir)",
+      "Yarım su bardağı yumuşamış çilek veya meyve artıkları",
+      "1 su bardağı ıspanak veya pazı sapları",
+      "1 su bardağı süt veya bitki sütü",
+      "1 yemek kaşığı bal veya hurma",
+      "Yarım su bardağı buz",
+      "1 yemek kaşığı yulaf ezmesi (isteğe bağlı, tokluk için)"
+    ],
+    "instructions": [
+      "Yumuşamış meyveleri kabaca doğrayın. Çürük kısımları kesin, geri kalanı kullanılabilir.",
+      "Ispanak veya pazı saplarını yıkayıp kabaca parçalayın.",
+      "Tüm malzemeleri blender'a ekleyin: meyve, yeşillik, süt, bal ve yulaf.",
+      "Buzları ekleyin.",
+      "Pürüzsüz bir kıvam alana kadar 1-2 dakika blender'da karıştırın.",
+      "Bardağa dökün, isterseniz üzerine chia tohumu veya granola serpin.",
+      "Hemen servis edin."
     ]
   }
 ]

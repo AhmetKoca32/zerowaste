@@ -24,6 +24,24 @@ final ingredientListProvider =
     );
 
 typedef _$IngredientList = AutoDisposeNotifier<List<String>>;
+String _$recentIngredientsHash() => r'fc21193ab544db57cac15a77332ffd093a375233';
+
+/// Previously used ingredients persisted across sessions.
+///
+/// Copied from [RecentIngredients].
+@ProviderFor(RecentIngredients)
+final recentIngredientsProvider =
+    AsyncNotifierProvider<RecentIngredients, List<String>>.internal(
+      RecentIngredients.new,
+      name: r'recentIngredientsProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$recentIngredientsHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$RecentIngredients = AsyncNotifier<List<String>>;
 String _$selectedCuisineHash() => r'3ea9a7ee3fd598adf36695f4bba0b6af945ec9d6';
 
 /// Optional selected cuisine for recipe generation (null = no preference).
@@ -78,7 +96,7 @@ final savedRecipesProvider =
     );
 
 typedef _$SavedRecipes = AutoDisposeAsyncNotifier<List<SavedRecipe>>;
-String _$generatedRecipeHash() => r'25a4ba327ac36c3ecdc73688ce8f4764868bfacb';
+String _$generatedRecipeHash() => r'f297a6a09cc1d172617396cfcde8d4de19e6df04';
 
 /// Async state for the generated recipe text (loading / data / error).
 ///
