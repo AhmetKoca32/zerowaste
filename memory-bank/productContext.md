@@ -20,28 +20,36 @@ Sıfır Atık Mutfak, AI teknolojisini kullanarak kullanıcıların elindeki mal
 
 ### 1. Tarifler Sayfası (Ana Sayfa)
 - Uygulama açılır, "Sıfır Atık Mutfak" başlığı görünür
-- Arama çubuğu (inner shadow efektli, beyaz, search_icon.png)
-- Altında yatay kaydırılabilir malzeme chip'leri:
-  - "Tümü" chip'i (seçim temizleme)
-  - Tüm tariflerden çıkarılan benzersiz malzemeler
-  - Multi-select: seçili chip turuncu dolgu, seçili olmayan beyaz/turuncu outline
-- Tarifler akıllı sıralama ile listelenir (seçilen malzemelerle en çok eşleşen üstte)
-- Her tarif kartında eşleşme göstergesi: "3/4 malzeme elinizde"
-- Tarif kartları: beyaz arka plan, yuvarlak köşeli yemek resmi (16px padding), başlık, malzeme chip'leri (turuncu kenarlı), "Tarifi İncele" butonu
+- Arama çubuğu (inner shadow efektli, beyaz, search_icon.png) + sağında filtre butonu
+- Filtre butonu: tune ikonu, seçili malzeme varsa turuncu + badge
+- Filtre butonuna tıklayınca bottom sheet açılır:
+  - Arama çubuğu ile malzeme ara
+  - Seçili malzemeler üstte turuncu chip'ler
+  - Tüm malzemeler wrap layout'ta (seçili: turuncu, değil: outline)
+  - "Temizle" + "Uygula (N)" butonları
+- Seçili malzemeler ana sayfada yatay chip bar'da gösterilir (+ "Temizle" chip'i)
+- Tarifler akıllı sıralama ile listelenir (en çok eşleşen üstte)
+- Her kartta: başlık, "N malzeme · N adım" özeti, malzeme chip'leri, eşleşme göstergesi, "Tarifi İncele" butonu
 - Karta tıklanınca bottom sheet detay açılır
 
 ### 2. Tarif Detay (Bottom Sheet)
 - Beyaz arka plan, yumuşak gölge
-- Yemek resmi (yuvarlak köşeli, yemek.png placeholder)
-- Başlık (Manrope Bold 20)
-- Malzemeler: turuncu kenarlıklı chip'ler (alisveris_icon.png ikonu ile)
-- Yapılış: numaralı adımlar (turuncu daire numaralar)
-- Kaydet/Kapat butonları (varsa)
+- Başlık + kapat butonu
+- Yemek resmi (yemek.png placeholder)
+- Özet istatistik barı (malzeme sayısı + adım sayısı)
+- Açıklama (description varsa)
+- Malzemeler kartı: alisveris_icon.png, "N adet", turuncu noktalı madde listesi
+- Yapılış kartı: numaralı adımlar, ayraç çizgiler
 
 ### 3. AI Tarif Üretimi (Oluştur)
-- Malzeme girişi + mutfak stili seçimi
-- AI ile tarif üretimi (DeepSeek API)
-- Üretilen tarifi kaydetme ve fotoğraf ekleme
+- Başlık + info ikonu ile açıklama
+- Inner shadow input alanı + turuncu "+" butonu
+- Eklenen malzemeler turuncu chip'ler
+- Son eklenenler: daha önce kullanılmış malzemeler (kalıcı, dokunulunca ekle)
+- Mutfak dropdown (pill-shape, inner shadow, arrow_icon.png)
+- "Tarif Oluştur" butonu → DeepSeek API → detay sheet
+- Kaydettiğim Tarifler: max 5 yatay + "Tümünü gör" bottom sheet
+- Tarif detayda fotoğraf yoksa placeholder gösterilmez, "Fotoğraf ekle" butonu çıkar
 
 ### 4. AI Sohbet (Chat/Leafy)
 - Sıfır atık mutfak yardımcısı ile sohbet
@@ -63,10 +71,10 @@ Sıfır Atık Mutfak, AI teknolojisini kullanarak kullanıcıların elindeki mal
 ### Tasarım Dili
 - **Beyaz kartlar** üzerine turuncu vurgular
 - **Manrope** font ailesi tüm metinlerde
-- **Custom PNG ikonlar** (Flutter material ikonları yerine)
+- **Custom PNG ikonlar** (arrow_icon, search_icon, alisveris_icon vb.)
 - **Pill-shaped navbar** frosted glass efektli
-- **Inner shadow** arama çubuğu
-- **Chip-based** malzeme gösterimi ve filtreleme
+- **Inner shadow** arama çubukları ve dropdown'lar
+- **Bottom sheet** bazlı detay/filtre/liste görünümleri
 
 ### Navigation
 - Bottom tab bar (4 sekme): Tarifler, Oluştur, Chat, Puan
@@ -76,6 +84,8 @@ Sıfır Atık Mutfak, AI teknolojisini kullanarak kullanıcıların elindeki mal
 
 ### Önemli UX Detayları
 - Tarifler sadece ilk açılışta fetch edilir (keepAlive: true)
-- Loading states ve error handling
-- Malzeme filtresi ile akıllı sıralama (tam eşleşme gerekmez, en çok eşleşen üstte)
-- Eşleşme göstergesi kartlarda ("X/Y malzeme elinizde")
+- Firestore boşsa veya hata verirse yerel JSON fallback
+- Malzeme filtresi bottom sheet ile (ana sayfada kalabalık yapmaz)
+- Son eklenenler kalıcı (SharedPreferences) - kullanıcı aynı malzemeleri tekrar yazmaz
+- Tarif oluşturulduktan sonra aktif malzeme listesi temizlenir
+- Kaydettiğim tarifler max 5 gösterilir + "Tümünü gör" ile aranabilir sheet

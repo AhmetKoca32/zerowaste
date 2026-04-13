@@ -1,79 +1,72 @@
 # Active Context: Sıfır Atık Mutfak
 
 **Son Güncelleme:** Mart 2025  
-**Aktif Çalışma:** UI/UX polish ve tarif filtreleme sistemi tamamlandı
+**Aktif Çalışma:** Oluştur sayfası yeniden tasarımı, tarif detay zenginleştirme, malzeme filtre sistemi
 
 ---
 
 ## Şu Anki Odak
 
-### Son Yapılan Büyük Değişiklikler (Mart 2025)
+### Son Yapılan Değişiklikler (Mart 2025 - Güncel Oturum)
 
-#### 1. Renk Paleti Değişimi
-- Eski yeşil tonları (sage, mint, fern, moss, forest) tamamen kaldırıldı
-- Yeni brand renkleri uygulandı: brandOrange, brandCream, brandOrange70
-- app_colors.dart'tan "Pastel Greens" bölümü silindi
-- app_theme.dart: seedColor, primary, tertiary, button, input border güncellendi
-- 15+ dosyada renk referansları güncellendi
+#### 1. Firestore Security Rules & Fallback - ÇÖZÜLDÜ
+- `firestore.rules` dosyası oluşturuldu (recipes: herkes okur, admin yazar; admins: kendi kaydını okur)
+- RecipeRepository: Firestore boşsa veya hata verirse yerel JSON fallback
+- SHA-1 debug parmak izi Firebase Console'a eklendi
+- Google Play Services emülatör uyarıları (DEVELOPER_ERROR) Firestore'u engellemiyor
 
-#### 2. Navigation Bar Yeniden Tasarımı
-- Pill-shaped yatay navbar
-- BackdropFilter ile frosted glass/blur efekti
-- Custom PNG ikonlar (tarifler_icon, chat_icon, puan_icon, olustur_icon)
-- Aktif: turuncu pill + beyaz ikon + Manrope Bold 12 text
-- İkonlar dikey olarak ortalanmış (_circleSize: 54, _iconVerticalPadding: 15)
+#### 2. Oluştur Sayfası (RecipeGeneratorPage) Yeniden Tasarımı
+- **Başlık:** Siyah Manrope Bold 20 + altında info ikonu ile gri açıklama metni (fontSize: 12)
+- **Input alanı:** Inner shadow efektli pill-shape beyaz text field + sağında turuncu daire "+" butonu. Eski "Ekle" butonu kaldırıldı
+- **Eklenen malzemeler:** Turuncu dolgulu chip'ler (beyaz yazı, x ile sil)
+- **Son eklenenler:** Daha önce tarif oluştururken kullanılmış malzemeler (SharedPreferences ile kalıcı, max 10). Turuncu kenarlıklı beyaz chip'ler. Dokunulunca aktif listeye eklenir. Zaten aktif listede olanlar gizlenir. Tarif oluşturulunca malzemeler kaydedilir ve aktif liste temizlenir.
+- **Mutfak dropdown:** Başlık dışarıda ("Mutfak (isteğe bağlı)"), altında pill-shape beyaz dropdown. Inner shadow efekti. arrow_icon.png ile ok. Seçili değer gösterilir, tıklayınca animasyonlu açılır liste. Seçim yapılınca kapanır.
+- **Kaydettiğim Tarifler:** Max 5 tarif yatay listede + "Tümünü gör (N)" kartı + başlıkta "Tümünü gör" yazısı. Tümünü gör'e tıklayınca aranabilir bottom sheet (saved_recipes_sheet.dart).
+- **Tarif detay (oluştur sayfası):** showPlaceholderImage: false - fotoğraf eklenmemişse yemek.png gösterilmez, sadece "Fotoğraf ekle" butonu
+- **Yemek isimleri:** Siyah (AppColors.ink), regular (w400)
 
-#### 3. Navbar Arka Plan Sorunu Çözümü
-- İç sayfalar (RecipeGeneratorPage, ChatPage, PointsPage) inTabs: true iken inner Scaffold bypass eder
-- SafeArea kaldırıldı, alt padding 100-120px eklendi
-- İçerik navbar arkasından scroll ediyor, blur efekti çalışıyor
+#### 3. Tarif İçerikleri Genişletildi
+- recipes.json: 3 tariften 7 tarife çıktı
+- Her tarife description (açıklama/hikaye) eklendi
+- Malzemeler detaylandırıldı (miktarlar, ölçüler, alternatifler)
+- Yapılış adımları detaylandırıldı (süreler, sıcaklıklar, ipuçları)
+- Yeni tarifler: Bayat Ekmek Köftesi, Meyve Kabuğu Sirkesi, Kabuk ve Sap Cipsi, Sıfır Atık Smoothie
 
-#### 4. Tarifler Sayfası Yeniden Tasarımı
-- Arama çubuğu: beyaz, inner shadow efektli, search_icon.png, Manrope font
-- Tarif kartları: beyaz arka plan, 16px padding ile yuvarlak köşeli resim (220px), turuncu kenarlıklı malzeme chip'leri
-- "Tarifi İncele" butonu: turuncu, ortalanmış yazı
-- Custom malzeme ikonu: alisveris_icon.png
-- Tüm fontlar Manrope
+#### 4. Tarif Detay Sheet Zenginleştirildi
+- **Özet istatistik barı:** Resimden sonra krem arka planlı kutu, malzeme sayısı + adım sayısı ikon ile
+- **Malzemeler bölümü:** Kenarlıklı beyaz kart, başlıkta "N adet", turuncu nokta ile madde işaretli liste (chip yerine)
+- **Yapılış bölümü:** Kenarlıklı beyaz kart, başlıkta "N adım", numaralı adımlar arası ince ayraç çizgisi
+- **showPlaceholderImage parametresi:** Oluştur sayfasından açılan detaylarda yemek.png gösterilmez
 
-#### 5. Malzeme Bazlı Tarif Filtreleme
-- Arama çubuğu altında yatay kaydırılabilir chip bar
-- Tüm tariflerden benzersiz malzemeler otomatik çıkarılır
-- Multi-select: birden fazla malzeme seçilebilir
-- Akıllı sıralama: seçilen malzemelerle en çok eşleşen tarif üstte
-- Eşleşme göstergesi: "X/Y malzeme elinizde" her kartta
-- "Tümü" chip'i ile seçim temizleme
+#### 5. Tarif Kartı (RecipeBlogCard) Güncellendi
+- Başlık altına "N malzeme · N adım" özet satırı eklendi
 
-#### 6. Tarif Detay Sheet Yeniden Tasarımı
-- Beyaz arka plan (paper yerine), yumuşak siyah gölge (turuncu yerine)
-- Başlık: Manrope Bold 20, koyu renk (turuncu değil)
-- Malzemeler: chip formatında (bullet point yerine), turuncu kenarlı
-- Malzemeler başlığı: alisveris_icon.png
-- Yapılış numaraları: brandOrange daireler (brandCream yerine)
-- Placeholder: yemek.png (boş kutu yerine)
-- initialChildSize: 0.85 (0.6 yerine)
-- Tüm fontlar Manrope
+#### 6. Malzeme Filtre Sistemi Yeniden Tasarlandı
+- Eski yatay chip bar kaldırıldı
+- Arama çubuğunun sağına filtre butonu eklendi (tune ikonu, turuncu badge ile seçili sayı)
+- Filtre butonu tıklayınca bottom sheet açılır (ingredient_filter_sheet.dart):
+  - Arama çubuğu (inner shadow, search_icon.png)
+  - Seçili malzemeler üstte turuncu chip'ler (x ile kaldır)
+  - Tüm malzemeler wrap layout (seçili: turuncu dolgu, değil: outline)
+  - Alt barda "Temizle" + "Uygula (N)" butonları
+- Ana sayfada seçili malzemeler yatay chip bar'da gösterilir + sonunda "Temizle" chip'i
+- Seçili malzeme yoksa chip bar gizli
 
-#### 7. Provider Optimizasyonu
-- recipeListProvider: @Riverpod(keepAlive: true) ile sadece ilk açılışta fetch
-- build_runner ile generated dosya yeniden oluşturuldu
-
-#### 8. Diğer
-- App adı: 'Sıfır Atık Mutfak' (ZeroWaste Mutfak yerine)
-- Chat sayfasına mock data eklendi
-- yemek.png placeholder görseli eklendi
-- EmptyPlaceholder widget'a Manrope font eklendi
+#### 7. RecentIngredients Provider
+- SharedPreferences ile kalıcı depolama
+- @Riverpod(keepAlive: true)
+- Max 10 malzeme saklanır
+- Tarif oluşturulduğunda malzemeler kaydedilir
+- IngredientList.removeAt bug fix: `[...state]..removeAt(index)` (referans kopyası)
 
 ---
 
-## Çözülen Sorunlar (Mart 2025 - Son)
+## Çözülen Sorunlar
 
-### Siyah Ekran / Firestore PERMISSION_DENIED - ÇÖZÜLDÜ
-- Firestore Security Rules güncellendi (`firestore.rules` dosyası oluşturuldu)
-  - `recipes`: herkes okuyabilir, sadece admin yazabilir
-  - `admins`: giriş yapmış kullanıcı kendi kaydını okuyabilir
-- RecipeRepository'ye fallback eklendi: Firestore boşsa veya hata verirse yerel JSON tarifleri (`assets/data/recipes.json`) gösterilir
-- SHA-1 debug parmak izi Firebase Console'a eklendi
-- Google Play Services emülatör uyarıları (DEVELOPER_ERROR) normal; Firestore'u engellemiyor
+- **Siyah ekran / PERMISSION_DENIED:** Firestore rules + fallback ile çözüldü
+- **Boş tarif listesi:** Firestore boşsa yerel JSON fallback
+- **RangeError (IngredientList.removeAt):** Cascade operator bug düzeltildi
+- **info_icon.png bulunamadı:** Dosya silinmişti, kodda Material ikon kullanılıyor, flutter clean ile çözüldü
 
 ---
 
@@ -98,41 +91,23 @@
 ### Font: Manrope
 - Tüm UI bileşenlerinde Manrope kullanılıyor
 - Ağırlıklar: Light (300), Regular (400), Medium (500), Bold (700)
-- Her yeni UI bileşeninde fontFamily: 'Manrope' eklenmeli
 
 ### Renkler: Brand Orange Palette
-- Ana renk: brandOrange (#ED6826) - butonlar, aktif durumlar, vurgular
+- Ana renk: brandOrange (#ED6826)
 - Arka plan: Colors.white (kartlar, sheet'ler), AppColors.cream (sayfa arka planı)
-- Chip kenarlıkları: brandOrange
 - Metin: AppColors.ink (koyu), AppColors.inkLight (açık)
-- ESKİ yeşil tonları KULLANILMAMALI (sage, mint, fern, moss, forest artık yok)
+- ESKİ yeşil tonları KULLANILMAMALI
+
+### Inner Shadow Pattern
+- Arama çubukları ve dropdown'lar: LinearGradient ile içe doğru gölge efekti
+- Colors.black.withOpacity(0.05) üst, 0.02 alt, stops: [0.0, 0.15, 0.85, 1.0]
 
 ### Custom İkonlar
-- Material ikonları yerine PNG ikonlar tercih ediliyor
-- Yeni ikon eklendiğinde: assets/images/icons/ klasörüne koy, pubspec.yaml'da path ekli
+- assets/images/icons/ klasöründe PNG ikonlar
+- arrow_icon.png (dropdown ok), search_icon.png, alisveris_icon.png vb.
+- Material ikonları da kullanılıyor (Icons.tune, Icons.info_outline vb.)
 
-### Navbar Pattern
-- extendBody: true + alt padding ile içerik navbar arkasından scroll eder
-- İç sayfalar inTabs: true iken inner Scaffold bypass eder
-- Chat sayfası: input bar bottom padding 120 ile navbar üzerinde
-
----
-
-## Son Değişiklikler Özeti (Kronolojik)
-
-1. Navbar pill-shaped tasarımı + blur efekti
-2. Navbar boyut/ikon ayarlamaları
-3. İç sayfa navbar arka plan sorunu çözümü
-4. Chat input bar konumlandırma
-5. Chat mock data
-6. Navbar text: Manrope Bold 12
-7. Navbar custom PNG ikonlar
-8. Tarifler sayfası yeniden tasarımı (kartlar, arama)
-9. Renk paleti değişimi (yeşil → turuncu)
-10. yemek.png placeholder eklendi
-11. Tarif kartı: beyaz arka plan, padded yuvarlak resim, turuncu chip'ler
-12. Arama çubuğu: beyaz, inner shadow, search_icon.png
-13. Tüm fontlar Manrope
-14. Malzeme bazlı tarif filtreleme chip bar
-15. Tarif detay sheet yeniden tasarımı
-16. recipeListProvider keepAlive: true
+### Bottom Sheet Pattern
+- DraggableScrollableSheet kullanımı (initialChildSize: 0.75-0.85)
+- Üstte drag handle (40x4, stone renk)
+- Beyaz arka plan, üst köşeler 24px radius

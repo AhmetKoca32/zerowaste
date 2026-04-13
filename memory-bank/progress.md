@@ -15,43 +15,40 @@
 - Manrope font ailesi entegrasyonu
 
 ### Tarif Yönetimi
-- Recipe model (Freezed, Firestore helpers)
-- RecipeRepository (Firestore + local JSON fallback)
+- Recipe model (Freezed, Firestore helpers, description alanı)
+- RecipeRepository (Firestore + local JSON fallback — Firestore boş veya hata verirse yerel JSON)
 - recipeListProvider (keepAlive: true - sadece ilk açılışta fetch)
-- HomePage: arama + malzeme filtreleme + akıllı sıralama
-- RecipeBlogCard: beyaz kart, yuvarlak resim, turuncu chip'ler, eşleşme göstergesi
-- RecipeDetailSheet: beyaz bottom sheet, chip malzemeler, numaralı adımlar, Manrope
-- Varsayılan placeholder: yemek.png
-- Custom ikonlar: alisveris_icon.png, search_icon.png
+- Firestore Security Rules (firestore.rules dosyası): recipes herkes okur, admin yazar
+- 7 detaylı tarif (recipes.json): açıklamalar, miktarlı malzemeler, detaylı adımlar
+- SHA-1 debug parmak izi Firebase'e eklendi
 
-### Malzeme Bazlı Filtreleme Sistemi
-- Yatay kaydırılabilir malzeme chip bar
-- Multi-select (seçili: turuncu dolgu, seçili değil: turuncu outline)
-- "Tümü" chip'i ile seçim temizleme
-- Akıllı sıralama (en çok eşleşen tarif üstte)
-- Eşleşme göstergesi kartlarda ("X/Y malzeme elinizde")
-- Arama ve filtreleme birlikte çalışıyor
+### Tarifler Sayfası (HomePage)
+- Arama çubuğu: inner shadow efekti, search_icon.png, Manrope font
+- Filtre butonu: arama çubuğunun sağında, tune ikonu, seçili malzeme badge'i
+- Malzeme filtre bottom sheet (ingredient_filter_sheet.dart): arama + wrap layout + uygula/temizle
+- Seçili malzemeler: yatay chip bar (turuncu dolgulu) + "Temizle" chip'i (seçim yoksa gizli)
+- Akıllı sıralama (en çok eşleşen tarif üstte) + eşleşme göstergesi kartlarda
+- RecipeBlogCard: beyaz kart, yuvarlak resim, turuncu chip'ler, "N malzeme · N adım" özeti
+- Tarif detay sheet: özet istatistik barı, kenarlıklı kart malzeme/yapılış bölümleri, showPlaceholderImage parametresi
+
+### Oluştur Sayfası (RecipeGeneratorPage) - Yeniden Tasarlandı
+- Başlık: siyah Manrope Bold 20 + info ikonu ile gri açıklama (fontSize: 12)
+- Input: inner shadow pill-shape text field + turuncu daire "+" butonu
+- Eklenen malzemeler: turuncu dolgulu chip'ler (x ile sil)
+- Son eklenenler: SharedPreferences ile kalıcı (max 10), turuncu kenarlı beyaz chip'ler, dokunulunca ekle
+- RecentIngredients provider (@Riverpod keepAlive, SharedPreferences)
+- Mutfak dropdown: başlık dışarıda, pill-shape dropdown, inner shadow, arrow_icon.png, animasyonlu açılır liste
+- Kaydettiğim Tarifler: max 5 yatay + "Tümünü gör" kartı/yazısı
+- Tüm tarifler sheet (saved_recipes_sheet.dart): arama + dikey liste + silme/fotoğraf ekleme
+- Tarif detay: showPlaceholderImage: false (fotoğraf yoksa placeholder gösterilmez)
+- Yemek isimleri: siyah, regular weight
+- Tarif oluşturulduktan sonra: malzemeler recent'a kaydedilir, aktif liste temizlenir
 
 ### Navigation Bar
 - Pill-shaped frosted glass navbar (BackdropFilter blur)
 - Custom PNG ikonlar (tarifler, oluştur, chat, puan)
 - Aktif: turuncu pill + beyaz ikon + Manrope Bold 12
 - Pasif: beyaz daire + turuncu outline ikon
-- İkonlar dikey ortalanmış
-
-### Sayfa Uyumluluğu (Navbar ile)
-- Tüm sayfalar extendBody: true ile navbar arkasından scroll ediyor
-- RecipeGeneratorPage: inTabs iken inner Scaffold bypass, SafeArea kaldırılmış
-- ChatPage: input bar navbar üzerinde (bottom padding 120), mock data
-- PointsPage: SafeArea kaldırılmış, scroll padding ayarlı
-
-### Renk Paleti (Güncel)
-- Brand: brandOrange (#ED6826), brandCream (#FFFFCC), + opacity varyantları
-- Extended: 21 renk paleti
-- Earth tones: sand, stone, terracotta, clay, bark
-- Neutrals: cream, paper, ink, inkLight
-- ESKİ yeşiller (sage, mint, fern, moss, forest) kaldırıldı
-- 15+ dosyada renk referansları güncellendi
 
 ### AI Tarif Üretimi
 - DeepSeek API entegrasyonu
@@ -76,6 +73,7 @@
 - Firestore Database (tarifler)
 - Firebase Authentication (Email/Password - admin)
 - RecipeRepository Firestore entegrasyonu + fallback
+- Firestore Security Rules (firestore.rules)
 
 ### Admin Paneli (Web)
 - Flutter Web, desktop-friendly sidebar
@@ -83,19 +81,16 @@
 - Tarif CRUD (ekleme, düzenleme, silme)
 - Route guard (AdminGuard)
 
-### UI/UX Genel
-- App adı: "Sıfır Atık Mutfak"
-- Tüm fontlar Manrope
-- Custom PNG ikonlar
-- Loading states, error handling, empty states
-- Slide transitions
-
 ---
 
 ## Bilinen Sorunlar
 
 ### Çözüldü
-- **~~Siyah ekran sorunu:~~** Firestore Security Rules güncellendi, RecipeRepository'ye Firestore boşsa yerel JSON fallback eklendi. SHA-1 Firebase'e eklendi.
+- ~~Siyah ekran:~~ Firestore Security Rules + fallback
+- ~~Boş tarif listesi:~~ Firestore boşsa yerel JSON
+- ~~RangeError:~~ IngredientList.removeAt cascade bug
+- ~~info_icon.png:~~ Dosya silinmişti, flutter clean ile çözüldü
+- ~~DEVELOPER_ERROR:~~ Emülatörde normal, Firestore'u engellemez
 
 ### Küçük
 - Chat history: sadece in-memory, uygulama kapanınca kaybolur
@@ -127,6 +122,19 @@
 ---
 
 ## Versiyon Geçmişi
+
+### v0.3.0 (Mart 2025 - Güncel)
+- Firestore Security Rules + fallback sistemi
+- Oluştur sayfası tamamen yeniden tasarlandı (input, dropdown, son eklenenler, kayıtlı tarifler)
+- RecentIngredients provider (SharedPreferences, max 10)
+- Kaydettiğim Tarifler: max 5 + "Tümünü gör" bottom sheet
+- Tarif içerikleri genişletildi (7 tarif, detaylı malzeme/adım/açıklama)
+- Tarif detay sheet zenginleştirildi (istatistik barı, kart bölümler, ayraçlar)
+- RecipeBlogCard'a özet satırı eklendi
+- Malzeme filtre sistemi: filtre butonu + bottom sheet (eski chip bar kaldırıldı)
+- Inner shadow pattern (arama çubukları, dropdown)
+- arrow_icon.png eklendi
+- showPlaceholderImage parametresi (oluştur sayfası detaylarında placeholder gizleme)
 
 ### v0.2.0 (Mart 2025)
 - Renk paleti değişimi (yeşil → turuncu brand)

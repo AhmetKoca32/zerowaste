@@ -28,7 +28,7 @@
 - **cloud_firestore:** ^5.5.2 (tarif veritabanı)
 
 ### Data & Storage
-- **shared_preferences:** ^2.3.3
+- **shared_preferences:** ^2.3.3 (RecentIngredients, SavedRecipes)
 - **path_provider:** ^2.1.4
 
 ### UI & Content
@@ -59,7 +59,15 @@ zerowaste/
 │   │
 │   ├── features/
 │   │   ├── home/               # Tarif listesi + malzeme filtreleme
+│   │   │   └── presentation/widgets/
+│   │   │       ├── recipe_blog_card.dart
+│   │   │       ├── recipe_detail_sheet.dart
+│   │   │       └── ingredient_filter_sheet.dart  # YENİ
 │   │   ├── recipe_generator/   # AI tarif üretimi
+│   │   │   └── presentation/widgets/
+│   │   │       ├── chef_loading_overlay.dart
+│   │   │       ├── recipe_result_sheet.dart
+│   │   │       └── saved_recipes_sheet.dart      # YENİ
 │   │   ├── chat/               # Leafy sohbet (mock data)
 │   │   ├── points/             # Puan sistemi
 │   │   └── admin/              # Web admin paneli
@@ -69,7 +77,7 @@ zerowaste/
 │
 ├── assets/
 │   ├── data/
-│   │   └── recipes.json        # Statik tarif verisi (fallback)
+│   │   └── recipes.json        # 7 detaylı tarif (fallback)
 │   ├── fonts/
 │   │   ├── Manrope-Regular.ttf
 │   │   ├── Manrope-Medium.ttf
@@ -82,10 +90,12 @@ zerowaste/
 │       │   ├── puan_icon.png
 │       │   ├── oluştur_icon.png
 │       │   ├── alisveris_icon.png
-│       │   └── search_icon.png
+│       │   ├── search_icon.png
+│       │   └── arrow_icon.png      # YENİ
 │       └── image/
-│           └── yemek.png       # Tarif placeholder görseli
+│           └── yemek.png
 │
+├── firestore.rules                 # YENİ
 ├── memory-bank/
 └── docs/
 ```
@@ -97,28 +107,34 @@ zerowaste/
 ### Core
 | Dosya | Açıklama |
 |-------|----------|
-| `lib/core/theme/app_colors.dart` | Brand renkleri (brandOrange, brandCream), earth tones, neutrals. Eski yeşiller kaldırıldı |
-| `lib/core/theme/app_theme.dart` | ColorScheme.fromSeed(brandOrange), ElevatedButton/InputDecoration temaları |
-| `lib/core/shell/custom_bottom_nav.dart` | Pill-shaped frosted glass navbar, custom PNG ikonlar, Manrope Bold 12 |
-| `lib/core/shell/main_tab_shell.dart` | TabBarView, extendBody: true, AppBar title Manrope Bold |
-| `lib/core/constants/app_constants.dart` | appName: 'Sıfır Atık Mutfak' |
-| `lib/core/widgets/empty_placeholder.dart` | Manrope font eklendi |
+| `lib/core/theme/app_colors.dart` | Brand renkleri (brandOrange, brandCream), earth tones, neutrals |
+| `lib/core/theme/app_theme.dart` | ColorScheme.fromSeed(brandOrange) |
+| `lib/core/shell/custom_bottom_nav.dart` | Pill-shaped frosted glass navbar |
+| `lib/core/shell/main_tab_shell.dart` | TabBarView, extendBody: true |
 
 ### Home Feature
 | Dosya | Açıklama |
 |-------|----------|
-| `lib/features/home/presentation/pages/home_page.dart` | Arama + chip filter + akıllı sıralama + ListView |
-| `lib/features/home/presentation/widgets/recipe_blog_card.dart` | Beyaz kart, yuvarlak resim, turuncu chip'ler, eşleşme göstergesi |
-| `lib/features/home/presentation/widgets/recipe_detail_sheet.dart` | Beyaz bottom sheet, chip malzemeler, turuncu numaralı adımlar, Manrope |
-| `lib/features/home/presentation/providers/home_providers.dart` | recipeListProvider (keepAlive: true) |
-| `lib/features/home/data/models/recipe.dart` | Recipe model (Freezed, Firestore helpers) |
+| `home_page.dart` | Arama + filtre butonu + seçili chip'ler + tarif listesi |
+| `recipe_blog_card.dart` | Beyaz kart, "N malzeme · N adım" özeti, eşleşme göstergesi |
+| `recipe_detail_sheet.dart` | İstatistik barı, kenarlıklı kart bölümler, showPlaceholderImage |
+| `ingredient_filter_sheet.dart` | Malzeme filtre bottom sheet (arama + wrap + uygula/temizle) |
+| `home_providers.dart` | recipeListProvider (keepAlive: true) |
+| `recipe.dart` | Recipe model (Freezed, description alanı, Firestore helpers) |
+| `recipe_repository.dart` | Firestore + fallback (boşsa veya hata verirse yerel JSON) |
 
-### Diğer Sayfalar
-| Dosya | Önemli Notlar |
-|-------|---------------|
-| `recipe_generator_page.dart` | inTabs: true iken inner Scaffold bypass, SafeArea kaldırılmış |
-| `chat_page.dart` | Input bar navbar üzerinde (bottom padding 120), mock data |
-| `points_page.dart` | SafeArea kaldırılmış, scroll padding 120 |
+### Recipe Generator Feature
+| Dosya | Açıklama |
+|-------|----------|
+| `recipe_generator_page.dart` | Yeniden tasarlandı: input, dropdown, son eklenenler, kayıtlı tarifler |
+| `recipe_generator_providers.dart` | IngredientList, RecentIngredients, SelectedCuisine, SavedRecipes, GeneratedRecipe |
+| `saved_recipes_sheet.dart` | Tüm kayıtlı tarifler bottom sheet (arama + dikey liste) |
+| `cuisine_options.dart` | Mutfak seçenekleri listesi |
+
+### Diğer
+| Dosya | Açıklama |
+|-------|----------|
+| `firestore.rules` | Firestore Security Rules (recipes: okuma açık, yazma admin; admins: kendi kaydı) |
 
 ---
 
@@ -135,20 +151,29 @@ flutter build apk --release          # Android
 flutter build web --release           # Admin paneli
 flutter run -d chrome                 # Web geliştirme
 dart run build_runner build --delete-conflicting-outputs  # Code gen
+flutter clean                         # Build cache temizle
 ```
 
 ---
 
 ## Bilinen Teknik Notlar
 
-### Firestore PERMISSION_DENIED
-- Logda `Listen for Query... PERMISSION_DENIED` hatası görülebilir
-- Firestore Security Rules production için güncellenmeli
-- Emülatörde "Unknown calling package" Google Play Services hatası normal
+### Firestore
+- Security Rules: `firestore.rules` dosyası mevcut
+- Emülatörde DEVELOPER_ERROR / "Unknown calling package" normal, Firestore'u engellemiyor
+- Firestore boşsa veya bağlantı hata verirse otomatik yerel JSON fallback
 
 ### Code Generation
 - Provider değişikliklerinden sonra `build_runner` çalıştırılmalı
 - `@Riverpod(keepAlive: true)` için generated dosya yeniden oluşturulmalı
+
+### SharedPreferences
+- RecentIngredients: `recent_ingredients` key, max 10 malzeme
+- SavedRecipes: local storage ile tarif kaydetme
+
+### PowerShell Komutları
+- `%USERPROFILE%` yerine `$env:USERPROFILE` kullan (SHA-1 alma vb.)
+- `&&` yerine `;` veya ayrı komutlar kullan
 
 ### pubspec.yaml Asset Paths
 ```yaml

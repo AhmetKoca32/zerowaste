@@ -29,13 +29,19 @@ lib/
     ├── home/               # Tarif listesi + filtreleme
     │   ├── data/
     │   │   ├── models/     # Recipe (Freezed)
-    │   │   └── repositories/ # RecipeRepository (Firestore)
+    │   │   └── repositories/ # RecipeRepository (Firestore + fallback)
     │   └── presentation/
-    │       ├── pages/      # HomePage (arama + chip filter + liste)
+    │       ├── pages/      # HomePage (arama + filtre butonu + liste)
     │       ├── providers/  # recipeListProvider (keepAlive: true)
-    │       └── widgets/    # RecipeBlogCard, RecipeDetailSheet
+    │       └── widgets/    # RecipeBlogCard, RecipeDetailSheet, IngredientFilterSheet
     │
     ├── recipe_generator/   # AI tarif üretimi
+    │   ├── data/           # CuisineOptions, RecipeParser, SavedRecipe, SavedRecipesStorage
+    │   └── presentation/
+    │       ├── pages/      # RecipeGeneratorPage
+    │       ├── providers/  # IngredientList, RecentIngredients, GeneratedRecipe, SavedRecipes
+    │       └── widgets/    # ChefLoadingOverlay, RecipeResultSheet, SavedRecipesSheet
+    │
     ├── chat/               # Leafy AI sohbet
     ├── points/             # Puan sistemi
     └── admin/              # Web admin paneli
@@ -49,86 +55,118 @@ lib/
 
 #### Provider Tipleri
 1. **Provider:** Singleton servisler (NetworkService, DeepSeekService)
-2. **FutureProvider (keepAlive: true):** Tarif listesi (sadece ilk açılışta fetch)
-3. **StateProvider:** Basit state (tabIndexProvider, ingredientListProvider)
+2. **FutureProvider (keepAlive: true):** Tarif listesi, RecentIngredients
+3. **StateProvider:** Basit state (tabIndexProvider)
 4. **StreamProvider:** Real-time data (adminUserProvider)
 5. **StateNotifierProvider:** Kompleks state (chatMessagesProvider)
+6. **@riverpod class:** IngredientList, SelectedCuisine, GeneratedRecipes, SavedRecipes, GeneratedRecipe, RecentIngredients
 
-#### Önemli Provider Değişiklikleri
+#### Önemli Providerlar
 ```dart
 // recipeListProvider: keepAlive: true ile sadece ilk açılışta fetch
 @Riverpod(keepAlive: true)
-Future<List<Recipe>> recipeList(RecipeListRef ref) async {
-  final repo = ref.watch(recipeRepositoryProvider);
-  final fromRepo = await repo.getRecipes();
-  final generated = ref.watch(generatedRecipesProvider);
-  return [...generated, ...fromRepo];
+Future<List<Recipe>> recipeList(RecipeListRef ref) async { ... }
+
+// RecentIngredients: SharedPreferences ile kalıcı, max 10 malzeme
+@Riverpod(keepAlive: true)
+class RecentIngredients extends _$RecentIngredients {
+  Future<List<String>> build() async { ... } // SharedPreferences'dan oku
+  Future<void> addAll(List<String> ingredients) async { ... } // Kaydet
 }
+
+// IngredientList: removeAt bug fix
+void removeAt(int index) => state = [...state]..removeAt(index); // Kopyala sonra sil
 ```
 
 ---
 
-## UI Pattern
+## UI Patterns
+
+### Inner Shadow Pattern
+Arama çubukları ve dropdown'larda kullanılıyor:
+```dart
+Container(
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(50), // veya 28
+    border: Border.all(color: const Color(0xFFE8E8E8), width: 0.5),
+  ),
+  child: Container(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(50),
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Colors.black.withOpacity(0.05), Colors.transparent,
+          Colors.transparent, Colors.black.withOpacity(0.02),
+        ],
+        stops: const [0.0, 0.15, 0.85, 1.0],
+      ),
+    ),
+    child: ClipRRect(..., child: TextField(...)),
+  ),
+)
+```
+
+### Bottom Sheet Pattern
+Tüm sheet'lerde kullanılan ortak yapı:
+```dart
+showModalBottomSheet(
+  isScrollControlled: true,
+  backgroundColor: Colors.transparent,
+  builder: (context) => DraggableScrollableSheet(
+    initialChildSize: 0.75-0.85,
+    builder: (context, scrollController) => Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(children: [
+        // Drag handle (40x4, stone renk)
+        // Başlık
+        // İçerik (Expanded + ListView)
+        // Alt butonlar (varsa)
+      ]),
+    ),
+  ),
+);
+```
 
 ### Navigation Pattern
 - **CustomBottomNav:** Pill-shaped frosted glass navbar
-  - BackdropFilter ile blur efekti
-  - Custom PNG ikonlar (assetPath parametresi)
-  - Aktif: turuncu pill + beyaz ikon + Manrope Bold 12 text
-  - Pasif: beyaz daire + turuncu outline ikon
 - **MainTabShell:** TabBarView, extendBody: true
-  - İç sayfalar (RecipeGeneratorPage, ChatPage, PointsPage) inTabs: true iken inner Scaffold bypass eder
-  - SafeArea kaldırılmış, alt padding 100-120px eklenerek içerik navbar arkasından scroll eder
+  - İç sayfalar inTabs: true iken inner Scaffold bypass
 
 ### Tarifler Sayfası Pattern (HomePage)
 ```dart
-// State
-String _searchQuery = '';
-Set<String> _selectedIngredients = {};
-
-// Tüm tariflerden benzersiz malzemeler
-final allIngredients = recipes.expand((r) => r.ingredients).toSet().toList()..sort();
-
-// Arama filtresi
-var filtered = _searchQuery.isEmpty ? recipes.toList() : recipes.where(...).toList();
-
-// Malzeme bazlı akıllı sıralama
-if (_selectedIngredients.isNotEmpty) {
-  filtered.sort((a, b) => _matchCount(b).compareTo(_matchCount(a)));
-}
-
-// ListView: index 0 = search bar + chip bar, index > 0 = tarif kartları
+// Arama çubuğu + filtre butonu (Row)
+// Seçili malzeme chip'leri (seçim varsa gösterilir, yoksa gizli)
+// Tarif listesi (ListView.builder)
+// Filtre: showIngredientFilterSheet() → Set<String> döner
 ```
 
-### Tarif Kartı Pattern (RecipeBlogCard)
-- Beyaz Card, turuncu kenarlı malzeme chip'leri
-- Opsiyonel matchCount/totalSelected parametreleri
-- Eşleşme göstergesi: "X/Y malzeme elinizde" (filtre aktifken)
-- Resim: 16px padding, 16px border radius, 220px yükseklik
-- Placeholder: yemek.png (assets/images/image/)
+### Oluştur Sayfası Pattern (RecipeGeneratorPage)
+```dart
+// Başlık + açıklama (info ikonu ile)
+// Input (inner shadow) + "+" butonu
+// Turuncu dolgulu aktif malzeme chip'leri
+// Son eklenenler (RecentIngredients, turuncu kenarlı chip'ler)
+// Mutfak dropdown (pill-shape, inner shadow, arrow_icon.png, animasyonlu açılır liste)
+// Tarif Oluştur butonu
+// Kaydettiğim Tarifler (max 5 + "Tümünü gör")
+```
 
 ### Tarif Detay Pattern (RecipeDetailSheet)
-- DraggableScrollableSheet (initialChildSize: 0.85)
-- Beyaz arka plan, yumuşak gölge
-- Malzemeler chip formatında (turuncu kenarlı)
-- Yapılış adımları numaralı (turuncu daire)
-- Tüm fontlar Manrope
-- Placeholder: yemek.png
-
-### Tema ve Renk Pattern
 ```dart
-// AppColors - Brand renkleri (yeşiller kaldırıldı)
-static const Color brandOrange = Color(0xFFED6826);
-static const Color brandCream = Color(0xFFFFFFCC);
-static const Color brandBlack = Color(0xFF000000);
-static const Color brandWhite = Color(0xFFFFFFFF);
-
-// AppTheme
-ColorScheme.fromSeed(
-  seedColor: AppColors.brandOrange,
-  primary: AppColors.brandOrange,
-  tertiary: AppColors.brandCream,
-)
+// DraggableScrollableSheet (0.85)
+// Başlık + silme/kapat butonları
+// Kaydet/Kapat butonları (showSavePrompt ise)
+// Resim (showPlaceholderImage parametresi kontrol eder)
+// Özet istatistik barı (malzeme + adım sayısı)
+// Açıklama (description varsa)
+// Malzemeler kartı (kenarlıklı, turuncu nokta ile madde listesi)
+// Yapılış kartı (kenarlıklı, numaralı adımlar, ayraç çizgiler)
 ```
 
 ---
@@ -142,31 +180,47 @@ ColorScheme.fromSeed(
 - `oluştur_icon.png` - Navbar oluştur ikonu
 - `alisveris_icon.png` - Malzemeler başlığı ikonu
 - `search_icon.png` - Arama çubuğu ikonu
+- `arrow_icon.png` - Dropdown ok ikonu
 
 ### Placeholder Görseller (assets/images/image/)
 - `yemek.png` - Tarif kartları ve detay sayfası varsayılan görseli
 
 ### Font (assets/fonts/)
-- Manrope-Regular.ttf
-- Manrope-Medium.ttf
-- Manrope-Bold.ttf
-- Manrope-Light.ttf
+- Manrope-Regular.ttf, Manrope-Medium.ttf, Manrope-Bold.ttf, Manrope-Light.ttf
 
 ---
 
-## Data Flow Pattern
+## Data Flow Patterns
 
-### Tarif Listesi + Filtreleme Akışı
+### Tarif Listesi + Filtreleme
 ```
-App Açılış → recipeListProvider (keepAlive) → RecipeRepository → Firestore → List<Recipe>
+App Açılış → recipeListProvider (keepAlive) → RecipeRepository → Firestore (boşsa → yerel JSON)
   ↓
-HomePage: allIngredients çıkar → chip bar render
+HomePage: allIngredients çıkar
   ↓
-Kullanıcı chip seçer → _selectedIngredients güncelle → filtered.sort(matchCount) → UI güncelle
+Kullanıcı filtre butonuna dokunur → IngredientFilterSheet açılır → malzeme seçer → "Uygula"
+  ↓
+_selectedIngredients güncellenir → filtered.sort(matchCount) → UI güncellenir
   ↓
 RecipeBlogCard: matchCount/totalSelected ile eşleşme göstergesi
 ```
 
-### Sayfa Geçişlerinde Cache
-- recipeListProvider keepAlive: true → sayfa geçişlerinde re-fetch yok
-- ref.invalidate(recipeListProvider) ile manuel yenileme mümkün (hata durumunda "Tekrar Dene")
+### Tarif Oluşturma + Son Eklenenler
+```
+Kullanıcı malzeme ekler (IngredientList) → "Tarif Oluştur" → DeepSeek API
+  ↓
+generate() içinde: recentIngredientsProvider.addAll(ingredients) → SharedPreferences'a kaydet
+  ↓
+Tarif başarılı → ingredientList.clear() → detay sheet açılır
+  ↓
+Sayfa geri döndüğünde: "Son eklenenler" güncel (aktif listede olmayan recent malzemeler)
+```
+
+### Kaydettiğim Tarifler
+```
+Tarif detayda "Kaydet" → savedRecipesProvider.addRecipe() → SharedPreferences
+  ↓
+RecipeGeneratorPage: _SavedRecipesSection (max 5 yatay + "Tümünü gör")
+  ↓
+"Tümünü gör" → SavedRecipesSheet (arama + dikey liste + detay/silme/fotoğraf)
+```
