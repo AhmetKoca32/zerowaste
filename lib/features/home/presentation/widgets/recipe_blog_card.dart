@@ -118,9 +118,7 @@ class RecipeBlogCard extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: AppColors.brandOrange,
-                          ),
+                        border: Border.all(color: AppColors.brandOrange),
                       ),
                       child: Text(
                         e,
@@ -180,7 +178,7 @@ class RecipeBlogCard extends StatelessWidget {
         height: 220,
         width: double.infinity,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _buildPlaceholder(),
+        errorBuilder: (_, _, _) => _buildPlaceholder(),
       );
     }
     return _buildPlaceholder();

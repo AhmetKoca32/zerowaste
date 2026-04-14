@@ -1,6 +1,6 @@
 # Progress: Sıfır Atık Mutfak
 
-**Son Güncelleme:** Mart 2025
+**Son Güncelleme:** Nisan 2026
 
 ---
 
@@ -57,11 +57,12 @@
 - ChefLoadingOverlay
 - Saved recipes (local storage) + fotoğraf ekleme
 
-### AI Sohbet (Leafy)
-- ChatPage (sohbet arayüzü)
-- ChatBubble, LeafyTypingIndicator
-- DeepSeek mascot chat
-- Mock data ile test edilmiş
+### AI Sohbet (EcoChef)
+- ChatPage (Liquid glass tam ekran tasarımı, Stack mimarisi, sınırsız navbar scrollu)
+- Kapsül UI tasarımlı mesaj barı (içgömülü buton, ekstra yumuşak kenarlar, odak çizgisi iptali)
+- Dynamic Scroll Padding uyarlaması ile sayfa altı floating bar çakışmaları sıfırlandı
+- ChatBubble, EcoChefTypingIndicator, EcoChefWelcome arayüzü güncellendi
+- DeepSeek mascot chat entegrasyonu ve testi
 
 ### Puan Sistemi
 - PointsPage UI tasarımı
@@ -102,6 +103,8 @@
 ## Yapılacaklar
 
 ### Kısa Vadeli
+- Chat arayüzü için Fade-in ve Slide-up animasyonlu mesaj girişleri
+- Sohbet balonları için şık/minimal zaman damgaları (timestamps)
 - Pagination (Firestore reads optimizasyonu)
 - Cache mekanizması
 - Cloud Storage entegrasyonu (fotoğraf upload)

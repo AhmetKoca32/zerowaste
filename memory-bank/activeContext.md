@@ -1,15 +1,20 @@
 # Active Context: Sıfır Atık Mutfak
 
-**Son Güncelleme:** Mart 2025  
-**Aktif Çalışma:** Oluştur sayfası yeniden tasarımı, tarif detay zenginleştirme, malzeme filtre sistemi
+**Son Güncelleme:** Nisan 2026  
+**Aktif Çalışma:** EcoChef Chat arayüzü modernizasyonu, tam ekran liquid glass efekti optimizasyonları, kapsül chat input'u
 
 ---
 
 ## Şu Anki Odak
 
-### Son Yapılan Değişiklikler (Mart 2025 - Güncel Oturum)
+### Son Yapılan Değişiklikler (Nisan 2026 - Güncel Oturum)
 
-#### 1. Firestore Security Rules & Fallback - ÇÖZÜLDÜ
+#### 1. EcoChef (Chat) ve Navigasyon Modernizasyonu
+- **Liquid Glass Mimarisi:** `ChatPage`, `PointsPage` ve `RecipeGeneratorPage` sayfaları hantal listelemelerden çıkartılıp tam ekran `Stack` yapısına dönüştürüldü. İçerikler (ListView ve ScrollView'lar) `SafeArea(bottom: false)` ile mutlak ekran dibine çekildi, bu sayede alttaki yarı saydam `CustomBottomNav`'ın puslu (blur) filtresinden kesintisiz geçiyorlar.
+- **Kapsül (İçgömülü) Input Bar:** ChatPage metin girdi alanı köşeleri (BorderRadius: 32) ile ekstra yumuşatıldı. Standart olan harici turuncu IconButton iptal edilip doğrudan Input içerisine (`suffixIcon` olarak) optimize ebatta yerleştirildi. Odaklanıldığında beliren rahatsız edici default border-focus çizgisi sıfırlandı.
+- **Scroll (Kaydırma) Optimizasyonu:** `EcoChefWelcome`, `PointsPage` ve `RecipeGeneratorPage` içerisindeki liste altlarına ekstra `+160-170px` bottom padding eklenerek en alttaki bileşenlerin menülerin arkasında tutsak kalması engellendi.
+
+#### 2. Firestore Security Rules & Fallback - ÇÖZÜLDÜ
 - `firestore.rules` dosyası oluşturuldu (recipes: herkes okur, admin yazar; admins: kendi kaydını okur)
 - RecipeRepository: Firestore boşsa veya hata verirse yerel JSON fallback
 - SHA-1 debug parmak izi Firebase Console'a eklendi
@@ -73,6 +78,8 @@
 ## Yapılacaklar
 
 ### Kısa Vadeli
+- Chat arayüzü için akıcı Fade-in ve Slide-up mesaj gelme animasyonları
+- Sohbet balonlarına profesyonel görünüm katacak, silik tonda zaman damgaları (timestamps)
 - Pagination (tarif listesi büyüdükçe)
 - Cache mekanizması
 - Kullanıcı authentication (mobil uygulama)

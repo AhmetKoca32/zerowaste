@@ -19,9 +19,8 @@ void showSavedRecipesSheet(BuildContext context) {
       initialChildSize: 0.85,
       minChildSize: 0.4,
       maxChildSize: 0.95,
-      builder: (context, scrollController) => _SavedRecipesSheetContent(
-        scrollController: scrollController,
-      ),
+      builder: (context, scrollController) =>
+          _SavedRecipesSheetContent(scrollController: scrollController),
     ),
   );
 }
@@ -53,10 +52,9 @@ class _SavedRecipesSheetContentState
           sr.recipe.id,
           bytes,
         );
-        await ref.read(savedRecipesProvider.notifier).updateImagePath(
-              sr.recipe.id,
-              path,
-            );
+        await ref
+            .read(savedRecipesProvider.notifier)
+            .updateImagePath(sr.recipe.id, path);
         return path;
       },
       onDelete: () async {
@@ -110,10 +108,7 @@ class _SavedRecipesSheetContentState
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(50),
-                border: Border.all(
-                  color: const Color(0xFFE8E8E8),
-                  width: 0.5,
-                ),
+                border: Border.all(color: const Color(0xFFE8E8E8), width: 0.5),
               ),
               child: Container(
                 decoration: BoxDecoration(
@@ -174,10 +169,12 @@ class _SavedRecipesSheetContentState
                 final filtered = _searchQuery.isEmpty
                     ? list
                     : list
-                        .where((sr) => sr.recipe.title
-                            .toLowerCase()
-                            .contains(_searchQuery.toLowerCase()))
-                        .toList();
+                          .where(
+                            (sr) => sr.recipe.title.toLowerCase().contains(
+                              _searchQuery.toLowerCase(),
+                            ),
+                          )
+                          .toList();
 
                 if (filtered.isEmpty) {
                   return Center(
@@ -197,7 +194,7 @@ class _SavedRecipesSheetContentState
                   controller: widget.scrollController,
                   padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
                   itemCount: filtered.length,
-                  separatorBuilder: (_, __) => Divider(
+                  separatorBuilder: (_, _) => Divider(
                     height: 1,
                     color: AppColors.stone.withOpacity(0.3),
                   ),
@@ -211,10 +208,13 @@ class _SavedRecipesSheetContentState
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const Center(
+              error: (_, _) => const Center(
                 child: Text(
                   'Tarifler yüklenirken hata oluştu.',
-                  style: TextStyle(fontFamily: 'Manrope', color: AppColors.inkLight),
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    color: AppColors.inkLight,
+                  ),
                 ),
               ),
             ),
@@ -226,10 +226,7 @@ class _SavedRecipesSheetContentState
 }
 
 class _SavedRecipeRow extends StatelessWidget {
-  const _SavedRecipeRow({
-    required this.savedRecipe,
-    required this.onTap,
-  });
+  const _SavedRecipeRow({required this.savedRecipe, required this.onTap});
 
   final SavedRecipe savedRecipe;
   final VoidCallback onTap;
@@ -254,7 +251,7 @@ class _SavedRecipeRow extends StatelessWidget {
                   width: 52,
                   height: 52,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _placeholder(),
+                  errorBuilder: (_, _, _) => _placeholder(),
                 ),
               )
             else

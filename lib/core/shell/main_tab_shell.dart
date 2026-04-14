@@ -9,10 +9,10 @@ import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/points/presentation/pages/points_page.dart';
 import '../../features/recipe_generator/presentation/pages/recipe_generator_page.dart';
 
-/// Current tab index (0 = Recipes, 1 = Generate, 2 = Leafy, 3 = Puan).
+/// Current tab index (0 = Recipes, 1 = Generate, 2 = EcoChef, 3 = Puan).
 final tabIndexProvider = StateProvider<int>((ref) => 0);
 
-/// Single scaffold with AppBar tabs (Recipes | Generate | Leafy).
+/// Single scaffold with AppBar tabs (Recipes | Generate | EcoChef).
 class MainTabShell extends ConsumerStatefulWidget {
   const MainTabShell({super.key, this.initialIndex = 0});
 
@@ -67,16 +67,18 @@ class _MainTabShellState extends ConsumerState<MainTabShell>
 
     return Scaffold(
       extendBody: true,
-      appBar: AppBar(
-        title: Text(
-          AppConstants.appName,
-          style: const TextStyle(
-            fontFamily: 'Manrope',
-            color: AppColors.ink,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
+      appBar: currentIndex == 0
+          ? AppBar(
+              title: Text(
+                AppConstants.appName,
+                style: const TextStyle(
+                  fontFamily: 'Manrope',
+                  color: AppColors.ink,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            )
+          : null,
       body: TabBarView(
         controller: _tabController,
         children: [
@@ -95,7 +97,7 @@ class _MainTabShellState extends ConsumerState<MainTabShell>
         items: const [
           CustomNavItem(assetPath: 'assets/images/icons/tarifler_icon.png', label: 'Tarifler'),
           CustomNavItem(assetPath: 'assets/images/icons/oluştur_icon.png', label: 'Oluştur'),
-          CustomNavItem(assetPath: 'assets/images/icons/chat_icon.png', label: 'Leafy'),
+          CustomNavItem(assetPath: 'assets/images/icons/chat_icon.png', label: 'EcoChef'),
           CustomNavItem(assetPath: 'assets/images/icons/puan_icon.png', label: 'Puan'),
         ],
       ),

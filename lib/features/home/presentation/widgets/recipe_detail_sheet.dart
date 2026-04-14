@@ -86,8 +86,11 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
 
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
-    final file =
-        await picker.pickImage(source: source, maxWidth: 1200, imageQuality: 85);
+    final file = await picker.pickImage(
+      source: source,
+      maxWidth: 1200,
+      imageQuality: 85,
+    );
     if (file == null || !mounted || widget.onImagePicked == null) return;
     final path = await widget.onImagePicked!(file);
     if (path != null && mounted) setState(() => _localImagePath = path);
@@ -112,7 +115,10 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text(
               'İptal',
-              style: TextStyle(fontFamily: 'Manrope', color: AppColors.inkLight),
+              style: TextStyle(
+                fontFamily: 'Manrope',
+                color: AppColors.inkLight,
+              ),
             ),
           ),
           FilledButton(
@@ -125,7 +131,10 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
             ),
             child: const Text(
               'Sil',
-              style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontFamily: 'Manrope',
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -148,7 +157,10 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_library, color: AppColors.brandOrange),
+              leading: const Icon(
+                Icons.photo_library,
+                color: AppColors.brandOrange,
+              ),
               title: const Text(
                 'Galeriden seç',
                 style: TextStyle(fontFamily: 'Manrope'),
@@ -159,7 +171,10 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.camera_alt, color: AppColors.brandOrange),
+              leading: const Icon(
+                Icons.camera_alt,
+                color: AppColors.brandOrange,
+              ),
               title: const Text(
                 'Fotoğraf çek',
                 style: TextStyle(fontFamily: 'Manrope'),
@@ -204,7 +219,11 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                     borderRadius: BorderRadius.circular(24),
                     child: const Padding(
                       padding: EdgeInsets.all(10),
-                      child: Icon(Icons.add_a_photo, color: Colors.white, size: 20),
+                      child: Icon(
+                        Icons.add_a_photo,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ),
                   ),
                 ),
@@ -225,7 +244,7 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
           height: 220,
           width: double.infinity,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _buildImageWithAddOption(),
+          errorBuilder: (_, _, _) => _buildImageWithAddOption(),
         ),
       );
     }
@@ -256,7 +275,10 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                   borderRadius: BorderRadius.circular(16),
                   child: Center(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withOpacity(0.5),
                         borderRadius: BorderRadius.circular(24),
@@ -264,7 +286,11 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.add_a_photo, color: Colors.white, size: 20),
+                          Icon(
+                            Icons.add_a_photo,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                           SizedBox(width: 8),
                           Text(
                             'Fotoğraf ekle',
@@ -387,14 +413,19 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                       onPressed: () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.inkLight,
-                        side: BorderSide(color: AppColors.stone.withOpacity(0.5)),
+                        side: BorderSide(
+                          color: AppColors.stone.withOpacity(0.5),
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                       child: const Text(
                         'Kapat',
-                        style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontFamily: 'Manrope',
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
@@ -415,7 +446,10 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                       ),
                       child: const Text(
                         'Kaydet',
-                        style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                          fontFamily: 'Manrope',
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
@@ -519,7 +553,9 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                       ...recipe.ingredients.asMap().entries.map((e) {
                         return Padding(
                           padding: EdgeInsets.only(
-                            bottom: e.key < recipe.ingredients.length - 1 ? 10 : 0,
+                            bottom: e.key < recipe.ingredients.length - 1
+                                ? 10
+                                : 0,
                           ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -568,7 +604,11 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.menu_book_outlined, size: 18, color: AppColors.brandOrange),
+                          const Icon(
+                            Icons.menu_book_outlined,
+                            size: 18,
+                            color: AppColors.brandOrange,
+                          ),
                           const SizedBox(width: 8),
                           const Text(
                             'Yapılış',
@@ -619,19 +659,24 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Container(
-                                  margin: EdgeInsets.only(bottom: isLast ? 0 : 12),
+                                  margin: EdgeInsets.only(
+                                    bottom: isLast ? 0 : 12,
+                                  ),
                                   padding: const EdgeInsets.only(top: 4),
                                   decoration: BoxDecoration(
                                     border: isLast
                                         ? null
                                         : Border(
                                             bottom: BorderSide(
-                                              color: AppColors.stone.withOpacity(0.2),
+                                              color: AppColors.stone
+                                                  .withOpacity(0.2),
                                             ),
                                           ),
                                   ),
                                   child: Padding(
-                                    padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
+                                    padding: EdgeInsets.only(
+                                      bottom: isLast ? 0 : 12,
+                                    ),
                                     child: Text(
                                       e.value,
                                       style: const TextStyle(

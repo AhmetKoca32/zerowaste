@@ -40,13 +40,19 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
     super.dispose();
   }
 
-  Widget _buildRecentIngredients(WidgetRef ref, List<String> currentIngredients) {
+  Widget _buildRecentIngredients(
+    WidgetRef ref,
+    List<String> currentIngredients,
+  ) {
     final recentAsync = ref.watch(recentIngredientsProvider);
     return recentAsync.when(
       data: (recentList) {
         final filtered = recentList
-            .where((r) => !currentIngredients
-                .any((c) => c.toLowerCase() == r.toLowerCase()))
+            .where(
+              (r) => !currentIngredients.any(
+                (c) => c.toLowerCase() == r.toLowerCase(),
+              ),
+            )
             .toList();
         if (filtered.isEmpty) return const SizedBox.shrink();
         return Padding(
@@ -96,7 +102,7 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
         );
       },
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
     );
   }
 
@@ -117,7 +123,8 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
       next.whenOrNull(
         data: (value) {
           if (value != null && value.isNotEmpty && context.mounted) {
-            final isError = value.contains('Lütfen') ||
+            final isError =
+                value.contains('Lütfen') ||
                 value.contains('Invalid') ||
                 value.contains('timed out') ||
                 value.contains('API') ||
@@ -159,194 +166,192 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
     final isLoading = generatedAsync.isLoading;
 
     final scrollBody = SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(20, 20, 20, widget.inTabs ? 120 : 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- Başlık ---
-            Text(
-              'Elinizdeki malzemeleri ekleyin',
-              style: TextStyle(
-                fontFamily: 'Manrope',
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: AppColors.ink,
-              ),
+      padding: EdgeInsets.fromLTRB(20, 20, 20, widget.inTabs ? 170 : 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // --- Başlık ---
+          Text(
+            'Elinizdeki malzemeleri ekleyin',
+            style: TextStyle(
+              fontFamily: 'Manrope',
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: AppColors.ink,
             ),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  size: 15,
-                  color: AppColors.inkLight,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    'En az bir malzeme ekleyin, ardından Tarif Oluştur\'a dokunun.',
-                    style: TextStyle(
-                      fontFamily: 'Manrope',
-                      fontSize: 12,
-                      color: AppColors.inkLight,
-                    ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Icon(Icons.info_outline, size: 15, color: AppColors.inkLight),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'En az bir malzeme ekleyin, ardından Tarif Oluştur\'a dokunun.',
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 12,
+                    color: AppColors.inkLight,
                   ),
                 ),
-              ],
-            ),
-
-            // --- Input + "+" butonu ---
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(28),
-                      border: Border.all(
-                        color: const Color(0xFFE8E8E8),
-                        width: 0.5,
-                      ),
-                    ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(28),
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.black.withOpacity(0.05),
-                            Colors.transparent,
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.02),
-                          ],
-                          stops: const [0.0, 0.15, 0.85, 1.0],
-                        ),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(28),
-                        child: TextField(
-                          controller: _controller,
-                          focusNode: _focusNode,
-                          style: const TextStyle(fontFamily: 'Manrope', fontSize: 15),
-                          decoration: InputDecoration(
-                            hintText: 'örn. domates, fesleğen',
-                            hintStyle: TextStyle(
-                              fontFamily: 'Manrope',
-                              color: AppColors.inkLight.withOpacity(0.5),
-                            ),
-                            filled: true,
-                            fillColor: Colors.transparent,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 16,
-                            ),
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                          ),
-                          textInputAction: TextInputAction.done,
-                          onSubmitted: (_) => _addIngredient(),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                GestureDetector(
-                  onTap: _addIngredient,
-                  child: Container(
-                    width: 52,
-                    height: 52,
-                    decoration: const BoxDecoration(
-                      color: AppColors.brandOrange,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.add,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            // --- Eklenen malzemeler ---
-            if (ingredients.isNotEmpty) ...[
-              const SizedBox(height: 20),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: ingredients.asMap().entries.map((e) {
-                  return Chip(
-                    label: Text(
-                      e.value,
-                      style: const TextStyle(
-                        fontFamily: 'Manrope',
-                        fontSize: 13,
-                        color: Colors.white,
-                      ),
-                    ),
-                    deleteIcon: const Icon(Icons.close, size: 16, color: Colors.white70),
-                    onDeleted: () => ref
-                        .read(ingredientListProvider.notifier)
-                        .removeAt(e.key),
-                    backgroundColor: AppColors.brandOrange,
-                    side: BorderSide.none,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  );
-                }).toList(),
               ),
             ],
+          ),
 
-            // --- Son eklenenler (geçmiş malzemeler) ---
-            _buildRecentIngredients(ref, ingredients),
-
-            // --- Mutfak (isteğe bağlı) ---
-            const SizedBox(height: 28),
-            Text(
-              'Mutfak (isteğe bağlı)',
-              style: TextStyle(
-                fontFamily: 'Manrope',
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.ink,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: _cuisineExpanded
-                      ? AppColors.brandOrange
-                      : const Color(0xFFE8E8E8),
-                  width: _cuisineExpanded ? 1.5 : 0.5,
-                ),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(28),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withOpacity(0.05),
-                      Colors.transparent,
-                      Colors.transparent,
-                      Colors.black.withOpacity(0.02),
-                    ],
-                    stops: const [0.0, 0.15, 0.85, 1.0],
+          // --- Input + "+" butonu ---
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(
+                      color: const Color(0xFFE8E8E8),
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(28),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withOpacity(0.05),
+                          Colors.transparent,
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.02),
+                        ],
+                        stops: const [0.0, 0.15, 0.85, 1.0],
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(28),
+                      child: TextField(
+                        controller: _controller,
+                        focusNode: _focusNode,
+                        style: const TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 15,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'örn. domates, fesleğen',
+                          hintStyle: TextStyle(
+                            fontFamily: 'Manrope',
+                            color: AppColors.inkLight.withOpacity(0.5),
+                          ),
+                          filled: true,
+                          fillColor: Colors.transparent,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 16,
+                          ),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                        ),
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _addIngredient(),
+                      ),
+                    ),
                   ),
                 ),
-                child: Column(
+              ),
+              const SizedBox(width: 12),
+              GestureDetector(
+                onTap: _addIngredient,
+                child: Container(
+                  width: 52,
+                  height: 52,
+                  decoration: const BoxDecoration(
+                    color: AppColors.brandOrange,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.add, color: Colors.white, size: 28),
+                ),
+              ),
+            ],
+          ),
+
+          // --- Eklenen malzemeler ---
+          if (ingredients.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: ingredients.asMap().entries.map((e) {
+                return Chip(
+                  label: Text(
+                    e.value,
+                    style: const TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 13,
+                      color: Colors.white,
+                    ),
+                  ),
+                  deleteIcon: const Icon(
+                    Icons.close,
+                    size: 16,
+                    color: Colors.white70,
+                  ),
+                  onDeleted: () =>
+                      ref.read(ingredientListProvider.notifier).removeAt(e.key),
+                  backgroundColor: AppColors.brandOrange,
+                  side: BorderSide.none,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                );
+              }).toList(),
+            ),
+          ],
+
+          // --- Son eklenenler (geçmiş malzemeler) ---
+          _buildRecentIngredients(ref, ingredients),
+
+          // --- Mutfak (isteğe bağlı) ---
+          const SizedBox(height: 28),
+          Text(
+            'Mutfak (isteğe bağlı)',
+            style: TextStyle(
+              fontFamily: 'Manrope',
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.ink,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: _cuisineExpanded
+                    ? AppColors.brandOrange
+                    : const Color(0xFFE8E8E8),
+                width: _cuisineExpanded ? 1.5 : 0.5,
+              ),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.05),
+                    Colors.transparent,
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.02),
+                  ],
+                  stops: const [0.0, 0.15, 0.85, 1.0],
+                ),
+              ),
+              child: Column(
                 children: [
                   // Dropdown satırı
                   InkWell(
@@ -390,67 +395,66 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
                   AnimatedCrossFade(
                     firstChild: const SizedBox(width: double.infinity),
                     secondChild: Column(
-                      children: List.generate(
-                        CuisineOptions.all.length,
-                        (index) {
-                          final cuisine = CuisineOptions.all[index];
-                          final isNone = cuisine == CuisineOptions.none;
-                          final isSelected = isNone
-                              ? (selectedCuisine == null)
-                              : (selectedCuisine == cuisine);
+                      children: List.generate(CuisineOptions.all.length, (
+                        index,
+                      ) {
+                        final cuisine = CuisineOptions.all[index];
+                        final isNone = cuisine == CuisineOptions.none;
+                        final isSelected = isNone
+                            ? (selectedCuisine == null)
+                            : (selectedCuisine == cuisine);
 
-                          return Column(
-                            children: [
-                              Divider(
-                                height: 1,
-                                thickness: 0.5,
-                                color: AppColors.stone.withOpacity(0.3),
-                                indent: 16,
-                                endIndent: 16,
-                              ),
-                              InkWell(
-                                onTap: () {
-                                  ref
-                                      .read(selectedCuisineProvider.notifier)
-                                      .set(isNone ? null : cuisine);
-                                  setState(() => _cuisineExpanded = false);
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 14,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          cuisine,
-                                          style: TextStyle(
-                                            fontFamily: 'Manrope',
-                                            fontSize: 15,
-                                            fontWeight: isSelected
-                                                ? FontWeight.w600
-                                                : FontWeight.w400,
-                                            color: isSelected
-                                                ? AppColors.brandOrange
-                                                : AppColors.ink,
-                                          ),
+                        return Column(
+                          children: [
+                            Divider(
+                              height: 1,
+                              thickness: 0.5,
+                              color: AppColors.stone.withOpacity(0.3),
+                              indent: 16,
+                              endIndent: 16,
+                            ),
+                            InkWell(
+                              onTap: () {
+                                ref
+                                    .read(selectedCuisineProvider.notifier)
+                                    .set(isNone ? null : cuisine);
+                                setState(() => _cuisineExpanded = false);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        cuisine,
+                                        style: TextStyle(
+                                          fontFamily: 'Manrope',
+                                          fontSize: 15,
+                                          fontWeight: isSelected
+                                              ? FontWeight.w600
+                                              : FontWeight.w400,
+                                          color: isSelected
+                                              ? AppColors.brandOrange
+                                              : AppColors.ink,
                                         ),
                                       ),
-                                      if (isSelected)
-                                        const Icon(
-                                          Icons.check_circle,
-                                          color: AppColors.brandOrange,
-                                          size: 20,
-                                        ),
-                                    ],
-                                  ),
+                                    ),
+                                    if (isSelected)
+                                      const Icon(
+                                        Icons.check_circle,
+                                        color: AppColors.brandOrange,
+                                        size: 20,
+                                      ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          );
-                        },
-                      ),
+                            ),
+                          ],
+                        );
+                      }),
                     ),
                     crossFadeState: _cuisineExpanded
                         ? CrossFadeState.showSecond
@@ -459,52 +463,55 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
                   ),
                 ],
               ),
-              ),
             ),
+          ),
 
-            // --- Tarif Oluştur butonu ---
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: ingredients.isEmpty || isLoading
-                    ? null
-                    : _generateRecipe,
-                icon: const Icon(Icons.auto_awesome),
-                label: const Text(
-                  'Tarif Oluştur',
-                  style: TextStyle(fontFamily: 'Manrope', fontSize: 16),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.brandOrange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+          // --- Tarif Oluştur butonu ---
+          const SizedBox(height: 32),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: ingredients.isEmpty || isLoading
+                  ? null
+                  : _generateRecipe,
+              icon: const Icon(Icons.auto_awesome),
+              label: const Text(
+                'Tarif Oluştur',
+                style: TextStyle(fontFamily: 'Manrope', fontSize: 16),
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.brandOrange,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
               ),
             ),
-            const SizedBox(height: 32),
-            const _SavedRecipesSection(),
-          ],
-        ),
+          ),
+          const SizedBox(height: 32),
+          const _SavedRecipesSection(),
+        ],
+      ),
     );
-    return Stack(
+    final safeBody = SafeArea(
+      top: true,
+      bottom: false,
+      child: scrollBody,
+    );
+
+    final generatorUI = Stack(
       children: [
-        widget.inTabs
-            ? scrollBody
-            : Scaffold(
-                appBar: AppBar(
-                  title: const Text('Tarif Oluştur'),
-                  leading: IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => context.go(AppRouter.home),
-                  ),
-                ),
-                body: scrollBody,
-              ),
-      ]..addAll(isLoading ? [const ChefLoadingOverlay()] : <Widget>[]),
+        Positioned.fill(child: safeBody),
+        if (isLoading) const ChefLoadingOverlay(),
+      ],
+    );
+
+    if (widget.inTabs) return generatorUI;
+
+    return Scaffold(
+      backgroundColor: AppColors.paper,
+      body: generatorUI,
     );
   }
 }
@@ -532,10 +539,10 @@ class _SavedRecipesSection extends ConsumerWidget {
                   child: Text(
                     'Kaydettiğim Tarifler',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontFamily: 'Manrope',
-                          color: AppColors.ink,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      fontFamily: 'Manrope',
+                      color: AppColors.ink,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 if (hasMore)
@@ -559,7 +566,7 @@ class _SavedRecipesSection extends ConsumerWidget {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: visibleCount + (hasMore ? 1 : 0),
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
                 itemBuilder: (context, index) {
                   if (hasMore && index == visibleCount) {
                     return _SeeAllCard(
@@ -579,12 +586,11 @@ class _SavedRecipesSection extends ConsumerWidget {
         );
       },
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
     );
   }
 
-  void _openSavedRecipe(
-      BuildContext context, WidgetRef ref, SavedRecipe sr) {
+  void _openSavedRecipe(BuildContext context, WidgetRef ref, SavedRecipe sr) {
     showRecipeDetailSheet(
       context,
       recipe: sr.recipe,
@@ -597,10 +603,9 @@ class _SavedRecipesSection extends ConsumerWidget {
           sr.recipe.id,
           bytes,
         );
-        await ref.read(savedRecipesProvider.notifier).updateImagePath(
-              sr.recipe.id,
-              path,
-            );
+        await ref
+            .read(savedRecipesProvider.notifier)
+            .updateImagePath(sr.recipe.id, path);
         return path;
       },
       onDelete: () async {
@@ -671,10 +676,7 @@ class _SeeAllCard extends StatelessWidget {
 }
 
 class _SavedRecipeCard extends StatelessWidget {
-  const _SavedRecipeCard({
-    required this.savedRecipe,
-    required this.onTap,
-  });
+  const _SavedRecipeCard({required this.savedRecipe, required this.onTap});
 
   final SavedRecipe savedRecipe;
   final VoidCallback onTap;
@@ -710,8 +712,7 @@ class _SavedRecipeCard extends StatelessWidget {
                           image: FileImage(File(localImagePath)),
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              _placeholder(context),
+                          errorBuilder: (_, _, _) => _placeholder(context),
                         )
                       : _placeholder(context),
                 ),
@@ -724,10 +725,10 @@ class _SavedRecipeCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontFamily: 'Manrope',
-                            color: AppColors.ink,
-                            fontWeight: FontWeight.w400,
-                          ),
+                        fontFamily: 'Manrope',
+                        color: AppColors.ink,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                   ),
                 ),

@@ -12,7 +12,7 @@ class PointsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bodyContent = SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(20, 20, 20, inTabs ? 120 : 32),
+        padding: EdgeInsets.fromLTRB(20, 20, 20, inTabs ? 170 : 32),
         child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -49,9 +49,23 @@ class PointsPage extends StatelessWidget {
             ],
         ),
     );
-    if (inTabs) return bodyContent;
+    final safeBody = SafeArea(
+      top: true,
+      bottom: false,
+      child: bodyContent,
+    );
+
+    if (inTabs) {
+      return Stack(
+        children: [
+          Positioned.fill(child: safeBody),
+        ],
+      );
+    }
+    
     return Scaffold(
-      body: bodyContent,
+      backgroundColor: AppColors.paper,
+      body: safeBody,
     );
   }
 

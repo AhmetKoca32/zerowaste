@@ -38,10 +38,9 @@ class AdminGuard extends ConsumerWidget {
             }
             return child;
           },
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
-          error: (_, __) {
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+          error: (_, _) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (context.mounted) context.go(AppRouter.adminLogin);
             });
@@ -51,16 +50,13 @@ class AdminGuard extends ConsumerWidget {
           },
         );
       },
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
-      error: (_, __) {
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (_, _) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (context.mounted) context.go(AppRouter.adminLogin);
         });
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        );
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
       },
     );
   }

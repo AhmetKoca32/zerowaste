@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -77,10 +76,7 @@ class SavedRecipes extends _$SavedRecipes {
 
   Future<void> addRecipe(Recipe recipe) async {
     final list = state.valueOrNull ?? await SavedRecipesStorage.load();
-    state = AsyncValue.data([
-      SavedRecipe(recipe: recipe),
-      ...list,
-    ]);
+    state = AsyncValue.data([SavedRecipe(recipe: recipe), ...list]);
     await SavedRecipesStorage.save(state.value!);
   }
 
@@ -98,7 +94,9 @@ class SavedRecipes extends _$SavedRecipes {
 
   Future<void> remove(String recipeId) async {
     final list = state.valueOrNull ?? await SavedRecipesStorage.load();
-    state = AsyncValue.data(list.where((sr) => sr.recipe.id != recipeId).toList());
+    state = AsyncValue.data(
+      list.where((sr) => sr.recipe.id != recipeId).toList(),
+    );
     await SavedRecipesStorage.save(state.value!);
   }
 }
