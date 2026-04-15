@@ -1,120 +1,79 @@
 # Active Context: Sıfır Atık Mutfak
 
-**Son Güncelleme:** Nisan 2026  
-**Aktif Çalışma:** EcoChef Chat arayüzü modernizasyonu, tam ekran liquid glass efekti optimizasyonları, kapsül chat input'u
+**Son Güncelleme:** Nisan 2026 (16 Nisan - Gece Oturumu)  
+**Aktif Çalışma:** Puan sistemi modernizasyonu (Level-up journey), Chat günlük limit (20 mesaj), Kamera/Galeri entegrasyonu, Ticker sızıntı koruması.
 
 ---
 
 ## Şu Anki Odak
 
-### Son Yapılan Değişiklikler (Nisan 2026 - Güncel Oturum)
+### Son Yapılan Değişiklikler (16 Nisan 2026 - Gece Oturumu)
 
-#### 1. EcoChef (Chat) ve Navigasyon Modernizasyonu
-- **Liquid Glass Mimarisi:** `ChatPage`, `PointsPage` ve `RecipeGeneratorPage` sayfaları hantal listelemelerden çıkartılıp tam ekran `Stack` yapısına dönüştürüldü. İçerikler (ListView ve ScrollView'lar) `SafeArea(bottom: false)` ile mutlak ekran dibine çekildi, bu sayede alttaki yarı saydam `CustomBottomNav`'ın puslu (blur) filtresinden kesintisiz geçiyorlar.
-- **Kapsül (İçgömülü) Input Bar:** ChatPage metin girdi alanı köşeleri (BorderRadius: 32) ile ekstra yumuşatıldı. Standart olan harici turuncu IconButton iptal edilip doğrudan Input içerisine (`suffixIcon` olarak) optimize ebatta yerleştirildi. Odaklanıldığında beliren rahatsız edici default border-focus çizgisi sıfırlandı.
-- **Scroll (Kaydırma) Optimizasyonu:** `EcoChefWelcome`, `PointsPage` ve `RecipeGeneratorPage` içerisindeki liste altlarına ekstra `+160-170px` bottom padding eklenerek en alttaki bileşenlerin menülerin arkasında tutsak kalması engellendi.
+#### 1. Gamification — Puan Sistemi Modernizasyonu ✨
+- **PointsHeroCard Yeniden Tasarlandı:**
+  - **İki Modlu Animasyon:** Sayfa her açıldığında "Normal" (mevcut seviye dolumu) ve puan artışı olduğunda "Level-up Journey" (sıfırdan başlayıp seviyeleri tek tek geçen sinematik yolculuk) modları.
+  - **Seviye Sistemi:** Çaylak (0-50), Meraklı (50-150), Usta (150-300), Efsane (300-600), Efsane+ (600+).
+  - **UI Detayları:** Parlayan dairesel progress bar (`_GradientArcPainter`), hareketli puan sayacı, seviye geçişlerinde kutlama overlay'leri (`_buildCelebrationOverlay`).
+- **Puan Sayfası Akışı:** Yolculuk animasyonu sırasında sayfa içeriği (görevler/postlar) gizlenir, "Tebrikler" dialogundan sonra yolculuk başlar ve tamamlanınca içerik süzülerek (Fade + Slide) geri gelir.
+- **Admin Bonus Kartı:** Admin tarafından verilen manuel puanlar için özel altın temalı (`_buildAdminBonusCard`) kart tasarımı.
 
-#### 2. Firestore Security Rules & Fallback - ÇÖZÜLDÜ
-- `firestore.rules` dosyası oluşturuldu (recipes: herkes okur, admin yazar; admins: kendi kaydını okur)
-- RecipeRepository: Firestore boşsa veya hata verirse yerel JSON fallback
-- SHA-1 debug parmak izi Firebase Console'a eklendi
-- Google Play Services emülatör uyarıları (DEVELOPER_ERROR) Firestore'u engellemiyor
+#### 2. Chat — Günlük Mesaj Sınırı
+- **Sınır:** Her kullanıcı için günlük 20 mesaj hakkı tanımlandı.
+- **Teknik:** `dailyMessageCountProvider` (Riverpod) ile mesaj sayısı takip ediliyor.
+- **UX:** limit dolduğunda kullanıcıya SnackBar ile bilgi veriliyor ve mesaj göndermesi engelleniyor.
+- **Welcome Sayfası:** Kullanıcıyı bilgilendirmek için "Günlük 20 mesaj hakkı" ibaresi taşıyan şık bir bilgilendirme rozeti eklendi.
 
-#### 2. Oluştur Sayfası (RecipeGeneratorPage) Yeniden Tasarımı
-- **Başlık:** Siyah Manrope Bold 20 + altında info ikonu ile gri açıklama metni (fontSize: 12)
-- **Input alanı:** Inner shadow efektli pill-shape beyaz text field + sağında turuncu daire "+" butonu. Eski "Ekle" butonu kaldırıldı
-- **Eklenen malzemeler:** Turuncu dolgulu chip'ler (beyaz yazı, x ile sil)
-- **Son eklenenler:** Daha önce tarif oluştururken kullanılmış malzemeler (SharedPreferences ile kalıcı, max 10). Turuncu kenarlıklı beyaz chip'ler. Dokunulunca aktif listeye eklenir. Zaten aktif listede olanlar gizlenir. Tarif oluşturulunca malzemeler kaydedilir ve aktif liste temizlenir.
-- **Mutfak dropdown:** Başlık dışarıda ("Mutfak (isteğe bağlı)"), altında pill-shape beyaz dropdown. Inner shadow efekti. arrow_icon.png ile ok. Seçili değer gösterilir, tıklayınca animasyonlu açılır liste. Seçim yapılınca kapanır.
-- **Kaydettiğim Tarifler:** Max 5 tarif yatay listede + "Tümünü gör (N)" kartı + başlıkta "Tümünü gör" yazısı. Tümünü gör'e tıklayınca aranabilir bottom sheet (saved_recipes_sheet.dart).
-- **Tarif detay (oluştur sayfası):** showPlaceholderImage: false - fotoğraf eklenmemişse yemek.png gösterilmez, sadece "Fotoğraf ekle" butonu
-- **Yemek isimleri:** Siyah (AppColors.ink), regular (w400)
+#### 3. Gönderi Paylaşımı & Medya Entegrasyonu
+- **Image Picker:** `image_picker` paketi entegre edilerek Kamera ve Galeri desteği getirildi.
+- **Özel Dialog:** Kamera mı galeri mi seçileceğini soran tertemiz, premium tasarımlı beyaz dialog.
+- **Post Modeli:** `PostEntry` modeline `localImagePath` alanı eklendi.
+- **RecentPostsGrid:** Artık hem statik fotoğrafları hem de kullanıcının o an çektiği/seçtiği yerel cihaz fotoğraflarını (`FileImage`) gösterebiliyor.
 
-#### 3. Tarif İçerikleri Genişletildi
-- recipes.json: 3 tariften 7 tarife çıktı
-- Her tarife description (açıklama/hikaye) eklendi
-- Malzemeler detaylandırıldı (miktarlar, ölçüler, alternatifler)
-- Yapılış adımları detaylandırıldı (süreler, sıcaklıklar, ipuçları)
-- Yeni tarifler: Bayat Ekmek Köftesi, Meyve Kabuğu Sirkesi, Kabuk ve Sap Cipsi, Sıfır Atık Smoothie
+#### 4. Gönderi Detay Görünümü
+- **Premium Dialog:** Gönderiye tıklandığında açılan, fotoğrafın ön planda (320px boyunda) olduğu detay penceresi.
+- **Detaylar:** Admin notu bölümü, yüzer "Kapat" butonu ve arka plan bulanıklaştırma efekti.
 
-#### 4. Tarif Detay Sheet Zenginleştirildi
-- **Özet istatistik barı:** Resimden sonra krem arka planlı kutu, malzeme sayısı + adım sayısı ikon ile
-- **Malzemeler bölümü:** Kenarlıklı beyaz kart, başlıkta "N adet", turuncu nokta ile madde işaretli liste (chip yerine)
-- **Yapılış bölümü:** Kenarlıklı beyaz kart, başlıkta "N adım", numaralı adımlar arası ince ayraç çizgisi
-- **showPlaceholderImage parametresi:** Oluştur sayfasından açılan detaylarda yemek.png gösterilmez
-
-#### 5. Tarif Kartı (RecipeBlogCard) Güncellendi
-- Başlık altına "N malzeme · N adım" özet satırı eklendi
-
-#### 6. Malzeme Filtre Sistemi Yeniden Tasarlandı
-- Eski yatay chip bar kaldırıldı
-- Arama çubuğunun sağına filtre butonu eklendi (tune ikonu, turuncu badge ile seçili sayı)
-- Filtre butonu tıklayınca bottom sheet açılır (ingredient_filter_sheet.dart):
-  - Arama çubuğu (inner shadow, search_icon.png)
-  - Seçili malzemeler üstte turuncu chip'ler (x ile kaldır)
-  - Tüm malzemeler wrap layout (seçili: turuncu dolgu, değil: outline)
-  - Alt barda "Temizle" + "Uygula (N)" butonları
-- Ana sayfada seçili malzemeler yatay chip bar'da gösterilir + sonunda "Temizle" chip'i
-- Seçili malzeme yoksa chip bar gizli
-
-#### 7. RecentIngredients Provider
-- SharedPreferences ile kalıcı depolama
-- @Riverpod(keepAlive: true)
-- Max 10 malzeme saklanır
-- Tarif oluşturulduğunda malzemeler kaydedilir
-- IngredientList.removeAt bug fix: `[...state]..removeAt(index)` (referans kopyası)
+#### 5. Stabilizasyon & Bug Fix
+- **Ticker Leak Fix:** Animasyonlar sırasında sayfa değiştirilince oluşan "disposed with active Ticker" hatası giderildi.
+- **Çözüm:** `_activeProgressController` merkezi yönetimi, `_isAnimating` ve `_isDisposed` kilit mekanizması eklendi. Tüm kontrolcüler `dispose` anında kesin olarak temizleniyor.
 
 ---
 
 ## Çözülen Sorunlar
 
-- **Siyah ekran / PERMISSION_DENIED:** Firestore rules + fallback ile çözüldü
-- **Boş tarif listesi:** Firestore boşsa yerel JSON fallback
-- **RangeError (IngredientList.removeAt):** Cascade operator bug düzeltildi
-- **info_icon.png bulunamadı:** Dosya silinmişti, kodda Material ikon kullanılıyor, flutter clean ile çözüldü
+- **Ticker Dispose Hatası:** `PointsHeroCard` animasyonları sırasında sayfa değişikliğinde oluşan çökme giderildi.
+- **Medya Erişimi:** iOS/Android simülatör ve cihazlarda kamera/galeri erişimi sağlandı.
+- **Post Detay:** "Paylaş" butonu kullanıcı isteği üzerine kaldırıldı, sadece "Kapat" butonu bırakıldı.
+- **Grid Hataları:** `recent_posts_grid.dart` içindeki parantez hataları ve scope (kapsam) sorunları giderildi.
+- **Navbar Swipe Senkronizasyonu:** TabController listener ile navbar geçişi pürüzsüzleştirildi.
 
 ---
 
 ## Yapılacaklar
 
 ### Kısa Vadeli
-- Chat arayüzü için akıcı Fade-in ve Slide-up mesaj gelme animasyonları
-- Sohbet balonlarına profesyonel görünüm katacak, silik tonda zaman damgaları (timestamps)
-- Pagination (tarif listesi büyüdükçe)
-- Cache mekanizması
-- Kullanıcı authentication (mobil uygulama)
-- Cloud Storage entegrasyonu (fotoğraf upload)
+- **Liderlik Tablosu (Leaderboard):** Kullanıcıların puanlarına göre sıralandığı interaktif liste tasarımı.
+- **Başarımlar (Achievements):** Belirli hedeflere ulaşınca kazanılan rozetler için koleksiyon sayfası.
+- **Chat limit sıfırlama:** Günlük limitin her gece 00:00'da sıfırlanması için SharedPreferences kontrolü.
 
 ### Orta Vadeli
-- Puan sistemi backend
-- Admin panelinde puanlama özelliği
-- Push notifications
-- Kullanıcı profilleri
+- **Backend Entegrasyonu:** Puanların ve postların Firebase'e kaydedilmesi.
+- **Admin Panel:** Gönderilen postları onaylama/reddetme arayüzü.
+- **Push Notification:** Puan eklendiğinde bildirim gönderimi.
 
 ---
 
 ## Önemli Tasarım Kararları
 
-### Font: Manrope
-- Tüm UI bileşenlerinde Manrope kullanılıyor
-- Ağırlıklar: Light (300), Regular (400), Medium (500), Bold (700)
+### Gamification Pattern
+- Animasyonlar kullanıcıyı ödüllendirme odaklı, yavaş ve tatmin edici (`elasticOut`, `easeInOut`).
+- Seviye atlama kutlamalarında "ekranı karartma + parlayan altın yazı" efekti standartlaştırıldı.
 
-### Renkler: Brand Orange Palette
-- Ana renk: brandOrange (#ED6826)
-- Arka plan: Colors.white (kartlar, sheet'ler), AppColors.cream (sayfa arka planı)
-- Metin: AppColors.ink (koyu), AppColors.inkLight (açık)
-- ESKİ yeşil tonları KULLANILMAMALI
+### Ticker Güvenliği (Pattern)
+- Her `StatefulWidget` animasyonunda `_activeController` kullanılarak "create-before-dispose" kuralı uygulanıyor.
+- `if (!mounted)` kontrolleri her `await` sonrasında zorunlu.
 
-### Inner Shadow Pattern
-- Arama çubukları ve dropdown'lar: LinearGradient ile içe doğru gölge efekti
-- Colors.black.withOpacity(0.05) üst, 0.02 alt, stops: [0.0, 0.15, 0.85, 1.0]
-
-### Custom İkonlar
-- assets/images/icons/ klasöründe PNG ikonlar
-- arrow_icon.png (dropdown ok), search_icon.png, alisveris_icon.png vb.
-- Material ikonları da kullanılıyor (Icons.tune, Icons.info_outline vb.)
-
-### Bottom Sheet Pattern
-- DraggableScrollableSheet kullanımı (initialChildSize: 0.75-0.85)
-- Üstte drag handle (40x4, stone renk)
-- Beyaz arka plan, üst köşeler 24px radius
+### Medya Pattern
+- Fotoğraflar önce yerel state'e (`localImagePath`) alınır, upload süreci kullanıcıyı bekletmez.
+- `PostDetail` görünümünde fotoğraf her zaman `BoxFit.cover` ve yüksek çözünürlüklü gösterilir.
+- Font: Manrope her zaman kullanılmalı.

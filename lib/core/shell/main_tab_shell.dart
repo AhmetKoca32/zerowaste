@@ -34,18 +34,25 @@ class _MainTabShellState extends ConsumerState<MainTabShell>
       vsync: this,
       initialIndex: widget.initialIndex.clamp(0, 3),
     );
-    _tabController.addListener(_syncIndexToProvider);
+    // Listen to the animation value so the navbar updates mid-swipe
+    // (rounds to nearest tab as soon as user crosses the halfway point).
+    _tabController.animation?.addListener(_onSwipeAnimation);
   }
 
-  void _syncIndexToProvider() {
-    if (!_tabController.indexIsChanging) {
-      ref.read(tabIndexProvider.notifier).state = _tabController.index;
+  void _onSwipeAnimation() {
+    // Skip during programmatic animateTo (navbar tap) — only react to swipe gestures
+    if (_tabController.indexIsChanging) return;
+
+    final roundedIndex = _tabController.animation!.value.round().clamp(0, 3);
+    final current = ref.read(tabIndexProvider);
+    if (current != roundedIndex) {
+      ref.read(tabIndexProvider.notifier).state = roundedIndex;
     }
   }
 
   @override
   void dispose() {
-    _tabController.removeListener(_syncIndexToProvider);
+    _tabController.animation?.removeListener(_onSwipeAnimation);
     _tabController.dispose();
     super.dispose();
   }

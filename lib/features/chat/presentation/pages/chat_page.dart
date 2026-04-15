@@ -1,12 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/providers/core_providers.dart';
-import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/chat_providers.dart';
 import '../widgets/chat_bubble.dart';
+import '../widgets/ecochef_chat_empty.dart';
 import '../widgets/ecochef_typing_indicator.dart';
 import '../widgets/ecochef_welcome.dart';
 
@@ -20,16 +21,53 @@ class ChatPage extends ConsumerStatefulWidget {
   ConsumerState<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends ConsumerState<ChatPage> {
+class _ChatPageState extends ConsumerState<ChatPage>
+    with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
   bool _isSending = false;
+  bool _chatStarted = false;
+
+  /// Background auto-clear timer (5 minutes).
+  Timer? _backgroundTimer;
+  static const _backgroundTimeout = Duration(minutes: 5);
+
+  @override
+  bool get wantKeepAlive => true; // Keep state alive across tab switches
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _backgroundTimer?.cancel();
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final hasMessages = ref.read(chatMessagesProvider).isNotEmpty;
+
+    if (state == AppLifecycleState.paused && hasMessages) {
+      // Uygulama arka plana gitti — 5 dakika sonra sohbeti temizle
+      _backgroundTimer?.cancel();
+      _backgroundTimer = Timer(_backgroundTimeout, () {
+        if (mounted) {
+          ref.read(chatMessagesProvider.notifier).clear();
+          setState(() => _chatStarted = false);
+        }
+      });
+    } else if (state == AppLifecycleState.resumed) {
+      // Kullanıcı geri döndü — timer'ı iptal et
+      _backgroundTimer?.cancel();
+      _backgroundTimer = null;
+    }
   }
 
   void _scrollToBottom() {
@@ -44,14 +82,34 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     });
   }
 
+  /// Start the chat session (transition from welcome → chat mode).
+  void _startChat() {
+    setState(() => _chatStarted = true);
+  }
+
   Future<void> _sendMessage() async {
     final text = _controller.text.trim();
     if (text.isEmpty || _isSending) return;
+
+    final sentCount = ref.read(dailyMessageCountProvider);
+    if (sentCount >= 20) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Bugünlük 20 mesaj hakkın doldu! Detaylı tarifler için yarın tekrar gel.'),
+          backgroundColor: AppColors.brandOrange,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+      return;
+    }
 
     _controller.clear();
 
     final notifier = ref.read(chatMessagesProvider.notifier);
     notifier.add(ChatMessageEntry(text: text, isUser: true));
+    ref.read(dailyMessageCountProvider.notifier).state++;
+    
     _scrollToBottom();
 
     setState(() => _isSending = true);
@@ -72,41 +130,49 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   }
 
   /// Called when a suggestion chip is tapped from the welcome screen.
+  /// Starts chat and sends the suggestion as the first message.
   void _sendSuggestion(String text) {
+    setState(() => _chatStarted = true);
     _controller.text = text;
     _sendMessage();
   }
 
+  /// End the current chat session and go back to welcome.
+  void _endChat() {
+    ref.read(chatMessagesProvider.notifier).clear();
+    setState(() => _chatStarted = false);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final messages = ref.watch(chatMessagesProvider);
-    final bottomSafe = MediaQuery.of(context).padding.bottom;
+    super.build(context); // Required by AutomaticKeepAliveClientMixin
 
-    // BottomNav bar'ın boyu (yaklaşık 84px) + margin (12px) + ekstra 12px boşluk
-    final bottomSpacing = widget.inTabs
-        ? bottomSafe + 12.0 + 84.0 + 12.0
-        : bottomSafe + 12.0;
+    final messages = ref.watch(chatMessagesProvider);
+
+    // If messages exist (e.g. returning from another tab), auto-enter chat mode
+    if (!_chatStarted && messages.isNotEmpty) {
+      _chatStarted = true;
+    }
+
+    // ── Welcome Screen (chat not started) ──
+    if (!_chatStarted) {
+      final welcomeUI = EcoChefWelcome(
+        onStartChat: _startChat,
+        onSuggestionTap: _sendSuggestion,
+      );
+
+      if (widget.inTabs) return welcomeUI;
+      return Scaffold(backgroundColor: AppColors.paper, body: welcomeUI);
+    }
+
+    // ── Active Chat UI ──
+    final bool showBackButton = messages.isEmpty && !_isSending;
 
     final inputBar = Container(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-      decoration: const BoxDecoration(
-        color: Colors.transparent,
-      ),
+      decoration: const BoxDecoration(color: Colors.transparent),
       child: Row(
         children: [
-          if (messages.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: IconButton(
-                onPressed: () =>
-                    ref.read(chatMessagesProvider.notifier).clear(),
-                icon: const Icon(
-                  Icons.delete_sweep_rounded,
-                  color: AppColors.inkLight,
-                ),
-                tooltip: 'Sohbeti Temizle',
-              ),
-            ),
           Expanded(
             child: Container(
               decoration: BoxDecoration(
@@ -150,7 +216,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                       bottom: 12,
                     ),
                     suffixIcon: Padding(
-                      padding: const EdgeInsets.only(right: 6, top: 4, bottom: 4),
+                      padding: const EdgeInsets.only(
+                        right: 6,
+                        top: 4,
+                        bottom: 4,
+                      ),
                       child: IconButton.filled(
                         onPressed: _isSending ? null : _sendMessage,
                         icon: const Icon(Icons.send_rounded, size: 18),
@@ -180,15 +250,19 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
     final chatUI = Stack(
       children: [
-        // Arka planda serbestçe akan sohbetler
+        // Arka planda: mesaj yoksa minimal empty state, varsa mesaj listesi
         Positioned.fill(
           child: messages.isEmpty && !_isSending
-              ? EcoChefWelcome(onSuggestionTap: _sendSuggestion)
+              ? const EcoChefChatEmpty()
               : ListView.builder(
                   controller: _scrollController,
                   reverse: true,
-                  // Mesajların navbar'ın altından akması ama son mesaja ulaşıldığında örtülmemesi için padding
-                  padding: EdgeInsets.fromLTRB(16, 8, 16, widget.inTabs ? 160 : 80),
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    72,
+                    16,
+                    widget.inTabs ? 200 : 120,
+                  ),
                   itemCount: messages.length + (_isSending ? 1 : 0),
                   itemBuilder: (context, index) {
                     if (_isSending && index == 0) {
@@ -196,11 +270,161 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                     }
                     final actualIndex = _isSending ? index - 1 : index;
                     final message = messages.reversed.toList()[actualIndex];
-                    return ChatBubble(entry: message);
+
+                    // Typewriter effect only for the newest EcoChef message
+                    final isNewestEcoChef = actualIndex == 0 && !message.isUser;
+
+                    return ChatBubble(
+                      entry: message,
+                      typewriter: isNewestEcoChef,
+                      onTypewriterComplete: isNewestEcoChef ? _scrollToBottom : null,
+                    );
                   },
                 ),
         ),
-        // Yüzen, bağımsız ve şeffaf giriş alanı
+        // Üst başlık: EcoChef — sadece mesaj varken göster
+        if (messages.isNotEmpty || _isSending)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              bottom: false,
+              child: Container(
+                margin: const EdgeInsets.only(top: 8, left: 40, right: 40),
+                padding: const EdgeInsets.only(
+                  left: 24,
+                  right: 8,
+                  top: 4,
+                  bottom: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(999),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 12,
+                      spreadRadius: 0,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(width: 24),
+                          Icon(
+                            Icons.eco_rounded,
+                            color: AppColors.brandOrange,
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'EcoChef',
+                            style: TextStyle(
+                              fontFamily: 'Manrope',
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.ink,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      height: 32,
+                      width: 32,
+                      child: PopupMenuButton<String>(
+                        icon: const Icon(
+                          Icons.more_vert_rounded,
+                          color: AppColors.inkLight,
+                          size: 18,
+                        ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        color: Colors.white,
+                        surfaceTintColor: Colors.transparent,
+                        elevation: 4,
+                        position: PopupMenuPosition.under,
+                        offset: const Offset(0, 4),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        onSelected: (value) {
+                          if (value == 'clear') {
+                            ref.read(chatMessagesProvider.notifier).clear();
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: 'clear',
+                            height: 36,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.delete_sweep_rounded,
+                                  size: 16,
+                                  color: AppColors.inkLight,
+                                ),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Sohbeti Temizle',
+                                  style: TextStyle(
+                                    fontFamily: 'Manrope',
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        // Sol üst geri butonu — sadece mesaj gönderilmeden önce görünür
+        if (showBackButton)
+          Positioned(
+            top: 0,
+            left: 8,
+            child: SafeArea(
+              bottom: false,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  onPressed: _endChat,
+                  icon: const Icon(
+                    Icons.arrow_back_rounded,
+                    color: AppColors.ink,
+                    size: 22,
+                  ),
+                  tooltip: 'Geri',
+                ),
+              ),
+            ),
+          ),
+        // Yüzen input bar
         Positioned(
           left: 0,
           right: 0,
@@ -208,7 +432,6 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           child: SafeArea(
             top: false,
             child: Padding(
-              // Kendi tutturduğun o sıfıra sıfır 0 değeri
               padding: EdgeInsets.only(bottom: widget.inTabs ? 0 : 12),
               child: inputBar,
             ),

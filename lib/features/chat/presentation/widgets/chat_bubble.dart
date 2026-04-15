@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 
@@ -6,65 +8,182 @@ import '../providers/chat_providers.dart';
 
 /// Pastel-themed chat bubble for user or EcoChef.
 /// EcoChef messages render Markdown; user messages render plain text.
-class ChatBubble extends StatelessWidget {
-  const ChatBubble({super.key, required this.entry});
+/// Animates in with fade + slide on first build.
+/// When [typewriter] is true, EcoChef text appears character by character.
+class ChatBubble extends StatefulWidget {
+  const ChatBubble({
+    super.key,
+    required this.entry,
+    this.typewriter = false,
+    this.onTypewriterComplete,
+  });
 
   final ChatMessageEntry entry;
 
+  /// If true, EcoChef messages appear with a typewriter (character-by-character) effect.
+  final bool typewriter;
+
+  /// Called when the typewriter animation finishes.
+  final VoidCallback? onTypewriterComplete;
+
+  @override
+  State<ChatBubble> createState() => _ChatBubbleState();
+}
+
+class _ChatBubbleState extends State<ChatBubble>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  // Typewriter state
+  Timer? _typewriterTimer;
+  int _visibleChars = 0;
+  bool _typewriterDone = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // ── Fade + Slide animation ──
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+
+    final slideBegin = widget.entry.isUser
+        ? const Offset(0.15, 0.05)
+        : const Offset(-0.15, 0.05);
+
+    _slideAnimation = Tween<Offset>(
+      begin: slideBegin,
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _controller.forward();
+
+    // ── Typewriter effect (EcoChef only) ──
+    if (widget.typewriter && !widget.entry.isUser) {
+      _startTypewriter();
+    } else {
+      _typewriterDone = true;
+      _visibleChars = widget.entry.text.length;
+    }
+  }
+
+  void _startTypewriter() {
+    final fullText = widget.entry.text;
+    _visibleChars = 0;
+    _typewriterDone = false;
+
+    // Characters per tick — speed adapts to text length
+    const tickDuration = Duration(milliseconds: 18);
+    final charsPerTick = fullText.length > 500 ? 3 : (fullText.length > 200 ? 2 : 1);
+
+    _typewriterTimer = Timer.periodic(tickDuration, (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      setState(() {
+        _visibleChars += charsPerTick;
+        if (_visibleChars >= fullText.length) {
+          _visibleChars = fullText.length;
+          _typewriterDone = true;
+          timer.cancel();
+          widget.onTypewriterComplete?.call();
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _typewriterTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String get _displayText {
+    final fullText = widget.entry.text;
+    if (_typewriterDone) return fullText;
+    return fullText.substring(0, _visibleChars.clamp(0, fullText.length));
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isUser = entry.isUser;
+    final isUser = widget.entry.isUser;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        mainAxisAlignment:
-            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          if (!isUser) _ecoChefAvatar(),
-          if (!isUser) const SizedBox(width: 10),
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isUser
-                    ? AppColors.brandOrange.withOpacity(0.9)
-                    : AppColors.cream,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(20),
-                  topRight: const Radius.circular(20),
-                  bottomLeft: Radius.circular(isUser ? 20 : 4),
-                  bottomRight: Radius.circular(isUser ? 4 : 20),
-                ),
-                border: Border.all(
-                  color: isUser
-                      ? AppColors.brandOrange70.withOpacity(0.5)
-                      : AppColors.brandCream,
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.brandOrange.withOpacity(0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Row(
+            mainAxisAlignment:
+                isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (!isUser) _ecoChefAvatar(),
+              if (!isUser) const SizedBox(width: 10),
+              Flexible(
+                child: AnimatedSize(
+                  duration: const Duration(milliseconds: 80),
+                  curve: Curves.easeOut,
+                  alignment: Alignment.topLeft,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isUser
+                          ? AppColors.brandOrange.withOpacity(0.9)
+                          : AppColors.cream,
+                      borderRadius: BorderRadius.only(
+                        topLeft: const Radius.circular(20),
+                        topRight: const Radius.circular(20),
+                        bottomLeft: Radius.circular(isUser ? 20 : 4),
+                        bottomRight: Radius.circular(isUser ? 4 : 20),
+                      ),
+                      border: Border.all(
+                        color: isUser
+                            ? AppColors.brandOrange70.withOpacity(0.5)
+                            : AppColors.brandCream,
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.brandOrange.withOpacity(0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: isUser
+                        ? Text(
+                            widget.entry.text,
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: Colors.white,
+                                  height: 1.4,
+                                ),
+                          )
+                        : _MarkdownBody(text: _displayText),
                   ),
-                ],
+                ),
               ),
-              child: isUser
-                  ? Text(
-                      entry.text,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: Colors.white,
-                            height: 1.4,
-                          ),
-                    )
-                  : _MarkdownBody(text: entry.text),
-            ),
+              if (isUser) const SizedBox(width: 10),
+              if (isUser) _userAvatar(),
+            ],
           ),
-          if (isUser) const SizedBox(width: 10),
-          if (isUser) _userAvatar(),
-        ],
+        ),
       ),
     );
   }
