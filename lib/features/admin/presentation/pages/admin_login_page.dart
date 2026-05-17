@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:zerowaste/l10n/app_localizations.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/admin_providers.dart';
@@ -55,6 +56,8 @@ class _AdminLoginPageState extends ConsumerState<AdminLoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
@@ -74,7 +77,7 @@ class _AdminLoginPageState extends ConsumerState<AdminLoginPage> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Admin Girişi',
+                    l10n.adminLoginTitle,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppColors.brandOrange,
@@ -83,7 +86,7 @@ class _AdminLoginPageState extends ConsumerState<AdminLoginPage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'ZeroWaste Mutfak Admin Paneli',
+                    l10n.adminLoginSubtitle,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.inkLight,
                         ),
@@ -94,15 +97,15 @@ class _AdminLoginPageState extends ConsumerState<AdminLoginPage> {
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
-                      labelText: 'Email',
+                      labelText: l10n.adminLoginEmailLabel,
                       prefixIcon: const Icon(Icons.email_outlined),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Email gerekli';
-                      if (!value.contains('@')) return 'Geçerli bir email girin';
+                      if (value == null || value.isEmpty) return l10n.adminLoginErrorInvalidEmail;
+                      if (!value.contains('@')) return l10n.adminLoginErrorInvalidEmail;
                       return null;
                     },
                   ),
@@ -111,7 +114,7 @@ class _AdminLoginPageState extends ConsumerState<AdminLoginPage> {
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
-                      labelText: 'Şifre',
+                      labelText: l10n.adminLoginPasswordLabel,
                       prefixIcon: const Icon(Icons.lock_outlined),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -128,8 +131,8 @@ class _AdminLoginPageState extends ConsumerState<AdminLoginPage> {
                       ),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Şifre gerekli';
-                      if (value.length < 6) return 'Şifre en az 6 karakter olmalı';
+                      if (value == null || value.isEmpty) return l10n.adminLoginErrorPasswordRequired;
+                      if (value.length < 6) return l10n.adminLoginErrorPasswordMin;
                       return null;
                     },
                   ),
@@ -154,12 +157,12 @@ class _AdminLoginPageState extends ConsumerState<AdminLoginPage> {
                                   AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
-                        : const Text('Giriş Yap'),
+                        : Text(l10n.adminLoginButton),
                   ),
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: () => context.go(AppRouter.home),
-                    child: const Text('Ana Sayfaya Dön'),
+                    child: Text(l10n.adminLoginBackToHome),
                   ),
                 ],
               ),

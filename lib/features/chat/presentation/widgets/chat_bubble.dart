@@ -75,18 +75,23 @@ class _ChatBubbleState extends State<ChatBubble>
       _startTypewriter();
     } else {
       _typewriterDone = true;
-      _visibleChars = widget.entry.text.length;
+      // Count graphemes, not UTF-16 code units, so we never reveal half an emoji.
+      _visibleChars = widget.entry.text.characters.length;
     }
   }
 
   void _startTypewriter() {
     final fullText = widget.entry.text;
+    // Use grapheme count so emoji (e.g. 🌿) and ZWJ sequences (👨‍👩‍👧)
+    // count as one tick each instead of getting sliced in half.
+    final totalGraphemes = fullText.characters.length;
     _visibleChars = 0;
     _typewriterDone = false;
 
     // Characters per tick — speed adapts to text length
     const tickDuration = Duration(milliseconds: 18);
-    final charsPerTick = fullText.length > 500 ? 3 : (fullText.length > 200 ? 2 : 1);
+    final charsPerTick =
+        totalGraphemes > 500 ? 3 : (totalGraphemes > 200 ? 2 : 1);
 
     _typewriterTimer = Timer.periodic(tickDuration, (timer) {
       if (!mounted) {
@@ -96,8 +101,8 @@ class _ChatBubbleState extends State<ChatBubble>
 
       setState(() {
         _visibleChars += charsPerTick;
-        if (_visibleChars >= fullText.length) {
-          _visibleChars = fullText.length;
+        if (_visibleChars >= totalGraphemes) {
+          _visibleChars = totalGraphemes;
           _typewriterDone = true;
           timer.cancel();
           widget.onTypewriterComplete?.call();
@@ -116,7 +121,11 @@ class _ChatBubbleState extends State<ChatBubble>
   String get _displayText {
     final fullText = widget.entry.text;
     if (_typewriterDone) return fullText;
-    return fullText.substring(0, _visibleChars.clamp(0, fullText.length));
+    // Slicing via `characters.take` guarantees we never cut a surrogate pair
+    // in half, which would crash the TextPainter with "not well-formed UTF-16".
+    final graphemes = fullText.characters;
+    final clamped = _visibleChars.clamp(0, graphemes.length);
+    return graphemes.take(clamped).toString();
   }
 
   @override
@@ -203,7 +212,13 @@ class _ChatBubbleState extends State<ChatBubble>
           ),
         ],
       ),
-      child: const Icon(Icons.eco, color: AppColors.brandOrange, size: 22),
+      child: Padding(
+        padding: const EdgeInsets.all(2),
+        child: Image.asset(
+          'assets/images/icons/denizati.png',
+          fit: BoxFit.contain,
+        ),
+      ),
     );
   }
 

@@ -1,0 +1,621 @@
+{
+  "@@locale": "tr",
+  "@@last_modified": "2026-05-17",
+
+  "appName": "Atıksız Mutfak",
+  "@appName": {
+    "description": "Uygulama adı"
+  },
+
+  "navRecipes": "Tarifler",
+  "@navRecipes": {
+    "description": "Alt navigasyon - Tarifler sekmesi"
+  },
+  "navCreate": "Oluştur",
+  "@navCreate": {
+    "description": "Alt navigasyon - Oluştur sekmesi"
+  },
+  "navEcoChef": "EcoChef",
+  "@navEcoChef": {
+    "description": "Alt navigasyon - Sohbet sekmesi"
+  },
+  "navPoints": "Puan",
+  "@navPoints": {
+    "description": "Alt navigasyon - Puan sekmesi"
+  },
+
+  "homeTitle": "Atıksız Mutfak",
+  "@homeTitle": {
+    "description": "Ana sayfa başlığı"
+  },
+  "homeEmpty": "Henüz tarif yok. Malzeme ekleyip bir tarif oluşturun!",
+  "@homeEmpty": {
+    "description": "Tarif listesi boşken gösterilen mesaj"
+  },
+  "homeCreateRecipe": "Tarif Oluştur",
+  "@homeCreateRecipe": {
+    "description": "Tarif oluşturma butonu"
+  },
+  "homeLoading": "Tarifler yükleniyor…",
+  "@homeLoading": {
+    "description": "Tarifler yüklenirken gösterilen metin"
+  },
+  "homeError": "Tarifler yüklenemedi.\n{error}",
+  "@homeError": {
+    "description": "Tarif yükleme hatası",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Network error"
+      }
+    }
+  },
+  "homeRetry": "Tekrar Dene",
+  "@homeRetry": {
+    "description": "Yeniden deneme butonu"
+  },
+  "homeClearFilter": "Temizle",
+  "@homeClearFilter": {
+    "description": "Filtre temizleme chip'i"
+  },
+  "homeSearchHint": "Tariflerde arayın",
+  "@homeSearchHint": {
+    "description": "Arama çubuğu ipucu metni"
+  },
+
+  "recipeCardMatchCount": "{count}/{total} malzeme elinizde",
+  "@recipeCardMatchCount": {
+    "description": "Karttaki eşleşen malzeme sayısı",
+    "placeholders": {
+      "count": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "recipeCardStatSummary": "{ingredientCount} malzeme · {stepCount} adım",
+  "@recipeCardStatSummary": {
+    "description": "Karttaki malzeme/adım özeti",
+    "placeholders": {
+      "ingredientCount": { "type": "int" },
+      "stepCount": { "type": "int" }
+    }
+  },
+  "recipeCardIngredients": "Malzemeler",
+  "@recipeCardIngredients": {
+    "description": "Malzemeler bölüm başlığı"
+  },
+  "recipeCardInspect": "Tarifi İncele",
+  "@recipeCardInspect": {
+    "description": "Tarif detay butonu"
+  },
+
+  "recipeDetailIngredientCount": "{count} adet",
+  "@recipeDetailIngredientCount": {
+    "description": "Malzeme sayısı etiketi",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "recipeDetailStepCount": "{count} adım",
+  "@recipeDetailStepCount": {
+    "description": "Adım sayısı etiketi",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "recipeDetailIngredient": "Malzeme",
+  "@recipeDetailIngredient": {
+    "description": "Tekil malzeme etiketi"
+  },
+  "recipeDetailStep": "Adım",
+  "@recipeDetailStep": {
+    "description": "Tekil adım etiketi"
+  },
+  "recipeDetailIngredients": "Malzemeler",
+  "@recipeDetailIngredients": {
+    "description": "Malzemeler bölüm başlığı"
+  },
+  "recipeDetailInstructions": "Yapılış",
+  "@recipeDetailInstructions": {
+    "description": "Yapılış bölüm başlığı"
+  },
+  "recipeDetailSave": "Kaydet",
+  "@recipeDetailSave": {
+    "description": "Tarif kaydetme butonu"
+  },
+  "recipeDetailSaved": "Tarif kaydedildi!",
+  "@recipeDetailSaved": {
+    "description": "Tarif kaydedildi bildirimi"
+  },
+  "recipeDetailClose": "Kapat",
+  "@recipeDetailClose": {
+    "description": "Kapat butonu"
+  },
+  "recipeDetailDelete": "Tarifi sil",
+  "@recipeDetailDelete": {
+    "description": "Tarif silme butonu / diyalog başlığı"
+  },
+  "recipeDetailDeleteConfirm": "Bu tarifi kaydettiğiniz listeden silmek istediğinize emin misiniz?",
+  "@recipeDetailDeleteConfirm": {
+    "description": "Silme onay mesajı"
+  },
+  "recipeDetailCancel": "İptal",
+  "@recipeDetailCancel": {
+    "description": "İptal butonu"
+  },
+  "recipeDetailDeleteAction": "Sil",
+  "@recipeDetailDeleteAction": {
+    "description": "Sil butonu"
+  },
+  "recipeDetailAddPhoto": "Fotoğraf ekle",
+  "@recipeDetailAddPhoto": {
+    "description": "Fotoğraf ekle butonu"
+  },
+  "recipeDetailGallery": "Galeriden seç",
+  "@recipeDetailGallery": {
+    "description": "Galeri seçeneği"
+  },
+  "recipeDetailCamera": "Fotoğraf çek",
+  "@recipeDetailCamera": {
+    "description": "Kamera seçeneği"
+  },
+
+  "filterTitle": "Malzeme Filtresi",
+  "@filterTitle": {
+    "description": "Filtre sayfası başlığı"
+  },
+  "filterSelected": "{count} seçili",
+  "@filterSelected": {
+    "description": "Seçili malzeme sayısı",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "filterSearchHint": "Malzeme ara...",
+  "@filterSearchHint": {
+    "description": "Filtre arama ipucu"
+  },
+  "filterSelectedSection": "Seçili malzemeler",
+  "@filterSelectedSection": {
+    "description": "Seçili malzemeler bölümü"
+  },
+  "filterAllSection": "Tüm malzemeler",
+  "@filterAllSection": {
+    "description": "Tüm malzemeler bölümü"
+  },
+  "filterNoResults": "Sonuç bulunamadı.",
+  "@filterNoResults": {
+    "description": "Filtre sonuç bulunamadı"
+  },
+  "filterClear": "Temizle",
+  "@filterClear": {
+    "description": "Filtre temizleme butonu"
+  },
+  "filterApply": "Uygula",
+  "@filterApply": {
+    "description": "Filtre uygulama butonu"
+  },
+  "filterApplyWithCount": "Uygula ({count})",
+  "@filterApplyWithCount": {
+    "description": "Seçimli uygulama butonu",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "recipeGeneratorHeading": "Elinizdeki malzemeleri ekleyin",
+  "@recipeGeneratorHeading": {
+    "description": "Tarif oluşturma sayfası başlığı"
+  },
+  "recipeGeneratorInstruction": "En az bir malzeme ekleyin, ardından Tarif Oluştur'a dokunun.",
+  "@recipeGeneratorInstruction": {
+    "description": "Kullanım talimatı"
+  },
+  "recipeGeneratorInputHint": "örn. domates, fesleğen",
+  "@recipeGeneratorInputHint": {
+    "description": "Malzeme giriş ipucu"
+  },
+  "recipeGeneratorRecent": "Son eklenenler",
+  "@recipeGeneratorRecent": {
+    "description": "Son eklenen malzemeler başlığı"
+  },
+  "recipeGeneratorCuisine": "Mutfak (isteğe bağlı)",
+  "@recipeGeneratorCuisine": {
+    "description": "Mutfak stili seçimi başlığı"
+  },
+  "recipeGeneratorNoCuisine": "Fark etmez",
+  "@recipeGeneratorNoCuisine": {
+    "description": "Mutfak seçilmedi varsayılanı"
+  },
+  "recipeGeneratorCreate": "Tarif Oluştur",
+  "@recipeGeneratorCreate": {
+    "description": "Oluştur butonu"
+  },
+  "recipeGeneratorSaved": "Kaydettiğim Tarifler",
+  "@recipeGeneratorSaved": {
+    "description": "Kaydedilen tarifler başlığı"
+  },
+  "recipeGeneratorSeeAll": "Tümünü gör",
+  "@recipeGeneratorSeeAll": {
+    "description": "Tümünü gör bağlantısı"
+  },
+  "recipeGeneratorSeeAllCount": "Tümünü gör ({count})",
+  "@recipeGeneratorSeeAllCount": {
+    "description": "Sayılı tümünü gör bağlantısı",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "recipeGeneratorCount": "{count} tarif",
+  "@recipeGeneratorCount": {
+    "description": "Tarif sayısı etiketi",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "recipeGeneratorMinIngredients": "Lütfen tarif oluşturmadan önce en az bir malzeme ekleyin.",
+  "@recipeGeneratorMinIngredients": {
+    "description": "En az malzeme uyarısı"
+  },
+
+  "chefLoading": "EcoChef pişiriyor",
+  "@chefLoading": {
+    "description": "Yükleniyor metni"
+  },
+
+  "chatDailyLimit": "Bugünlük 20 mesaj hakkın doldu! Detaylı tarifler için yarın tekrar gel.",
+  "@chatDailyLimit": {
+    "description": "Günlük mesaj limiti uyarısı"
+  },
+  "chatInputHint": "EcoChef'e yazın...",
+  "@chatInputHint": {
+    "description": "Sohbet giriş ipucu"
+  },
+  "chatClear": "Sohbeti Temizle",
+  "@chatClear": {
+    "description": "Sohbet temizleme menü öğesi"
+  },
+  "chatBack": "Geri",
+  "@chatBack": {
+    "description": "Geri butonu tooltip"
+  },
+  "chatConnectionError": "Sunucuya ulaşılamıyor. İnternet bağlantınızı kontrol edip tekrar deneyin.",
+  "@chatConnectionError": {
+    "description": "Bağlantı hatası mesajı"
+  },
+  "chatTimeoutError": "Sunucu yanıt vermekte gecikti. Birkaç saniye sonra tekrar deneyin.",
+  "@chatTimeoutError": {
+    "description": "Zaman aşımı hatası"
+  },
+  "chatAuthError": "Doğrulama hatası. API anahtarı eksik veya geçersiz görünüyor.",
+  "@chatAuthError": {
+    "description": "Kimlik doğrulama hatası"
+  },
+  "chatApiError": "Servis bir hata döndürdü (kod: {code}).",
+  "@chatApiError": {
+    "description": "API hata mesajı",
+    "placeholders": { "code": { "type": "String" } }
+  },
+  "chatGenericError": "Beklenmedik bir sorun oldu. Lütfen tekrar deneyin.",
+  "@chatGenericError": {
+    "description": "Genel hata mesajı"
+  },
+  "chatStartButton": "Sohbete Başla",
+  "@chatStartButton": {
+    "description": "Sohbet başlatma butonu"
+  },
+  "chatWelcomeSubtitle": "Atıksız mutfak yardımcınız",
+  "@chatWelcomeSubtitle": {
+    "description": "Karşılama alt başlığı"
+  },
+  "chatWelcomeDescription": "Tarif önerileri, gıda israfını azaltma ipuçları ve sürdürülebilir mutfak pratikleri hakkında benimle sohbet edebilirsiniz! 🌿",
+  "@chatWelcomeDescription": {
+    "description": "Karşılama açıklaması"
+  },
+  "chatDailyLimitInfo": "Günlük 20 mesaj hakkınız bulunmaktadır",
+  "@chatDailyLimitInfo": {
+    "description": "Günlük limit bilgisi"
+  },
+  "chatOrAskDirectly": "Ya da direkt sorun",
+  "@chatOrAskDirectly": {
+    "description": "Öneri bölümü başlığı"
+  },
+  "chatEmptyPrompt": "Size nasıl yardımcı olabilirim?",
+  "@chatEmptyPrompt": {
+    "description": "Boş sohbet metni"
+  },
+  "chatEmptyInstruction": "Aşağıdan mesajınızı yazabilirsiniz",
+  "@chatEmptyInstruction": {
+    "description": "Boş sohbet talimatı"
+  },
+  "chatEmptyResponse": "Atıksız mutfak veya ipuçları hakkında ne olursa olsun sorabilirsiniz!",
+  "@chatEmptyResponse": {
+    "description": "Boş mesaj gönderilince yanıt"
+  },
+
+  "generatorResultSheetTitle": "Tarifiniz",
+  "@generatorResultSheetTitle": {
+    "description": "Oluşturulan tarif sheet başlığı"
+  },
+  "generatorResultSheetError": "Bir hata oluştu",
+  "@generatorResultSheetError": {
+    "description": "Hata sheet başlığı"
+  },
+
+  "savedRecipesTitle": "Kaydettiğim Tarifler",
+  "@savedRecipesTitle": {
+    "description": "Kayıtlı tarifler sheet başlığı"
+  },
+  "savedRecipesEmpty": "Henüz kaydedilmiş tarif yok.",
+  "@savedRecipesEmpty": {
+    "description": "Kayıtlı tarif yok mesajı"
+  },
+  "savedRecipesError": "Tarifler yüklenirken hata oluştu.",
+  "@savedRecipesError": {
+    "description": "Yükleme hatası"
+  },
+
+  "pointsMissionFridge": "Dolabını paylaş",
+  "@pointsMissionFridge": {
+    "description": "Görev adı - dolap paylaş"
+  },
+  "pointsMissionFridgeDesc": "Buzdolabı veya kiler fotoğrafı yükle, sıfır atık alışkanlığına puan kazan.",
+  "@pointsMissionFridgeDesc": {
+    "description": "Görev açıklaması"
+  },
+  "pointsMissionCooking": "Yemek anını paylaş",
+  "@pointsMissionCooking": {
+    "description": "Görev adı - yemek anı"
+  },
+  "pointsMissionCookingDesc": "Malzemelerinle yemek yaparken çektiğin fotoğrafı gönder.",
+  "@pointsMissionCookingDesc": {
+    "description": "Görev açıklaması"
+  },
+  "pointsMissionLeftovers": "Artıklardan ne yaptın?",
+  "@pointsMissionLeftovers": {
+    "description": "Görev adı - artık değerlendirme"
+  },
+  "pointsMissionLeftoversDesc": "Kalan malzemelerden yaptığın tarifi veya değerlendirmeyi anlat.",
+  "@pointsMissionLeftoversDesc": {
+    "description": "Görev açıklaması"
+  },
+  "pointsCategoryFridge": "Dolap",
+  "@pointsCategoryFridge": {
+    "description": "Kategori etiketi"
+  },
+  "pointsCategoryCooking": "Yemek Anı",
+  "@pointsCategoryCooking": {
+    "description": "Kategori etiketi"
+  },
+  "pointsCategoryLeftovers": "Artık Değerlendirme",
+  "@pointsCategoryLeftovers": {
+    "description": "Kategori etiketi"
+  },
+  "pointsCategoryOther": "Diğer",
+  "@pointsCategoryOther": {
+    "description": "Kategori etiketi"
+  },
+  "pointsLevelLegend": "Efsane+",
+  "@pointsLevelLegend": {
+    "description": "En yüksek seviye adı"
+  },
+  "pointsLevelEfsane": "Efsane",
+  "@pointsLevelEfsane": {
+    "description": "Seviye adı"
+  },
+  "pointsLevelUsta": "Usta",
+  "@pointsLevelUsta": {
+    "description": "Seviye adı"
+  },
+  "pointsLevelMerakli": "Meraklı",
+  "@pointsLevelMerakli": {
+    "description": "Seviye adı"
+  },
+  "pointsLevelCaylak": "Çaylak",
+  "@pointsLevelCaylak": {
+    "description": "Seviye adı"
+  },
+  "pointsNicknameDialogTitle": "Takma Adın Nedir?",
+  "@pointsNicknameDialogTitle": {
+    "description": "Nickname diyalog başlığı"
+  },
+  "pointsNicknameDialogSubtitle": "Gönderilerinin ve sıralamadaki görünen adını belirle.",
+  "@pointsNicknameDialogSubtitle": {
+    "description": "Nickname diyalog alt metni"
+  },
+  "pointsNicknameHint": "Örn. Atıksız Şef",
+  "@pointsNicknameHint": {
+    "description": "Nickname giriş ipucu"
+  },
+  "pointsNicknameValidationEmpty": "Lütfen bir takma ad girin",
+  "@pointsNicknameValidationEmpty": {
+    "description": "Boş nickname uyarısı"
+  },
+  "pointsLeaderboardOptIn": "Sıralamada (leaderboard) takma adımın görüntülenmesine izin veriyorum.",
+  "@pointsLeaderboardOptIn": {
+    "description": "Leaderboard izin etiketi"
+  },
+  "pointsPrivacyDisclaimer": "KVKK kapsamında bu bilgi yalnızca uygulama içi sıralamada gösterilir, üçüncü taraflarla paylaşılmaz.",
+  "@pointsPrivacyDisclaimer": {
+    "description": "KVKK açıklaması"
+  },
+  "pointsSave": "Kaydet",
+  "@pointsSave": {
+    "description": "Kaydet butonu"
+  },
+  "pointsAddPhoto": "Fotoğraf Ekle",
+  "@pointsAddPhoto": {
+    "description": "Fotoğraf ekle diyalog başlığı"
+  },
+  "pointsPhotoSource": "Gönderin için fotoğraf kaynağını seç",
+  "@pointsPhotoSource": {
+    "description": "Fotoğraf kaynağı seçimi"
+  },
+  "pointsCamera": "Kameradan Çek",
+  "@pointsCamera": {
+    "description": "Kamera seçeneği"
+  },
+  "pointsGallery": "Galeriden Seç",
+  "@pointsGallery": {
+    "description": "Galeri seçeneği"
+  },
+  "pointsAnonymous": "Anonim",
+  "@pointsAnonymous": {
+    "description": "Varsayılan nickname"
+  },
+  "pointsPostSent": "⏳ {category} gönderin incelemeye gönderildi!",
+  "@pointsPostSent": {
+    "description": "Gönderi gönderildi bildirimi",
+    "placeholders": { "category": { "type": "String" } }
+  },
+  "pointsLevelUpTitle": "Tebrikler! 🎉",
+  "@pointsLevelUpTitle": {
+    "description": "Seviye atlama başlığı"
+  },
+  "pointsLevelUpDesc": "Gönderin admin tarafından onaylandı ve kazandığın yeni puanlar hesabına eklendi. Sıfır atık yolculuğunda ilham vermeye devam et!",
+  "@pointsLevelUpDesc": {
+    "description": "Seviye atlama açıklaması"
+  },
+  "pointsKeepGoing": "Harika! Devam Et",
+  "@pointsKeepGoing": {
+    "description": "Devam et butonu"
+  },
+  "pointsShareTitle": "Ne paylaşmak istersin?",
+  "@pointsShareTitle": {
+    "description": "Paylaşım sheet başlığı"
+  },
+  "pointsShareSubtitle": "Bir kategori seç ve fotoğraf ekle",
+  "@pointsShareSubtitle": {
+    "description": "Paylaşım sheet alt metni"
+  },
+  "pointsShareHint": "Fotoğraf çek veya galeriden seç",
+  "@pointsShareHint": {
+    "description": "Kategori kartı alt metni"
+  },
+  "pointsLeaderboardTitle": "Sıralama",
+  "@pointsLeaderboardTitle": {
+    "description": "Leaderboard başlığı"
+  },
+  "pointsLevelComplete": "Seviye tamamlandı!",
+  "@pointsLevelComplete": {
+    "description": "Seviye tamamlama metni"
+  },
+  "pointsNextLevel": "{emoji} {level} seviyesine {remaining} puan kaldı",
+  "@pointsNextLevel": {
+    "description": "Sonraki seviye bilgisi",
+    "placeholders": {
+      "emoji": { "type": "String" },
+      "level": { "type": "String" },
+      "remaining": { "type": "int" }
+    }
+  },
+  "pointsMaxLevel": "🏆 En yüksek seviyedesin!",
+  "@pointsMaxLevel": {
+    "description": "Maksimum seviye mesajı"
+  },
+  "pointsStreak": "{days} gün",
+  "@pointsStreak": {
+    "description": "Gün sayısı etiketi",
+    "placeholders": { "days": { "type": "int" } }
+  },
+  "pointsRecentTitle": "Son Gönderilerin",
+  "@pointsRecentTitle": {
+    "description": "Son gönderiler başlığı"
+  },
+  "pointsPostCount": "{count} gönderi",
+  "@pointsPostCount": {
+    "description": "Gönderi sayısı",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "pointsEmptyTitle": "İlk gönderini paylaş!",
+  "@pointsEmptyTitle": {
+    "description": "Boş gönderi başlığı"
+  },
+  "pointsEmptySubtitle": "Atıksız mutfağınla neler yaptığını göster\nve puan kazanmaya başla",
+  "@pointsEmptySubtitle": {
+    "description": "Boş gönderi alt metni"
+  },
+  "pointsAddPost": "Gönderi Ekle",
+  "@pointsAddPost": {
+    "description": "Gönderi ekle butonu"
+  },
+  "pointsStatusPending": "İnceleniyor",
+  "@pointsStatusPending": {
+    "description": "Gönderi durumu - beklemede"
+  },
+  "pointsStatusApproved": "Onaylandı",
+  "@pointsStatusApproved": {
+    "description": "Gönderi durumu - onaylandı"
+  },
+  "pointsEarned": "Kazanılan Puan:",
+  "@pointsEarned": {
+    "description": "Kazanılan puan etiketi"
+  },
+  "pointsDailyMissions": "Günlük Görevler",
+  "@pointsDailyMissions": {
+    "description": "Günlük görevler başlığı"
+  },
+
+  "monthAbbrJan": "Oca",
+  "monthAbbrFeb": "Şub",
+  "monthAbbrMar": "Mar",
+  "monthAbbrApr": "Nis",
+  "monthAbbrMay": "May",
+  "monthAbbrJun": "Haz",
+  "monthAbbrJul": "Tem",
+  "monthAbbrAug": "Ağu",
+  "monthAbbrSep": "Eyl",
+  "monthAbbrOct": "Eki",
+  "monthAbbrNov": "Kas",
+  "monthAbbrDec": "Ara",
+
+  "adminLoginTitle": "Admin Girişi",
+  "adminLoginSubtitle": "Atıksız Mutfak Admin Paneli",
+  "adminLoginEmailLabel": "Email",
+  "adminLoginPasswordLabel": "Şifre",
+  "adminLoginButton": "Giriş Yap",
+  "adminLoginBackToHome": "Ana Sayfaya Dön",
+  "adminLoginErrorInvalidEmail": "Geçerli bir email girin",
+  "adminLoginErrorPasswordRequired": "Şifre gerekli",
+  "adminLoginErrorPasswordMin": "Şifre en az 6 karakter olmalı",
+
+  "adminDashboardTitle": "Tarifler",
+  "adminDashboardEmpty": "Henüz tarif yok",
+  "adminDashboardEmptyHint": "Yeni tarif eklemek için sağ alttaki butonu kullanın",
+  "adminDashboardDeleteTitle": "Tarifi Sil",
+  "adminDashboardDeleteConfirm": "\"{title}\" tarifini silmek istediğinize emin misiniz?",
+  "adminDashboardDeleted": "Tarif silindi",
+
+  "adminSidebarBrand": "Atıksız Admin",
+  "adminSidebarRecipes": "Tarifler",
+  "adminSidebarNewRecipe": "Yeni Tarif",
+  "adminSidebarPosts": "Gönderiler",
+  "adminSidebarLogout": "Çıkış Yap",
+  "adminSidebarApprove": "Onayla",
+  "adminSidebarReject": "Reddet",
+
+  "adminFormTitle": "Tarif Başlığı *",
+  "adminFormTitleRequired": "Başlık gerekli",
+  "adminFormDescription": "Açıklama (Opsiyonel)",
+  "adminFormPhotoUrl": "Fotoğraf URL (Opsiyonel)",
+  "adminFormIngredientsHint": "Her satıra bir malzeme yazın",
+  "adminFormStepsLabel": "Yapılış Adımları *",
+  "adminFormStepsHint": "Her satıra bir adım yazın",
+  "adminFormStepsRequired": "En az bir adım gerekli",
+  "adminFormSave": "Kaydet",
+  "adminFormUpdate": "Güncelle",
+
+  "adminPostsTitle": "Bekleyen Gönderiler",
+  "adminPostsEmpty": "Bekleyen gönderi yok",
+  "adminPostsEmptySubtitle": "Her şey yolunda!",
+  "adminPostsApproveDialog": "Gönderiyi Onayla",
+  "adminPostsAdminNote": "Admin notu (isteğe bağlı)",
+  "adminPostsRejectDialog": "Gönderiyi Reddet",
+  "adminPostsRejectConfirm": "{nickname} kullanıcısının gönderisini reddetmek istediğinize emin misiniz?",
+
+  "cuisineMediterranean": "Akdeniz mutfağı",
+  "cuisineAegean": "Ege mutfağı",
+  "cuisineBlackSea": "Karadeniz mutfağı",
+  "cuisineSoutheastern": "Güneydoğu Anadolu mutfağı",
+  "cuisineCentralAnatolia": "İç Anadolu mutfağı",
+  "cuisineMarmara": "Marmara mutfağı",
+  "cuisineEasternAnatolia": "Doğu Anadolu mutfağı",
+  "cuisineTurkish": "Türk mutfağı (genel)",
+  "cuisineItalian": "İtalyan mutfağı",
+  "cuisineFrench": "Fransız mutfağı",
+  "cuisineJapanese": "Japon mutfağı",
+  "cuisineMexican": "Meksika mutfağı",
+  "cuisineIndian": "Hint mutfağı",
+  "cuisineArabic": "Arap mutfağı",
+  "cuisineUzbek": "Özbek mutfağı",
+  "cuisineGreek": "Yunan mutfağı",
+  "cuisineMiddleEastern": "Orta Doğu mutfağı",
+  "cuisineAsian": "Asya mutfağı"
+}

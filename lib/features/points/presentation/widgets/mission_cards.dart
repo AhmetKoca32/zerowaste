@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:zerowaste/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 
 /// A single mission definition.
@@ -92,7 +93,7 @@ class _MissionCardsSectionState extends State<MissionCardsSection>
             const Icon(Icons.flag_rounded, color: AppColors.brandOrange, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Günlük Görevler',
+              AppLocalizations.of(context)!.pointsDailyMissions,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontFamily: 'Manrope',
                     color: AppColors.ink,

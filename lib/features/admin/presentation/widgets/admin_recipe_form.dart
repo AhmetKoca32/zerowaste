@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:zerowaste/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../home/data/models/recipe.dart';
 
@@ -80,6 +81,8 @@ class _AdminRecipeFormState extends State<AdminRecipeForm> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Form(
       key: widget.formKey,
       child: SingleChildScrollView(
@@ -92,14 +95,14 @@ class _AdminRecipeFormState extends State<AdminRecipeForm> {
               TextFormField(
                 controller: _titleController,
                 decoration: InputDecoration(
-                  labelText: 'Tarif Başlığı *',
+                  labelText: l10n.adminFormTitle,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Başlık gerekli';
+                    return l10n.adminFormTitleRequired;
                   }
                   return null;
                 },
@@ -108,7 +111,7 @@ class _AdminRecipeFormState extends State<AdminRecipeForm> {
               TextFormField(
                 controller: _descriptionController,
                 decoration: InputDecoration(
-                  labelText: 'Açıklama (Opsiyonel)',
+                  labelText: l10n.adminFormDescription,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -119,7 +122,7 @@ class _AdminRecipeFormState extends State<AdminRecipeForm> {
               TextFormField(
                 controller: _imageUrlController,
                 decoration: InputDecoration(
-                  labelText: 'Fotoğraf URL (Opsiyonel)',
+                  labelText: l10n.adminFormPhotoUrl,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -131,7 +134,7 @@ class _AdminRecipeFormState extends State<AdminRecipeForm> {
                 controller: _ingredientsController,
                 decoration: InputDecoration(
                   labelText: 'Malzemeler *',
-                  hintText: 'Her satıra bir malzeme yazın',
+                  hintText: l10n.adminFormIngredientsHint,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -154,8 +157,8 @@ class _AdminRecipeFormState extends State<AdminRecipeForm> {
               TextFormField(
                 controller: _instructionsController,
                 decoration: InputDecoration(
-                  labelText: 'Yapılış Adımları *',
-                  hintText: 'Her satıra bir adım yazın',
+                  labelText: l10n.adminFormStepsLabel,
+                  hintText: l10n.adminFormStepsHint,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -163,14 +166,14 @@ class _AdminRecipeFormState extends State<AdminRecipeForm> {
                 maxLines: 10,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'En az bir adım gerekli';
+                    return l10n.adminFormStepsRequired;
                   }
                   final items = value
                       .split('\n')
                       .map((e) => e.trim())
                       .where((e) => e.isNotEmpty)
                       .toList();
-                  if (items.isEmpty) return 'En az bir adım gerekli';
+                  if (items.isEmpty) return l10n.adminFormStepsRequired;
                   return null;
                 },
               ),
@@ -179,7 +182,7 @@ class _AdminRecipeFormState extends State<AdminRecipeForm> {
                 onPressed: widget.isLoading
                     ? null
                     : () {
-                        if (Form.of(context).validate()) {
+                        if (widget.formKey?.currentState?.validate() ?? false) {
                           widget.onSave(_buildRecipe());
                         }
                       },
@@ -202,7 +205,7 @@ class _AdminRecipeFormState extends State<AdminRecipeForm> {
                         ),
                       )
                     : Text(
-                        widget.initialRecipe == null ? 'Kaydet' : 'Güncelle',
+                        widget.initialRecipe == null ? l10n.adminFormSave : l10n.adminFormUpdate,
                       ),
               ),
             ],

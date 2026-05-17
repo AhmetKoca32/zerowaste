@@ -1,83 +1,113 @@
 # Progress: Sıfır Atık Mutfak
 
-**Son Güncelleme:** Nisan 2026 (16 Nisan - Gece Oturumu)
+**Son Guncelleme:** Mayis 2026 (17 Mayis)
 
 ---
 
-## Tamamlanan Özellikler
+## Tamamlanan Ozellikler
 
 ### Core Infrastructure
-- Flutter proje yapısı (Clean Architecture, feature-based)
+- Flutter proje yapisi (Clean Architecture, feature-based)
 - Riverpod state management + code generation
-- GoRouter navigation
+- GoRouter navigation (slide transitions, 10+ route)
 - Theme ve color system (brand turuncu paleti)
-- Core providers (NetworkService, DeepSeekService)
-- Manrope font ailesi entegrasyonu
+- Manrope font ailesi entegrasyonu (AppTextStyle ile 16 stil)
+- SifirAtik markalama (ZeroWaste -> SifirAtik)
 
-### Puan Sistemi (Gamification) ✨ MODERNİZE EDİLDİ
-- **PointsHeroCard:**
-  - İki modlu animasyon (Normal vs. Level-up Journey)
-  - 5 seviyeli gamification hiyerarşisi (Çaylak → Meraklı → Usta → Efsane → Efsane+)
-  - `_GradientArcPainter` ile parlayan dairesel progress bar
-  - Seviye atlama kutlama overlay'i
-  - Ticker sızıntı koruması (Robust disposal management)
-- **Gönderi Paylaşımı:**
-  - `image_picker` (Kamera/Galeri) entegrasyonu
-  - Premium görsel kaynak seçici dialog
-- **Gönderi Akışı:**
-  - `RecentPostsGrid` yerel fotoğraf desteği (`FileImage`)
-  - Admin bonus puan kartı tasarımı
-  - Gönderi detay penceresi (Genişletilmiş fotoğraf + admin notu)
+### Splash Screen
+- 5 saniyelik staggered animasyon (4 asama)
+- AB logolari + EU sponsor logosu (PNG)
+- Admin giris butonu (sag alt, gelistirme amaciyla)
 
-### AI Sohbet (EcoChef) ✨ GÜNCELLENDİ
-- **Mesaj Sınırı:** Günlük 20 mesaj sınırı eklendi (`dailyMessageCountProvider`)
-- **Bilgilendirme:** Welcome ekranına 20 mesaj hakkı rozeti eklendi
-- **Flow:** Welcome (Giriş) → Active Chat (Sohbet) iki aşamalı akış
-- **Empty State:** Typewriter + ters typewriter animasyonlu mascot ekranı
-- **Balonlar:** Fade-in + Slide-up + Typewriter efektleri
-- **Üst Bar:** Süzülen EcoChef pill + Sohbeti temizle menüsü
+### AI Tarif Uretimi (DeepSeek)
+- Malzeme girisi + son eklenenler (SharedPreferences)
+- Mutfak stili secimi
+- "EcoChef pisiriyor" loading overlay (denizati.png)
+- RecipeParser ile AI ciktisi -> Recipe model
+- Kaydettigim Tarifler (max 5, SharedPreferences)
 
-### Tarif Yönetimi
-- Recipe model (Freezed, Firestore helpers, description alanı)
-- RecipeRepository (Firestore + local JSON fallback)
-- 7 detaylı tarif (recipes.json)
-- Akıllı sıralama ve malzeme filtreleme sistemi
+### AI Sohbet (EcoChef)
+- DeepSeek API, 20 mesaj/gun limiti
+- 34 oneri, 5 kategoride, gunluk 5 random
+- Typewriter animasyonu, Markdown render
+- 5 dk background timer ile otomatik temizlik
+- denizati.png maskot entegrasyonu
 
-### Oluştur Sayfası (RecipeGeneratorPage)
-- Material chip sistemi (son eklenenler, aktif malzemeler)
-- SharedPreferences ile son eklenen malzemelerin kaydı
-- AI tarif üretimi (DeepSeek)
-- Saved recipes (local storage) + fotoğraf ekleme
+### Puan Sistemi (Gamification)
+- PointsHeroCard: 2 modlu animasyon (Normal + Level-up)
+- 5 seviye: Caylak -> Merakli -> Usta -> Efsane -> Efsane+
+- Parlayan dairesel progress bar
+- Inline leaderboard (top 3, KVKK opt-in)
+- Nickname sistemi (ilk gonderide, KVKK/GDPR uyumlu)
 
-### Navigation Bar
-- Pill-shaped frosted glass navbar (BackdropFilter blur)
-- Swipe senkronizasyonu (TabController animation listener)
+### Points + Admin Firestore Entegrasyonu ✅
+- PostEntry modeli + Firestore serilestirme
+- PointsRepository: submitPost, query, onay/red, leaderboard
+- Admin paneli: gonderi onay/red sayfasi
+- PointsPage: Firestore baglantisi canli
+- Responsive AdminShell (sidebar/drawer)
+- Firestore rules + index'ler olusturuldu
 
----
-
-## Bilinen Sorunlar (Çözülenler)
-- [x] Ticker dispose hatası (PointsHeroCard)
-- [x] Navbar swipe senkronizasyonu
-- [x] Chat balonları input bar altında kalması
-- [x] Firestore security rules / permission denied
+### Admin Paneli
+- Firebase Auth (Email/Password) + admin check
+- Tarif CRUD
+- Gonderi onay/red
+- Responsive tasarim (desktop sidebar / mobile drawer)
 
 ---
 
-## Yapılacaklar
+## Bilinen Sorunlar (Co-zulmus)
+- [x] Ticker dispose hatasi (PointsHeroCard)
+- [x] ListTile / Nested Scaffold hatalari (admin)
+- [x] Form.of() context hatasi (admin_recipe_form)
+- [x] Chat input keyboard scroll sorunu
+- [x] Chat keyboard layout kaymasi
+- [x] SifirAtik markalama
+- [x] Firestore security rules
 
-### Kısa Vadeli
-- [ ] **Liderlik Tablosu:** Kullanıcı sıralama sistemi
-- [ ] **Başarımlar:** Rozet koleksiyonu sayfası
-- [ ] **Günlük Limit Reset:** Her 24 saatte bir chat limitini sıfırlama (SharedPreferences)
-- [ ] Pagination (Firestore Reads)
+## Bilinen Sorunlar (Devam Eden)
+- [ ] Fotograf Storage'a yuklenmiyor (sadece local)
+- [ ] RecipeSyncService main'de cagrilmadi
+- [ ] Gunluk chat limit reset su an handle edilmemis olabilir
+- [ ] Fotograf admin panelinde gozukmez
+
+---
+
+## Yapilacaklar
+
+### Kritik / Acil (Bir Sonraki Oturum)
+- [ ] **Admin paneli ayri web sitesine tasinacak** (Firebase Hosting plani incelenecek)
+- [ ] **Firebase plan degerlendirmesi**: Spark -> Blaze gecisi gerekebilir
+- [ ] **Storage entegrasyonu**: Fotograf yukleme (Storage veya Google Drive)
+- [ ] **Ingilizce dil destegi**: flutter_localizations + intl ile 2 dil (TR/EN)
+- [ ] Tarif entegrasyonu: RecipeSyncService main()'e eklenecek
+
+### Kisa Vadeli
+- [ ] Gunluk mesaj limit reset mekanizmasi (SharedPreferences)
+- [ ] RecipeSyncService main()'e ekleme
+- [ ] Fotograf gosterme iyilestirmesi (placeholder + ikon)
 
 ### Orta Vadeli
-- [ ] Backend Entegrasyonu (Puanlar ve postlar Firestore'da)
-- [ ] Admin Panel: Post onaylama/reddetme sistemi
-- [ ] Kullanıcı profilleri
-- [ ] Cloud Storage: Fotoğraf upload
+- [ ] Kullanici profilleri
+- [ ] Push notification
+- [ ] Topluluk ozellikleri (yorum, favori)
 
-### Uzun Vadeli
-- [ ] Topluluk özellikleri (yorum, favori)
-- [ ] Çoklu dil desteği
-- [ ] Offline çalışma
+---
+
+## Gelecek Plan Notlari
+
+### Admin Panel Web'e Tasima
+- Admin paneli mobil uygulamadan ayrilacak
+- Ayri bir Flutter Web uygulamasi olarak Firebase Hosting'de yayinlanacak
+- Firebase Hosting Spark plani yeterli mi -> Blaze gerekebilir -> incelenecek
+- Eger hosting plani sorun cikarirsa: mobil icinde gizli admin yolu birakilacak
+
+### Gorsel Paylasimi
+- Firebase Storage Spark'ta 5GB, 20KB/gun upload (cok sinirli)
+- Asilma durumunda alternatif: Google Drive API
+- Base64 Firestore'da saklama son care (onerilmez)
+
+### Firebase Plan
+- Su an Spark (ucretsiz): Firestore, Auth, Hosting temel ihtiyaclar icin yeterli
+- Storage eklenince Blaze onerilir (tahmini maliyet: $0-$5/ay)
+- Hosting ek yuku az (sadece admin paneli statik dosyalari)

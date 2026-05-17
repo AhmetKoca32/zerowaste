@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:zerowaste/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../data/models/leaderboard_doc.dart';
+import '../../data/models/post_entry.dart';
+import '../../data/repositories/points_repository.dart';
 import '../widgets/mission_cards.dart';
 import '../widgets/points_hero_card.dart';
 import '../widgets/recent_posts_grid.dart';
 
 /// 4. sekme: Puan toplama sayfası (dolap / yemek anı / artıklardan ne yaptım).
-/// Sayfa açıldığında fade-in + slide animasyonu, sağ altta nabız animasyonlu FAB.
 class PointsPage extends StatefulWidget {
   const PointsPage({super.key, this.inTabs = false});
 
@@ -28,29 +32,30 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
   late Animation<double> _pulseAnimation;
 
   /// Mock missions — will be driven by backend later.
-  static const _missions = [
-    Mission(
-      icon: Icons.kitchen_rounded,
-      title: 'Dolabını paylaş',
-      subtitle:
-          'Buzdolabı veya kiler fotoğrafı yükle, sıfır atık alışkanlığına puan kazan.',
-      points: 15,
-      completed: true,
-    ),
-    Mission(
-      icon: Icons.restaurant_rounded,
-      title: 'Yemek anını paylaş',
-      subtitle: 'Malzemelerinle yemek yaparken çektiğin fotoğrafı gönder.',
-      points: 20,
-    ),
-    Mission(
-      icon: Icons.recycling_rounded,
-      title: 'Artıklardan ne yaptın?',
-      subtitle:
-          'Kalan malzemelerden yaptığın tarifi veya değerlendirmeyi anlat.',
-      points: 25,
-    ),
-  ];
+  List<Mission> _missions(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return [
+      Mission(
+        icon: Icons.kitchen_rounded,
+        title: l10n.pointsMissionFridge,
+        subtitle: l10n.pointsMissionFridgeDesc,
+        points: 15,
+        completed: true,
+      ),
+      Mission(
+        icon: Icons.restaurant_rounded,
+        title: l10n.pointsMissionCooking,
+        subtitle: l10n.pointsMissionCookingDesc,
+        points: 20,
+      ),
+      Mission(
+        icon: Icons.recycling_rounded,
+        title: l10n.pointsMissionLeftovers,
+        subtitle: l10n.pointsMissionLeftoversDesc,
+        points: 25,
+      ),
+    ];
+  }
 
   /// Category definitions for the add-post picker.
   static const _categories = [
@@ -80,80 +85,48 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
     ),
   ];
 
-  /// Mutable posts list — new entries are added via FAB.
-  late List<PostEntry> _posts;
+  String _localizedCategoryLabel(BuildContext context, String label) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (label) {
+      case 'Dolap':
+        return l10n.pointsCategoryFridge;
+      case 'Yemek Anı':
+        return l10n.pointsCategoryCooking;
+      case 'Artık Değerlendirme':
+        return l10n.pointsCategoryLeftovers;
+      case 'Diğer':
+        return l10n.pointsCategoryOther;
+      default:
+        return label;
+    }
+  }
 
-  /// Running total for demo.
-  int _totalPoints = 160;
+  /// User data
+  String? _nickname;
+  bool _leaderboardOptIn = false;
+  bool _nicknameLoaded = false;
 
-  /// Level-up detection for content visibility.
+  /// Posts from Firestore
+  List<PostEntry> _posts = [];
+  int _totalPoints = 0;
+  int _previousPoints = 0;
+  bool _isLoading = true;
+
+  /// Level-up state
   bool _isLevelUp = false;
   bool _journeyDone = false;
   bool _startHeroAnimation = false;
+  bool _showPointsAddedOverlay = false;
 
-  /// TEST: set to a value to trigger level-up, set to null for normal mode.
-  static const int? _previousPoints = 140;
+  late PointsRepository _repo;
 
   @override
   void initState() {
     super.initState();
 
-    // Detect if level-up will happen
-    if (_previousPoints != null) {
-      _isLevelUp = _getLevelName(_previousPoints!) != _getLevelName(_totalPoints);
-    }
+    _repo = PointsRepository();
 
-    if (_isLevelUp) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _showPointsAddedDialog();
-      });
-    } else {
-      _startHeroAnimation = true;
-    }
-
-    _posts = [
-      const PostEntry(
-        icon: Icons.kitchen_rounded,
-        category: 'Dolap',
-        points: 15,
-        date: '14 Nis',
-        imageColor: Color(0xFF8BC34A),
-        status: PostStatus.pending,
-      ),
-      const PostEntry(
-        icon: Icons.restaurant_rounded,
-        category: 'Yemek Anı',
-        points: 20,
-        date: '13 Nis',
-        imageColor: Color(0xFFFF9800),
-        status: PostStatus.approved,
-      ),
-      const PostEntry(
-        icon: Icons.recycling_rounded,
-        category: 'Artık Değerlendirme',
-        points: 25,
-        date: '12 Nis',
-        imageColor: Color(0xFF4CAF50),
-        status: PostStatus.approved,
-      ),
-      const PostEntry(
-        icon: Icons.more_horiz_rounded,
-        category: 'Diğer',
-        points: 10,
-        date: '11 Nis',
-        imageColor: Color(0xFF7E57C2),
-        status: PostStatus.rejected,
-      ),
-      const PostEntry(
-        icon: Icons.auto_awesome_rounded,
-        category: 'Admin Bonus',
-        points: 30,
-        date: '10 Nis',
-        isAdminBonus: true,
-        status: PostStatus.approved,
-        adminNote: 'Harika katkı! 🎉',
-      ),
-    ];
+    _loadNickname();
 
     // ── Page entrance ──
     _entranceController = AnimationController(
@@ -187,13 +160,234 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
     );
   }
 
-  /// Helper to get level name for a given point value.
+  Future<void> _loadPosts() async {
+    if (_nickname == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    try {
+      final posts = await _repo.getPostsByNickname(_nickname!);
+      final approved = posts.where((p) => p.status == PostStatus.approved).toList();
+      final total = approved.fold(0, (sum, p) => sum + p.points);
+
+      if (mounted) {
+        setState(() {
+          _posts = posts;
+          _totalPoints = total;
+          _isLoading = false;
+
+          // Level-up detection
+          final prefs = SharedPreferences.getInstance();
+          prefs.then((p) {
+            _previousPoints = p.getInt('last_known_points') ?? 0;
+            _isLevelUp = _previousPoints > 0 &&
+                _getLevelName(_previousPoints) != _getLevelName(_totalPoints);
+            if (_isLevelUp) {
+              _showPointsAddedOverlay = true;
+            } else {
+              _startHeroAnimation = true;
+            }
+          });
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   String _getLevelName(int pts) {
-    if (pts >= 600) return 'Efsane+';
-    if (pts >= 300) return 'Efsane';
-    if (pts >= 150) return 'Usta';
-    if (pts >= 50) return 'Meraklı';
-    return 'Çaylak';
+    if (pts >= 600) return '_legend_plus_';
+    if (pts >= 300) return '_legend_';
+    if (pts >= 150) return '_master_';
+    if (pts >= 50) return '_curious_';
+    return '_novice_';
+  }
+
+  Future<void> _loadNickname() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Clear stored values so dialog appears fresh
+    await prefs.remove('leaderboard_nickname');
+    await prefs.remove('leaderboard_opt_in');
+    setState(() {
+      _nickname = null;
+      _leaderboardOptIn = false;
+      _nicknameLoaded = true;
+    });
+    // Load posts after nickname
+    _loadPosts();
+  }
+
+  Future<bool> _showNicknameDialog() async {
+    final l10n = AppLocalizations.of(context)!;
+    final nicknameController = TextEditingController(text: _nickname ?? '');
+    bool optIn = _leaderboardOptIn;
+    final formKey = GlobalKey<FormState>();
+
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.pointsNicknameDialogTitle,
+                        style: const TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        l10n.pointsNicknameDialogSubtitle,
+                        style: TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 14,
+                          color: AppColors.inkLight.withOpacity(0.8),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: nicknameController,
+                        maxLength: 20,
+                        decoration: InputDecoration(
+                          hintText: l10n.pointsNicknameHint,
+                          hintStyle: TextStyle(
+                            color: AppColors.stone.withOpacity(0.5),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.paper.withOpacity(0.5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) {
+                            return l10n.pointsNicknameValidationEmpty;
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: Checkbox(
+                              value: optIn,
+                              onChanged: (v) {
+                                setDialogState(() => optIn = v ?? false);
+                              },
+                              activeColor: AppColors.brandOrange,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              l10n.pointsLeaderboardOptIn,
+                              style: TextStyle(
+                                fontFamily: 'Manrope',
+                                fontSize: 13,
+                                height: 1.4,
+                                color: AppColors.inkLight,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 36),
+                        child: Text(
+                          l10n.pointsPrivacyDisclaimer,
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 11,
+                            height: 1.3,
+                            color: AppColors.inkLight.withOpacity(0.6),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            if (formKey.currentState?.validate() ?? false) {
+                              Navigator.pop(ctx, {
+                                'nickname': nicknameController.text.trim(),
+                                'optIn': optIn,
+                              });
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.brandOrange,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            l10n.pointsSave,
+                            style: const TextStyle(
+                              fontFamily: 'Manrope',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (result != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        'leaderboard_nickname',
+        result['nickname'] as String,
+      );
+      await prefs.setBool(
+        'leaderboard_opt_in',
+        result['optIn'] as bool,
+      );
+      setState(() {
+        _nickname = result['nickname'] as String;
+        _leaderboardOptIn = result['optIn'] as bool;
+      });
+      _loadPosts();
+      return true;
+    }
+    return false;
   }
 
   @override
@@ -203,7 +397,6 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  /// Shows category picker bottom sheet, then adds a new post.
   void _onAddPost() {
     showModalBottomSheet(
       context: context,
@@ -219,8 +412,14 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
   }
 
   Future<void> _pickImageAndAddPost(_PostCategory cat) async {
+    final l10n = AppLocalizations.of(context)!;
+    if (_nicknameLoaded && _nickname == null) {
+      final saved = await _showNicknameDialog();
+      if (!saved) return;
+    }
+
     final picker = ImagePicker();
-    
+
     final source = await showDialog<ImageSource>(
       context: context,
       builder: (ctx) => Dialog(
@@ -237,12 +436,16 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
                   color: AppColors.brandOrange.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.add_a_photo_rounded, color: AppColors.brandOrange, size: 36),
+                child: const Icon(
+                  Icons.add_a_photo_rounded,
+                  color: AppColors.brandOrange,
+                  size: 36,
+                ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Fotoğraf Ekle',
-                style: TextStyle(
+              Text(
+                l10n.pointsAddPhoto,
+                style: const TextStyle(
                   fontFamily: 'Manrope',
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
@@ -251,7 +454,7 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
               ),
               const SizedBox(height: 6),
               Text(
-                'Gönderin için fotoğraf kaynağını seç',
+                l10n.pointsPhotoSource,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'Manrope',
@@ -261,50 +464,90 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
                 ),
               ),
               const SizedBox(height: 24),
-              // Option 1: Camera
               Material(
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () => Navigator.pop(ctx, ImageSource.camera),
                   borderRadius: BorderRadius.circular(16),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
                     decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.stone.withOpacity(0.4)),
+                      border: Border.all(
+                        color: AppColors.stone.withOpacity(0.4),
+                      ),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(Icons.camera_alt_rounded, color: AppColors.brandOrange, size: 24),
-                        SizedBox(width: 14),
-                        Text('Kameradan Çek', style: TextStyle(fontFamily: 'Manrope', fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.ink)),
-                        Spacer(),
-                        Icon(Icons.chevron_right_rounded, color: AppColors.stone, size: 20),
+                        const Icon(
+                          Icons.camera_alt_rounded,
+                          color: AppColors.brandOrange,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 14),
+                        Text(
+                          l10n.pointsCamera,
+                          style: const TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                        const Spacer(),
+                        const Icon(
+                          Icons.chevron_right_rounded,
+                          color: AppColors.stone,
+                          size: 20,
+                        ),
                       ],
                     ),
                   ),
                 ),
               ),
               const SizedBox(height: 12),
-              // Option 2: Gallery
               Material(
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () => Navigator.pop(ctx, ImageSource.gallery),
                   borderRadius: BorderRadius.circular(16),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
                     decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.stone.withOpacity(0.4)),
+                      border: Border.all(
+                        color: AppColors.stone.withOpacity(0.4),
+                      ),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(Icons.photo_library_rounded, color: AppColors.brandOrange, size: 24),
-                        SizedBox(width: 14),
-                        Text('Galeriden Seç', style: TextStyle(fontFamily: 'Manrope', fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.ink)),
-                        Spacer(),
-                        Icon(Icons.chevron_right_rounded, color: AppColors.stone, size: 20),
+                        const Icon(
+                          Icons.photo_library_rounded,
+                          color: AppColors.brandOrange,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 14),
+                        Text(
+                          l10n.pointsGallery,
+                          style: const TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                        const Spacer(),
+                        const Icon(
+                          Icons.chevron_right_rounded,
+                          color: AppColors.stone,
+                          size: 20,
+                        ),
                       ],
                     ),
                   ),
@@ -330,31 +573,28 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
   }
 
   void _addNewPost(_PostCategory cat, {String? localImagePath}) {
-    final now = DateTime.now();
-    final months = [
-      '', 'Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz',
-      'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara',
-    ];
-    final dateStr = '${now.day} ${months[now.month]}';
+    final l10n = AppLocalizations.of(context)!;
+    final post = PostEntry(
+      nickname: _nickname ?? l10n.pointsAnonymous,
+      category: cat.label,
+      points: cat.points,
+      localImagePath: localImagePath,
+      imageColor: cat.color.value,
+      status: PostStatus.pending,
+      leaderboardOptIn: _leaderboardOptIn,
+    );
 
+    // Save to Firestore
+    _repo.submitPost(post);
+
+    // Optimistic local update
     setState(() {
-      _posts.insert(
-        0,
-        PostEntry(
-          icon: cat.icon,
-          category: cat.label,
-          points: cat.points,
-          date: dateStr,
-          localImagePath: localImagePath,
-          imageColor: cat.color,
-          status: PostStatus.pending,
-        ),
-      );
+      _posts.insert(0, post);
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('⏳ ${cat.label} gönderin incelemeye gönderildi!'),
+        content: Text(l10n.pointsPostSent(_localizedCategoryLabel(context, cat.label))),
         behavior: SnackBarBehavior.floating,
         backgroundColor: const Color(0xFFFFA726),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -363,82 +603,101 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
     );
   }
 
-  void _showPointsAddedDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.brandOrange.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.verified_rounded, color: AppColors.brandOrange, size: 48),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Tebrikler! 🎉',
-                  style: TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.ink,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Gönderin admin tarafından onaylandı ve kazandığın yeni puanlar hesabına eklendi. Sıfır atık yolculuğunda ilham vermeye devam et!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 15,
-                    height: 1.5,
-                    color: AppColors.inkLight,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      if (mounted) {
-                        setState(() => _startHeroAnimation = true);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.brandOrange,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      'Harika! Devam Et',
-                      style: TextStyle(
-                        fontFamily: 'Manrope',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
+  Widget _buildPointsAddedOverlay() {
+    final l10n = AppLocalizations.of(context)!;
+    return IgnorePointer(
+      ignoring: !_showPointsAddedOverlay,
+      child: AnimatedOpacity(
+        opacity: _showPointsAddedOverlay ? 1.0 : 0.0,
+        duration: const Duration(milliseconds: 400),
+        child: Container(
+          color: Colors.black.withOpacity(0.5),
+          child: Center(
+            child: Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.brandOrange.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.verified_rounded,
+                        color: AppColors.brandOrange,
+                        size: 48,
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.pointsLevelUpTitle,
+                      style: const TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.pointsLevelUpDesc,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 15,
+                        height: 1.5,
+                        color: AppColors.inkLight,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setInt('last_known_points', _totalPoints);
+                          if (mounted) {
+                            setState(() {
+                              _showPointsAddedOverlay = false;
+                              _startHeroAnimation = true;
+                            });
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.brandOrange,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          l10n.pointsKeepGoing,
+                          style: const TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
-  /// Whether to show the rest of the page content.
   bool get _showContent => !_isLevelUp || _journeyDone;
 
   @override
@@ -447,55 +706,60 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
       opacity: _fadeAnimation,
       child: SlideTransition(
         position: _slideAnimation,
-        child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(20, 20, 20, widget.inTabs ? 170 : 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ── Gamification Hero Card ──
-              PointsHeroCard(
-                totalPoints: _totalPoints,
-                streakDays: 3,
-                previousPoints: _previousPoints,
-                startAnimation: _startHeroAnimation,
-                onJourneyComplete: () {
-                  if (mounted) {
-                    setState(() => _journeyDone = true);
-                  }
-                },
-              ),
-              const SizedBox(height: 28),
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(20, 20, 20, widget.inTabs ? 170 : 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // ── Gamification Hero Card ──
+                    PointsHeroCard(
+                      totalPoints: _totalPoints,
+                      streakDays: 3,
+                      previousPoints: _previousPoints > 0 ? _previousPoints : null,
+                      startAnimation: _startHeroAnimation,
+                      nickname: _nickname,
+                      onJourneyComplete: () {
+                        if (mounted) {
+                          setState(() => _journeyDone = true);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
 
-              // ── Below content: hidden during level-up journey ──
-              AnimatedOpacity(
-                opacity: _showContent ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 600),
-                curve: Curves.easeOut,
-                child: IgnorePointer(
-                  ignoring: !_showContent,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      MissionCardsSection(
-                        missions: _missions,
-                        onMissionTap: (index) {
-                          // Handle Diğer logic if index exceeds or just map directly
-                          if (index < _categories.length) {
-                            _pickImageAndAddPost(_categories[index]);
-                          } else {
-                            _pickImageAndAddPost(_categories.last); // default fallback
-                          }
-                        },
+                    // ── Below content: hidden during level-up journey ──
+                    AnimatedOpacity(
+                      opacity: _showContent ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 600),
+                      curve: Curves.easeOut,
+                      child: IgnorePointer(
+                        ignoring: !_showContent,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // ── Leaderboard top 3 ──
+                            _LeaderboardTop3(repo: _repo),
+                            const SizedBox(height: 28),
+                            MissionCardsSection(
+                              missions: _missions(context),
+                              onMissionTap: (index) {
+                                if (index < _categories.length) {
+                                  _pickImageAndAddPost(_categories[index]);
+                                } else {
+                                  _pickImageAndAddPost(_categories.last);
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 28),
+                            RecentPostsGrid(posts: _posts, onAddPost: _onAddPost),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 28),
-                      RecentPostsGrid(posts: _posts, onAddPost: _onAddPost),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
       ),
     );
 
@@ -516,7 +780,10 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
             child: AnimatedBuilder(
               animation: _pulseAnimation,
               builder: (context, child) {
-                return Transform.scale(scale: _pulseAnimation.value, child: child);
+                return Transform.scale(
+                  scale: _pulseAnimation.value,
+                  child: child,
+                );
               },
               child: Container(
                 decoration: BoxDecoration(
@@ -546,12 +813,20 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
     );
 
     if (widget.inTabs) {
-      return Stack(children: [safeBody, fab]);
+      return Stack(children: [
+        safeBody,
+        fab,
+        if (_showPointsAddedOverlay) _buildPointsAddedOverlay(),
+      ]);
     }
 
     return Scaffold(
       backgroundColor: AppColors.paper,
-      body: Stack(children: [safeBody, fab]),
+      body: Stack(children: [
+        safeBody,
+        fab,
+        if (_showPointsAddedOverlay) _buildPointsAddedOverlay(),
+      ]),
     );
   }
 }
@@ -583,6 +858,7 @@ class _CategoryPickerSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -602,9 +878,9 @@ class _CategoryPickerSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Ne paylaşmak istersin?',
-              style: TextStyle(
+            Text(
+              l10n.pointsShareTitle,
+              style: const TextStyle(
                 fontFamily: 'Manrope',
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -613,7 +889,7 @@ class _CategoryPickerSheet extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'Bir kategori seç ve fotoğraf ekle',
+              l10n.pointsShareSubtitle,
               style: TextStyle(
                 fontFamily: 'Manrope',
                 fontSize: 13,
@@ -621,10 +897,9 @@ class _CategoryPickerSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            ...categories.map((cat) => _CategoryTile(
-                  category: cat,
-                  onTap: () => onSelect(cat),
-                )),
+            ...categories.map(
+              (cat) => _CategoryTile(category: cat, onTap: () => onSelect(cat)),
+            ),
             SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
           ],
         ),
@@ -638,6 +913,22 @@ class _CategoryTile extends StatelessWidget {
 
   final _PostCategory category;
   final VoidCallback onTap;
+
+  String _localizedCategoryLabel(BuildContext context, String label) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (label) {
+      case 'Dolap':
+        return l10n.pointsCategoryFridge;
+      case 'Yemek Anı':
+        return l10n.pointsCategoryCooking;
+      case 'Artık Değerlendirme':
+        return l10n.pointsCategoryLeftovers;
+      case 'Diğer':
+        return l10n.pointsCategoryOther;
+      default:
+        return label;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -672,7 +963,7 @@ class _CategoryTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        category.label,
+                        _localizedCategoryLabel(context, category.label),
                         style: const TextStyle(
                           fontFamily: 'Manrope',
                           fontSize: 15,
@@ -682,7 +973,7 @@ class _CategoryTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Fotoğraf çek veya galeriden seç',
+                        AppLocalizations.of(context)!.pointsShareHint,
                         style: TextStyle(
                           fontFamily: 'Manrope',
                           fontSize: 12,
@@ -693,7 +984,10 @@ class _CategoryTile extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: category.color,
                     borderRadius: BorderRadius.circular(999),
@@ -712,6 +1006,186 @@ class _CategoryTile extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Inline leaderboard showing the top 3 approved opt-in users.
+class _LeaderboardTop3 extends StatefulWidget {
+  const _LeaderboardTop3({required this.repo});
+
+  final PointsRepository repo;
+
+  @override
+  State<_LeaderboardTop3> createState() => _LeaderboardTop3State();
+}
+
+class _LeaderboardTop3State extends State<_LeaderboardTop3> {
+  List<LeaderboardEntry>? _entries;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final entries = await widget.repo.getLeaderboard();
+    if (mounted) {
+      setState(() {
+      _entries = entries;
+      _loading = false;
+    });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const SizedBox.shrink();
+    if (_entries == null || _entries!.isEmpty) return const SizedBox.shrink();
+
+    final top3 = _entries!.take(3).toList();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.brandOrange.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.brandOrange.withOpacity(0.15),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.leaderboard_rounded,
+                size: 16,
+                color: AppColors.brandOrange,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                AppLocalizations.of(context)!.pointsLeaderboardTitle,
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink.withOpacity(0.6),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...List.generate(top3.length, (i) => _Top3Tile(
+            rank: i + 1,
+            nickname: top3[i].nickname,
+            points: top3[i].points,
+          )),
+        ],
+      ),
+    );
+  }
+}
+
+/// Single top-3 row.
+class _Top3Tile extends StatelessWidget {
+  const _Top3Tile({
+    required this.rank,
+    required this.nickname,
+    required this.points,
+  });
+
+  final int rank;
+  final String nickname;
+  final int points;
+
+  @override
+  Widget build(BuildContext context) {
+    final medalColors = [
+      const Color(0xFFFFD700),
+      const Color(0xFFC0C0C0),
+      const Color(0xFFCD7F32),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Icon(
+            rank == 1
+                ? Icons.emoji_events_rounded
+                : rank == 2
+                    ? Icons.workspace_premium_rounded
+                    : Icons.military_tech_rounded,
+            size: 22,
+            color: medalColors[rank - 1],
+          ),
+          const SizedBox(width: 10),
+          // Avatar
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: medalColors[rank - 1].withOpacity(0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Text(
+                nickname[0].toUpperCase(),
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: medalColors[rank - 1],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              nickname,
+              style: const TextStyle(
+                fontFamily: 'Manrope',
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
+              ),
+            ),
+          ),
+          // Points badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.brandOrange.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.stars_rounded,
+                  size: 14,
+                  color: AppColors.brandOrange,
+                ),
+                const SizedBox(width: 3),
+                Text(
+                  '$points',
+                  style: const TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.brandOrange,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

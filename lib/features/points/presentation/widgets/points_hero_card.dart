@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'package:zerowaste/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 
 /// Gamification level definition.
@@ -28,6 +29,24 @@ const _levels = [
   _Level(name: 'Efsane',    emoji: '🏆', minPoints: 300,  maxPoints: 600,  color: Color(0xFFFF6F00)),
   _Level(name: 'Efsane+',   emoji: '💎', minPoints: 600,  maxPoints: 999999, color: Color(0xFFFFD700)),
 ];
+
+String _localizedLevelName(BuildContext context, String name) {
+  final l10n = AppLocalizations.of(context)!;
+  switch (name) {
+    case 'Çaylak':
+      return l10n.pointsLevelCaylak;
+    case 'Meraklı':
+      return l10n.pointsLevelMerakli;
+    case 'Usta':
+      return l10n.pointsLevelUsta;
+    case 'Efsane':
+      return l10n.pointsLevelEfsane;
+    case 'Efsane+':
+      return l10n.pointsLevelLegend;
+    default:
+      return name;
+  }
+}
 
 _Level _levelForPoints(int points) {
   for (final level in _levels.reversed) {
@@ -61,6 +80,7 @@ class PointsHeroCard extends StatefulWidget {
     this.previousPoints,
     this.onJourneyComplete,
     this.startAnimation = true,
+    this.nickname,
   });
 
   final int totalPoints;
@@ -73,6 +93,9 @@ class PointsHeroCard extends StatefulWidget {
 
   /// Controls when the progress animations begin.
   final bool startAnimation;
+
+  /// User's display name shown at the top of the card.
+  final String? nickname;
 
   @override
   State<PointsHeroCard> createState() => _PointsHeroCardState();
@@ -290,7 +313,7 @@ class _PointsHeroCardState extends State<PointsHeroCard>
 
     setState(() {
       _showCelebration = true;
-      _celebrationText = '${level.name} ✓';
+      _celebrationText = '${_localizedLevelName(context, level.name)} ✓';
       _celebrationOpacity = 0.0;
       _celebrationScale = 0.0;
     });
@@ -395,6 +418,31 @@ class _PointsHeroCardState extends State<PointsHeroCard>
           children: [
             Column(
               children: [
+                // ── Nickname greeting ──
+                if (widget.nickname != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.person_rounded,
+                          size: 16,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          widget.nickname!,
+                          style: const TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 _buildTopRow(displayLevel),
                 const SizedBox(height: 20),
                 _buildCircularProgress(),
@@ -460,8 +508,8 @@ class _PointsHeroCardState extends State<PointsHeroCard>
                   const SizedBox(height: 8),
                   Opacity(
                     opacity: _celebrationOpacity,
-                    child: const Text(
-                      'Seviye tamamlandı!',
+                    child: Text(
+                      AppLocalizations.of(context)!.pointsLevelComplete,
                       style: TextStyle(
                         fontFamily: 'Manrope',
                         fontSize: 14,
@@ -501,7 +549,7 @@ class _PointsHeroCardState extends State<PointsHeroCard>
                 Text(level.emoji, style: const TextStyle(fontSize: 16)),
                 const SizedBox(width: 6),
                 Text(
-                  level.name,
+                  _localizedLevelName(context, level.name),
                   style: const TextStyle(
                     fontFamily: 'Manrope',
                     fontSize: 14,
@@ -527,7 +575,7 @@ class _PointsHeroCardState extends State<PointsHeroCard>
                 const Text('🔥', style: TextStyle(fontSize: 14)),
                 const SizedBox(width: 4),
                 Text(
-                  '${widget.streakDays} gün',
+                  AppLocalizations.of(context)!.pointsStreak(widget.streakDays),
                   style: const TextStyle(
                     fontFamily: 'Manrope',
                     fontSize: 13,
@@ -606,7 +654,11 @@ class _PointsHeroCardState extends State<PointsHeroCard>
   Widget _buildBottomInfo(_Level? nextLevel) {
     if (nextLevel != null) {
       return Text(
-        '${nextLevel.emoji} ${nextLevel.name} seviyesine ${nextLevel.minPoints - widget.totalPoints} puan kaldı',
+        AppLocalizations.of(context)!.pointsNextLevel(
+          nextLevel.emoji,
+          _localizedLevelName(context, nextLevel.name),
+          nextLevel.minPoints - widget.totalPoints,
+        ),
         style: TextStyle(
           fontFamily: 'Manrope',
           fontSize: 13,
@@ -617,7 +669,7 @@ class _PointsHeroCardState extends State<PointsHeroCard>
       );
     }
     return Text(
-      '🏆 En yüksek seviyedesin!',
+      AppLocalizations.of(context)!.pointsMaxLevel,
       style: TextStyle(
         fontFamily: 'Manrope',
         fontSize: 13,

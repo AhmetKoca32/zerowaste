@@ -1,0 +1,106 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+/// Post approval status — admin reviews before points are awarded.
+enum PostStatus {
+  pending,  // Submitted, waiting for admin review
+  approved, // Admin approved → points awarded
+  rejected, // Admin rejected → no points
+}
+
+/// A single post entry stored in Firestore.
+class PostEntry {
+  PostEntry({
+    this.id,
+    required this.nickname,
+    required this.category,
+    required this.points,
+    this.localImagePath,
+    this.imageColor,
+    this.status = PostStatus.pending,
+    this.isAdminBonus = false,
+    this.adminNote,
+    this.leaderboardOptIn = false,
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
+
+  final String? id;
+  final String nickname;
+  final String category;
+  final int points;
+  final String? localImagePath;
+  final int? imageColor;
+  final PostStatus status;
+  final bool isAdminBonus;
+  final String? adminNote;
+  final bool leaderboardOptIn;
+  final DateTime createdAt;
+
+  PostEntry copyWith({
+    String? id,
+    String? nickname,
+    String? category,
+    int? points,
+    String? localImagePath,
+    int? imageColor,
+    PostStatus? status,
+    bool? isAdminBonus,
+    String? adminNote,
+    bool? leaderboardOptIn,
+    DateTime? createdAt,
+  }) {
+    return PostEntry(
+      id: id ?? this.id,
+      nickname: nickname ?? this.nickname,
+      category: category ?? this.category,
+      points: points ?? this.points,
+      localImagePath: localImagePath ?? this.localImagePath,
+      imageColor: imageColor ?? this.imageColor,
+      status: status ?? this.status,
+      isAdminBonus: isAdminBonus ?? this.isAdminBonus,
+      adminNote: adminNote ?? this.adminNote,
+      leaderboardOptIn: leaderboardOptIn ?? this.leaderboardOptIn,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  factory PostEntry.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return PostEntry(
+      id: doc.id,
+      nickname: data['nickname'] as String? ?? '',
+      category: data['category'] as String? ?? '',
+      points: data['points'] as int? ?? 0,
+      localImagePath: data['imagePath'] as String?,
+      imageColor: data['imageColor'] as int?,
+      status: _parseStatus(data['status'] as String?),
+      isAdminBonus: data['isAdminBonus'] as bool? ?? false,
+      adminNote: data['adminNote'] as String?,
+      leaderboardOptIn: data['leaderboardOptIn'] as bool? ?? false,
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toFirestore() => {
+        'nickname': nickname,
+        'category': category,
+        'points': points,
+        if (localImagePath != null) 'imagePath': localImagePath,
+        if (imageColor != null) 'imageColor': imageColor,
+        'status': status.name,
+        'isAdminBonus': isAdminBonus,
+        if (adminNote != null) 'adminNote': adminNote,
+        'leaderboardOptIn': leaderboardOptIn,
+        'createdAt': Timestamp.fromDate(createdAt),
+      };
+
+  static PostStatus _parseStatus(String? s) {
+    switch (s) {
+      case 'approved':
+        return PostStatus.approved;
+      case 'rejected':
+        return PostStatus.rejected;
+      default:
+        return PostStatus.pending;
+    }
+  }
+}

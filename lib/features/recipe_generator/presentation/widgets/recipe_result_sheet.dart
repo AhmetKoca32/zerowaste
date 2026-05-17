@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Bottom sheet showing generated recipe (or error) with pastel styling.
 void showRecipeResultSheet(
@@ -52,7 +53,9 @@ void showRecipeResultSheet(
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      isError ? 'Bir hata oluştu' : 'Tarifiniz',
+                      isError
+                          ? AppLocalizations.of(context)!.generatorResultSheetError
+                          : AppLocalizations.of(context)!.generatorResultSheetTitle,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: AppColors.brandOrange,

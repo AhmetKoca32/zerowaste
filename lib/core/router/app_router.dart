@@ -3,12 +3,15 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
 import '../../features/admin/presentation/pages/admin_login_page.dart';
+import '../../features/admin/presentation/pages/admin_posts_page.dart';
 import '../../features/admin/presentation/pages/admin_recipe_edit_page.dart';
+import '../../features/splash/presentation/pages/splash_page.dart';
 import '../shell/main_tab_shell.dart';
 
 abstract final class AppRouter {
   AppRouter._();
 
+  static const String splash = '/splash';
   static const String home = '/';
   static const String recipeGenerator = '/generate';
   static const String chat = '/chat';
@@ -18,10 +21,16 @@ abstract final class AppRouter {
   static const String adminDashboard = '/admin/dashboard';
   static const String adminRecipeNew = '/admin/recipes/new';
   static String adminRecipeEdit(String id) => '/admin/recipes/$id';
+  static const String adminPosts = '/admin/posts';
 
   static final GoRouter router = GoRouter(
-    initialLocation: home,
+    initialLocation: splash,
     routes: <RouteBase>[
+      GoRoute(
+        path: splash,
+        name: 'splash',
+        builder: (context, state) => const SplashPage(),
+      ),
       GoRoute(
         path: home,
         name: 'home',
@@ -82,6 +91,15 @@ abstract final class AppRouter {
         pageBuilder: (context, state) => CustomTransitionPage<void>(
           key: state.pageKey,
           child: const AdminRecipeEditPage(),
+          transitionsBuilder: _slideTransition,
+        ),
+      ),
+      GoRoute(
+        path: '/admin/posts',
+        name: 'adminPosts',
+        pageBuilder: (context, state) => CustomTransitionPage<void>(
+          key: state.pageKey,
+          child: const AdminPostsPage(),
           transitionsBuilder: _slideTransition,
         ),
       ),

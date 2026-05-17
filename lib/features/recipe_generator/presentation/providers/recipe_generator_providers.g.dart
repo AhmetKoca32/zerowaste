@@ -6,7 +6,7 @@ part of 'recipe_generator_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$ingredientListHash() => r'3d527657906efc66baf1f263ed18972f24cf3e50';
+String _$ingredientListHash() => r'5168ae94bb410b15d0fa113e97a4b27b5dda7553';
 
 /// Ingredient list for recipe generation (chips).
 ///

@@ -20,7 +20,28 @@ class RecipeParser {
   /// Tries to parse [markdown] into [Recipe]. Returns null if parsing fails.
   static Recipe? parse(String markdown, {String? id}) {
     if (markdown.trim().isEmpty) return null;
-    final lines = markdown.split('\n').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+
+    // Strip any introductory lines before the first section header (## or **)
+    var cleaned = markdown.trim();
+    final linesAll = cleaned.split('\n');
+    int firstHeaderIdx = -1;
+    for (int i = 0; i < linesAll.length; i++) {
+      final line = linesAll[i].trim();
+      if (line.startsWith('## ') ||
+          line.toLowerCase().contains('başlık') ||
+          line.toLowerCase().contains('malzeme') ||
+          line.toLowerCase().contains('yapılış') ||
+          line.toLowerCase().contains('hazırlanış')) {
+        firstHeaderIdx = i;
+        break;
+      }
+    }
+    if (firstHeaderIdx > 0) {
+      // Remove lines before the first header
+      cleaned = linesAll.sublist(firstHeaderIdx).join('\n').trim();
+    }
+
+    final lines = cleaned.split('\n').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
     if (lines.isEmpty) return null;
 
     final title = stripMarkdown(_extractTitle(lines));
@@ -80,9 +101,33 @@ class RecipeParser {
   }
 
   static String _extractTitle(List<String> lines) {
+    // Prefer lines that match "## Başlık: ..." or "**Başlık:** ..." format
+    final titleMarkers = ['başlık:', 'başlik:'];
+    for (final line in lines) {
+      final lower = line.toLowerCase();
+      if (titleMarkers.any((m) => lower.contains(m))) {
+        // Extract text after the marker
+        for (final m in ['## Başlık:', '## Başlık', '**Başlık:**', '**Başlık**', 'Başlık:']) {
+          final idx = lower.indexOf(m.toLowerCase());
+          if (idx >= 0) {
+            final after = line.substring(idx + m.length).trim();
+            if (after.isNotEmpty) return after;
+          }
+        }
+        // Fallback: remove common prefixes
+        return line.replaceFirst(RegExp(r'^##?\s*Başlık:?\s*', caseSensitive: false), '')
+            .replaceFirst(RegExp(r'^\*\*Başlık:?\*\*\s*', caseSensitive: false), '')
+            .trim();
+      }
+    }
+    // Fallback: first non-empty line that isn't just a greeting
     for (final line in lines) {
       final t = line.replaceFirst(RegExp(r'^#+\s*'), '').trim();
-      if (t.isNotEmpty && t.length < 200) return t;
+      const greetings = ['elbette', 'işte', 'karşınızda', 'merhaba', 'tabii ki'];
+      final lower = t.toLowerCase();
+      if (t.isNotEmpty && t.length < 200 && !greetings.any((g) => lower.startsWith(g))) {
+        return t;
+      }
     }
     if (lines.isEmpty) return 'Yeni Tarif';
     final first = lines.first;

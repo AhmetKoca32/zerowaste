@@ -3,8 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:zerowaste/l10n/app_localizations.dart';
+
 import '../../../../core/providers/core_providers.dart';
+import '../../../../core/providers/locale_provider.dart';
+import '../../../../core/services/deep_seek_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../data/chat_suggestion_pool.dart';
 import '../providers/chat_providers.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/ecochef_chat_empty.dart';
@@ -24,6 +29,7 @@ class ChatPage extends ConsumerStatefulWidget {
 class _ChatPageState extends ConsumerState<ChatPage>
     with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   final _controller = TextEditingController();
+  final _focusNode = FocusNode();
   final _scrollController = ScrollController();
   bool _isSending = false;
   bool _chatStarted = false;
@@ -45,6 +51,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _backgroundTimer?.cancel();
+    _focusNode.dispose();
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -87,15 +94,16 @@ class _ChatPageState extends ConsumerState<ChatPage>
     setState(() => _chatStarted = true);
   }
 
-  Future<void> _sendMessage() async {
+  Future<void> _sendMessage({String? aiTextOverride}) async {
+    final l10n = AppLocalizations.of(context)!;
     final text = _controller.text.trim();
     if (text.isEmpty || _isSending) return;
 
-    final sentCount = ref.read(dailyMessageCountProvider);
+    final sentCount = ref.read(dailyMessageCountProvider).valueOrNull ?? 0;
     if (sentCount >= 20) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Bugünlük 20 mesaj hakkın doldu! Detaylı tarifler için yarın tekrar gel.'),
+      SnackBar(
+        content: Text(l10n.chatDailyLimit),
           backgroundColor: AppColors.brandOrange,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -108,33 +116,66 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
     final notifier = ref.read(chatMessagesProvider.notifier);
     notifier.add(ChatMessageEntry(text: text, isUser: true));
-    ref.read(dailyMessageCountProvider.notifier).state++;
+    await ref.read(dailyMessageCountProvider.notifier).increment();
     
     _scrollToBottom();
 
     setState(() => _isSending = true);
 
-    String reply;
+    String? reply;
+    String? userFacingError;
     try {
       final deepSeek = ref.read(deepSeekServiceProvider);
-      reply = await deepSeek.chatWithMascot(text);
-    } catch (e) {
-      reply =
-          'Bir şeyler yanlış gitti. Bağlantınızı kontrol edin veya tekrar deneyin. ($e)';
+      reply = await deepSeek.chatWithMascot(aiTextOverride ?? text);
+    } on DeepSeekConnectionException {
+      userFacingError = l10n.chatConnectionError;
+    } on DeepSeekTimeoutException {
+      userFacingError = l10n.chatTimeoutError;
+    } on DeepSeekAuthException {
+      userFacingError = l10n.chatAuthError;
+    } on DeepSeekApiException catch (e) {
+      userFacingError = l10n.chatApiError('${e.statusCode}');
+    } catch (_) {
+      userFacingError = l10n.chatGenericError;
     }
 
     if (!mounted) return;
-    notifier.add(ChatMessageEntry(text: reply, isUser: false));
+
+    if (reply != null) {
+      notifier.add(ChatMessageEntry(text: reply, isUser: false));
+    } else {
+      // The send already cost the user a daily-quota slot; refund it so the
+      // failed attempt doesn't burn one of their 20 messages.
+      await ref.read(dailyMessageCountProvider.notifier).refund();
+      _showErrorSnack(userFacingError!);
+    }
+
     setState(() => _isSending = false);
     _scrollToBottom();
   }
 
+  void _showErrorSnack(String message) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.brandOrange,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
   /// Called when a suggestion chip is tapped from the welcome screen.
   /// Starts chat and sends the suggestion as the first message.
-  void _sendSuggestion(String text) {
+  Future<void> _sendSuggestion(ChatSuggestion suggestion) async {
+    final localeCode = ref.read(localeProvider).languageCode;
     setState(() => _chatStarted = true);
-    _controller.text = text;
-    _sendMessage();
+    _controller.text = suggestion.localized(localeCode);
+    await _sendMessage(aiTextOverride: suggestion.text);
   }
 
   /// End the current chat session and go back to welcome.
@@ -148,6 +189,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
     super.build(context); // Required by AutomaticKeepAliveClientMixin
 
     final messages = ref.watch(chatMessagesProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     // If messages exist (e.g. returning from another tab), auto-enter chat mode
     if (!_chatStarted && messages.isNotEmpty) {
@@ -197,8 +239,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
                 ),
                 child: TextField(
                   controller: _controller,
+                  focusNode: _focusNode,
                   decoration: InputDecoration(
-                    hintText: 'EcoChef\'e yazın...',
+                    hintText: l10n.chatInputHint,
                     hintStyle: const TextStyle(
                       fontFamily: 'Manrope',
                       color: AppColors.inkLight,
@@ -248,39 +291,50 @@ class _ChatPageState extends ConsumerState<ChatPage>
       ),
     );
 
+    // Message list
+    final messagesList = messages.isEmpty && !_isSending
+        ? const EcoChefChatEmpty()
+        : ListView.builder(
+            controller: _scrollController,
+            reverse: true,
+            padding: const EdgeInsets.fromLTRB(16, 72, 16, 16),
+            itemCount: messages.length + (_isSending ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (_isSending && index == 0) {
+                return const EcoChefTypingIndicator();
+              }
+              final actualIndex = _isSending ? index - 1 : index;
+              final message = messages.reversed.toList()[actualIndex];
+
+              // Typewriter effect only for the newest EcoChef message
+              final isNewestEcoChef = actualIndex == 0 && !message.isUser;
+
+              return ChatBubble(
+                entry: message,
+                typewriter: isNewestEcoChef,
+                onTypewriterComplete: isNewestEcoChef ? _scrollToBottom : null,
+              );
+            },
+          );
+
     final chatUI = Stack(
       children: [
-        // Arka planda: mesaj yoksa minimal empty state, varsa mesaj listesi
+        // Column tum alani kaplasin
         Positioned.fill(
-          child: messages.isEmpty && !_isSending
-              ? const EcoChefChatEmpty()
-              : ListView.builder(
-                  controller: _scrollController,
-                  reverse: true,
-                  padding: EdgeInsets.fromLTRB(
-                    16,
-                    72,
-                    16,
-                    widget.inTabs ? 200 : 120,
+          child: Column(
+            children: [
+              Expanded(child: messagesList),
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    bottom: 0,
                   ),
-                  itemCount: messages.length + (_isSending ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (_isSending && index == 0) {
-                      return const EcoChefTypingIndicator();
-                    }
-                    final actualIndex = _isSending ? index - 1 : index;
-                    final message = messages.reversed.toList()[actualIndex];
-
-                    // Typewriter effect only for the newest EcoChef message
-                    final isNewestEcoChef = actualIndex == 0 && !message.isUser;
-
-                    return ChatBubble(
-                      entry: message,
-                      typewriter: isNewestEcoChef,
-                      onTypewriterComplete: isNewestEcoChef ? _scrollToBottom : null,
-                    );
-                  },
+                  child: inputBar,
                 ),
+              ),
+            ],
+          ),
         ),
         // Üst başlık: EcoChef — sadece mesaj varken göster
         if (messages.isNotEmpty || _isSending)
@@ -312,18 +366,21 @@ class _ChatPageState extends ConsumerState<ChatPage>
                 ),
                 child: Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          SizedBox(width: 24),
-                          Icon(
-                            Icons.eco_rounded,
-                            color: AppColors.brandOrange,
-                            size: 20,
+                          const SizedBox(width: 24),
+                          SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: Image.asset(
+                              'assets/images/icons/denizati.png',
+                              fit: BoxFit.contain,
+                            ),
                           ),
-                          SizedBox(width: 8),
-                          Text(
+                          const SizedBox(width: 8),
+                          const Text(
                             'EcoChef',
                             style: TextStyle(
                               fontFamily: 'Manrope',
@@ -365,7 +422,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                             value: 'clear',
                             height: 36,
                             padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: const Row(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
@@ -375,7 +432,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                                 ),
                                 SizedBox(width: 6),
                                 Text(
-                                  'Sohbeti Temizle',
+                                  l10n.chatClear,
                                   style: TextStyle(
                                     fontFamily: 'Manrope',
                                     fontSize: 13,
@@ -419,24 +476,11 @@ class _ChatPageState extends ConsumerState<ChatPage>
                     color: AppColors.ink,
                     size: 22,
                   ),
-                  tooltip: 'Geri',
+                  tooltip: l10n.chatBack,
                 ),
               ),
             ),
           ),
-        // Yüzen input bar
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: EdgeInsets.only(bottom: widget.inTabs ? 0 : 12),
-              child: inputBar,
-            ),
-          ),
-        ),
       ],
     );
 

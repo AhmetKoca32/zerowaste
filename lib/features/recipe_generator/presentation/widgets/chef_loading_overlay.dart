@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// "Chef is cooking..." loader with animated dots.
 class ChefLoadingOverlay extends StatefulWidget {
@@ -43,6 +44,7 @@ class _ChefLoadingOverlayState extends State<ChefLoadingOverlay>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       color: AppColors.paper.withOpacity(0.95),
       child: Center(
@@ -55,7 +57,8 @@ class _ChefLoadingOverlayState extends State<ChefLoadingOverlay>
                 return Transform.scale(
                   scale: _pulseAnimation.value,
                   child: Container(
-                    padding: const EdgeInsets.all(24),
+                    width: 100,
+                    height: 100,
                     decoration: BoxDecoration(
                       color: AppColors.brandCream.withOpacity(0.5),
                       shape: BoxShape.circle,
@@ -67,10 +70,12 @@ class _ChefLoadingOverlayState extends State<ChefLoadingOverlay>
                         ),
                       ],
                     ),
-                    child: Icon(
-                      Icons.restaurant_menu,
-                      size: 56,
-                      color: AppColors.brandOrange,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Image.asset(
+                        'assets/images/icons/denizati.png',
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
                 );
@@ -78,7 +83,7 @@ class _ChefLoadingOverlayState extends State<ChefLoadingOverlay>
             ),
             const SizedBox(height: 28),
             Text(
-              'Şef pişiriyor',
+              l10n.chefLoading,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.brandOrange,

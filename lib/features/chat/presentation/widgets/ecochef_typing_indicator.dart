@@ -69,7 +69,13 @@ class _EcoChefTypingIndicatorState extends State<EcoChefTypingIndicator>
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.brandCream),
             ),
-            child: const Icon(Icons.eco, color: AppColors.brandOrange, size: 22),
+            child: Padding(
+              padding: const EdgeInsets.all(2),
+              child: Image.asset(
+                'assets/images/icons/denizati.png',
+                fit: BoxFit.contain,
+              ),
+            ),
           ),
           const SizedBox(width: 10),
           // Bouncing dots bubble

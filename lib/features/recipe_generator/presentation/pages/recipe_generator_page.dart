@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/providers/locale_provider.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../home/presentation/widgets/recipe_detail_sheet.dart';
 import '../../data/cuisine_options.dart';
 import '../../data/recipe_parser.dart';
@@ -41,6 +43,7 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
   Widget _buildRecentIngredients(
     WidgetRef ref,
     List<String> currentIngredients,
+    AppLocalizations l10n,
   ) {
     final recentAsync = ref.watch(recentIngredientsProvider);
     return recentAsync.when(
@@ -59,7 +62,7 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Son eklenenler',
+                l10n.recipeGeneratorRecent,
                 style: TextStyle(
                   fontFamily: 'Manrope',
                   fontSize: 16,
@@ -117,6 +120,7 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     ref.listen<AsyncValue<String?>>(generatedRecipeProvider, (prev, next) {
       next.whenOrNull(
         data: (value) {
@@ -162,6 +166,7 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
     final selectedCuisine = ref.watch(selectedCuisineProvider);
     final generatedAsync = ref.watch(generatedRecipeProvider);
     final isLoading = generatedAsync.isLoading;
+    final locale = ref.watch(localeProvider);
 
     final scrollBody = SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(20, 20, 20, widget.inTabs ? 170 : 20),
@@ -170,7 +175,7 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
         children: [
           // --- Başlık ---
           Text(
-            'Elinizdeki malzemeleri ekleyin',
+            l10n.recipeGeneratorHeading,
             style: TextStyle(
               fontFamily: 'Manrope',
               fontSize: 20,
@@ -185,7 +190,7 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  'En az bir malzeme ekleyin, ardından Tarif Oluştur\'a dokunun.',
+                  l10n.recipeGeneratorInstruction,
                   style: TextStyle(
                     fontFamily: 'Manrope',
                     fontSize: 12,
@@ -235,7 +240,7 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
                           fontSize: 15,
                         ),
                         decoration: InputDecoration(
-                          hintText: 'örn. domates, fesleğen',
+                          hintText: l10n.recipeGeneratorInputHint,
                           hintStyle: TextStyle(
                             fontFamily: 'Manrope',
                             color: AppColors.inkLight.withOpacity(0.5),
@@ -308,12 +313,12 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
           ],
 
           // --- Son eklenenler (geçmiş malzemeler) ---
-          _buildRecentIngredients(ref, ingredients),
+          _buildRecentIngredients(ref, ingredients, l10n),
 
           // --- Mutfak (isteğe bağlı) ---
           const SizedBox(height: 28),
           Text(
-            'Mutfak (isteğe bağlı)',
+            l10n.recipeGeneratorCuisine,
             style: TextStyle(
               fontFamily: 'Manrope',
               fontSize: 16,
@@ -365,7 +370,9 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
                         children: [
                           Expanded(
                             child: Text(
-                              selectedCuisine ?? 'Fark etmez',
+                              selectedCuisine != null
+                                  ? CuisineOptions.localized(selectedCuisine!, locale.languageCode)
+                                  : l10n.recipeGeneratorNoCuisine,
                               style: TextStyle(
                                 fontFamily: 'Manrope',
                                 fontSize: 15,
@@ -427,7 +434,7 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
                                   children: [
                                     Expanded(
                                       child: Text(
-                                        cuisine,
+                                    CuisineOptions.localized(cuisine, locale.languageCode),
                                         style: TextStyle(
                                           fontFamily: 'Manrope',
                                           fontSize: 15,
@@ -473,9 +480,9 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
                   ? null
                   : _generateRecipe,
               icon: const Icon(Icons.auto_awesome),
-              label: const Text(
-                'Tarif Oluştur',
-                style: TextStyle(fontFamily: 'Manrope', fontSize: 16),
+              label: Text(
+                l10n.recipeGeneratorCreate,
+                style: const TextStyle(fontFamily: 'Manrope', fontSize: 16),
               ),
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.brandOrange,
@@ -488,7 +495,7 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
             ),
           ),
           const SizedBox(height: 32),
-          const _SavedRecipesSection(),
+          _SavedRecipesSection(),
         ],
       ),
     );
@@ -521,6 +528,7 @@ class _SavedRecipesSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final savedAsync = ref.watch(savedRecipesProvider);
     return savedAsync.when(
       data: (list) {
@@ -535,7 +543,7 @@ class _SavedRecipesSection extends ConsumerWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Kaydettiğim Tarifler',
+                    l10n.recipeGeneratorSaved,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontFamily: 'Manrope',
                       color: AppColors.ink,
@@ -547,7 +555,7 @@ class _SavedRecipesSection extends ConsumerWidget {
                   GestureDetector(
                     onTap: () => showSavedRecipesSheet(context),
                     child: Text(
-                      'Tümünü gör (${list.length})',
+                      l10n.recipeGeneratorSeeAllCount(list.length),
                       style: const TextStyle(
                         fontFamily: 'Manrope',
                         fontSize: 13,
@@ -621,6 +629,7 @@ class _SeeAllCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -647,7 +656,7 @@ class _SeeAllCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Tümünü gör',
+                    l10n.recipeGeneratorSeeAll,
                     style: const TextStyle(
                       fontFamily: 'Manrope',
                       fontSize: 13,
@@ -656,7 +665,7 @@ class _SeeAllCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '$count tarif',
+                    l10n.recipeGeneratorCount(count),
                     style: const TextStyle(
                       fontFamily: 'Manrope',
                       fontSize: 12,

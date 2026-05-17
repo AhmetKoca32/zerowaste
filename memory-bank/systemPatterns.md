@@ -1,30 +1,39 @@
 # System Patterns: Sıfır Atık Mutfak
 
-**Son Güncelleme:** Nisan 2026 (16 Nisan - Gece Oturumu)
+**Son Guncelleme:** Mayis 2026
 
 ---
 
-## Mimari Genel Bakış
+## Mimari Genel Bakis
 
 ### Mimari Stil
-- **Clean Architecture:** Feature-based klasör yapısı.
+- **Clean Architecture:** Feature-based klasor yapisi.
 - **State Management:** Riverpod (Provider pattern, code generation).
-- **Routing:** GoRouter (declarative routing).
+- **Routing:** GoRouter (declarative routing, slide transitions).
 - **Dependency Injection:** Riverpod providers.
 
-### Katman Yapısı
+### Katman Yapisi
 ```
 lib/
 ├── core/
-│   ├── theme/              # AppColors (brandOrange), AppTheme
+│   ├── theme/              # AppColors, AppTheme, AppTextStyle
 │   ├── shell/              # MainTabShell, CustomBottomNav
-│   └── widgets/            # Ortak UI bileşenleri
+│   ├── services/           # DeepSeekService (retry, exceptions)
+│   ├── network/            # NetworkService (Dio, redacted log)
+│   ├── router/             # AppRouter (GoRouter)
+│   ├── constants/          # AppConstants
+│   ├── providers/          # Global providers
+│   └── widgets/            # Ortak UI bilesenleri
 │
 └── features/
     ├── home/               # Tarif listesi + malzeme filtreleme
-    ├── recipe_generator/   # AI tarif üretimi (DeepSeek)
+    ├── recipe_generator/   # AI tarif uretimi (DeepSeek)
     ├── chat/               # EcoChef AI sohbet (Limitli: 20 mesaj/gün)
-    ├── points/             # Gamification sistemi (Level-up journey)
+    ├── splash/             # Splash acilis ekrani
+    ├── points/             # Gamification sistemi (Firestore baglantili)
+    │   ├── data/models/    # PostEntry, LeaderboardDoc
+    │   ├── data/repositories/ # PointsRepository (Firestore)
+    │   └── presentation/   # Page, Widgets, Providers
     └── admin/              # Web admin paneli
 ```
 
@@ -32,88 +41,86 @@ lib/
 
 ## State Management Patterns
 
-### Riverpod Kullanımı
+### Riverpod Kullanimi
 
 #### Provider Tipleri
 1. **Provider:** Singleton servisler (NetworkService, DeepSeekService).
-2. **FutureProvider (keepAlive: true):** Tarif listesi, RecentIngredients.
-3. **StateNotifierProvider:** Chat mesajları (`chatMessagesProvider`).
-4. **@riverpod class:** IngredientList, SavedRecipes, DailyMessageCount.
+2. **FutureProvider (keepAlive: true):** Tarif listesi, RecentIngredients, DailyChatSuggestions.
+3. **StateProvider:** dailyMessageCountProvider (int, max 20).
+4. **StateNotifierProvider:** ChatMessages (message list management).
 
-#### Önemli Providerlar
+#### Onemli Providerlar
 ```dart
-// dailyMessageCountProvider: Günlük mesaj limitini takip eder (Max 20)
-@riverpod
-class DailyMessageCount extends _$DailyMessageCount {
-  @override
-  int build() => 0; // Şimdilik session bazlı, SharedPreferences eklenecek
-  void increment() => state++;
-  bool get isLimitReached => state >= 20;
-}
+// pointsRepositoryProvider: Points islemleri icin Firestore repository
+final pointsRepositoryProvider = Provider<PointsRepository>((ref) {
+  return PointsRepository();
+});
 ```
 
 ---
 
-## Tasarım & Animasyon Pattern'leri ✨
+## Tasarim & Animasyon Pattern'leri
 
-### 1. Sequential Animation Controller Pattern (Ardışık Animasyon)
-`PointsHeroCard` gibi birden fazla aşamalı animasyon içeren bileşenlerde kullanılan güvenli yapı:
-- **Tek Kontrolcü:** Tüm dinamik animasyonlar için tek bir `_activeProgressController` kullanılır.
-- **Race Condition Koruması:** Yeni bir animasyon başlamadan önce `_activeProgressController?.dispose()` ile eskisi temizlenir.
-- **Lifecycle Guard:** `dispose()` içinde tüm ticker'lar temizlenir ve `_isDisposed` bayrağı ile animasyon döngüleri (loop) anında durdurulur.
-- **Mounted Check:** Her `await` sonrasında `if (!mounted) return;` kontrolü zorunludur.
+### 1. Sequential Animation Controller Pattern (Ardisik Animasyon)
+`PointsHeroCard` gibi birden fazla asamali animasyon iceren bilesenlerde guvenli yapi.
 
 ### 2. Inner Shadow Pattern
-Arama çubukları ve dropdown'larda derinlik hissi için iki katmanlı `BoxDecoration` kullanımı:
-- Dış: İnce border + beyaz dolgu.
-- İç: `LinearGradient` ile üstten %5, alttan %2 opaklıkta siyah gölge.
+Arama cubuklari ve dropdown'larda BoxDecoration ile iki katmanli derinlik.
 
 ### 3. Liquid Glass Navbar Pattern
-- `BackdropFilter(filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15))`
-- `Colors.white.withOpacity(0.1)` dolgu.
-- Pill-shaped tasarım, sayfa üzerinde süzülen (floating) görünüm.
+`BackdropFilter(filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15))` ile pill-shaped navbar.
 
-### 4. Premium Dialog Pattern (Medya & Detay)
-- **Bulanık Arka Plan:** `showDialog` veya `showModalBottomSheet` ile birlikte `BackdropFilter` kullanımı.
-- **Yüzey:** Beyaz arka plan, 24-32px border radius.
-- **Kapatma Butonu:** Sağ üstte yüzer (floating) daire buton.
-- **Görsel Odak:** Fotoğrafların `BoxFit.cover` ile geniş alan kaplaması (320px+ yükseklik).
+### 4. Premium Dialog Pattern
+Bulanik arka plan, beyaz yuzey, 24-32px radius, yuzer kapatma butonu.
 
----
+### 5. Chat Suggestion Rotation Pattern
+Gunluk 5 rastgele oneri, SharedPreferences indeks bazli cache.
 
-## Asset & Medya Pattern'leri
+### 6. DeepSeek Error Handling Pattern
+4 exception tipi, retry loop (2 kez), refund mekanizmasi.
 
-### Medya Entegrasyonu (image_picker)
-- Kullanıcıya her zaman "Kamera" ve "Galeri" seçeneklerini sunan özel tasarlanmış bir dialog gösterilir.
-- Seçilen fotoğraf yerel cihaz yoluna (`localImagePath`) kaydedilir ve anlık olarak `FileImage` ile UI'da gösterilir.
-- `PostEntry` modeli yerel ve uzak (URL) görselleri destekleyecek şekilde hibrit yapıdadır.
+### 7. Typography System Pattern
+AppTextStyle ile 16 stil, Manrope font.
 
-### Custom İkon Sistemi
-- Navbar ve başlıklar için `assets/images/icons/` altında PNG ikonlar kullanılır.
-- İkonlar aktif durumda turuncu (`brandOrange`), pasif durumda beyaz/stonel rengidir.
+### 8. Recipe Markdown Parsing Pattern
+RecipeParser ile AI ciktisini Recipe modeline cevirme.
+
+### 9. Background Timer Pattern
+5 dakika inaktivite sonrasi chat temizleme.
 
 ---
 
 ## Data Flow Patterns
 
-### Puan Arttırma & Seviye Atlama (Gamification Flow)
+### Points & Admin Entegrasyonu (Firestore)
 ```
-Admin Puan Ekler (Mock/Backend) → previousPoints tetiklenir
-  ↓
-PointsPage: İçeriği gizle → "Tebrikler" Dialogu Göster
-  ↓
-Kullanıcı "Devam Et" der → PointsHeroCard: _startLevelUpJourney(0)
-  ↓
-Döngü: Her seviye için _animateProgress → Kutlama Overlay → Kısa Bekleme
-  ↓
-Bitiş: _isAnimating = false → Sayfa içeriği Fade-in ile geri gelir
+Kullanici fotograf ceker -> Nickname dialog (ilk sefer)
+  -> PostEntry olusturulur -> PointsRepository.submitPost() -> Firestore'da posts koleksiyonu
+  -> Admin paneli -> getPendingPosts() ile listele
+  -> Onayla -> approvePost() -> status='approved' + leaderboard recalculate
+  -> Kullanici ekrani -> _loadPosts() ile guncelle -> puan hesabi
 ```
 
-### Chat Limit Akışı
+### Leaderboard Mekanizmasi
 ```
-Kullanıcı Mesaj Yazar → check isLimitReached
-  ↓
-Evet → SnackBar göster → Mesajı gönderme
-  ↓
-Hayır → Mesajı gönder → dailyMessageCountProvider.increment()
+Admin post onaylar -> _recalculateLeaderboard()
+  -> Tum approved + optIn postlar sorgulanir -> puanlar toplanir
+  -> leaderboard/current dokumani guncellenir
+  -> PointsPage'deki _LeaderboardTop3 -> getLeaderboard() -> top 3 gosterilir
 ```
+
+### Admin Panel Responsive Tasarimi
+```
+LayoutBuilder -> genislik >= 600px ise Row(sidebar | content)
+               -> genislik < 600px ise Scaffold(drawer | body)
+```
+
+### RecipeSyncService (Gunluk Sync)
+```
+main() baslangicinda -> RecipeSyncService.syncIfNeeded()
+  -> Son sync gunu kontrol (SharedPreferences)
+  -> Farkli gunse -> RecipeRepository(useFirestore: true) ile tarifleri cek
+  -> SharedPreferences'a cache'le
+  -> Hata olursa sessizce basarisiz (fallback zaten var)
+```
+

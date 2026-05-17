@@ -1,7 +1,7 @@
 [
   {
     "id": "1",
-    "title": "Sıfır Atık Sebze Sote",
+    "title": "Atıksız Sebze Sote",
     "image_url": null,
     "description": "Buzdolabında kalan sebze artıklarını değerlendirmenin en lezzetli yolu. Soğan uçları, havuç kabukları, brokoli sapları gibi genelde çöpe giden parçalar bu sotede harika bir lezzete dönüşür.",
     "ingredients": [
@@ -148,7 +148,7 @@
   },
   {
     "id": "7",
-    "title": "Sıfır Atık Smoothie",
+    "title": "Atıksız Smoothie",
     "image_url": null,
     "description": "Yumuşamış meyveler, meyve kabukları ve sebze sapları ile hazırlanan bu smoothie, hem besleyici hem de israfı önleyen mükemmel bir içecek. Kahvaltıda veya ara öğünde ideal.",
     "ingredients": [

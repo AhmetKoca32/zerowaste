@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../constants/app_constants.dart';
+import '../providers/locale_provider.dart';
 import '../theme/app_colors.dart';
 import 'custom_bottom_nav.dart';
 import '../../features/chat/presentation/pages/chat_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/points/presentation/pages/points_page.dart';
 import '../../features/recipe_generator/presentation/pages/recipe_generator_page.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Current tab index (0 = Recipes, 1 = Generate, 2 = EcoChef, 3 = Puan).
 final tabIndexProvider = StateProvider<int>((ref) => 0);
@@ -59,6 +60,7 @@ class _MainTabShellState extends ConsumerState<MainTabShell>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final currentIndex = ref.watch(tabIndexProvider).clamp(0, 3);
     ref.listen<int>(tabIndexProvider, (int? prev, int next) {
       if (prev != next && _tabController.index != next) {
@@ -76,14 +78,21 @@ class _MainTabShellState extends ConsumerState<MainTabShell>
       extendBody: true,
       appBar: currentIndex == 0
           ? AppBar(
+              centerTitle: true,
               title: Text(
-                AppConstants.appName,
+                l10n.appName,
                 style: const TextStyle(
                   fontFamily: 'Manrope',
                   color: AppColors.ink,
                   fontWeight: FontWeight.w700,
                 ),
               ),
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 24),
+                  child: _LocaleToggle(),
+                ),
+              ],
             )
           : null,
       body: TabBarView(
@@ -101,12 +110,80 @@ class _MainTabShellState extends ConsumerState<MainTabShell>
           ref.read(tabIndexProvider.notifier).state = index;
           _tabController.animateTo(index);
         },
-        items: const [
-          CustomNavItem(assetPath: 'assets/images/icons/tarifler_icon.png', label: 'Tarifler'),
-          CustomNavItem(assetPath: 'assets/images/icons/oluştur_icon.png', label: 'Oluştur'),
-          CustomNavItem(assetPath: 'assets/images/icons/chat_icon.png', label: 'EcoChef'),
-          CustomNavItem(assetPath: 'assets/images/icons/puan_icon.png', label: 'Puan'),
+        items: [
+          CustomNavItem(
+            assetPath: 'assets/images/icons/tarifler_icon.png',
+            label: l10n.navRecipes,
+          ),
+          CustomNavItem(
+            assetPath: 'assets/images/icons/oluştur_icon.png',
+            label: l10n.navCreate,
+          ),
+          CustomNavItem(
+            assetPath: 'assets/images/icons/chat_icon.png',
+            label: l10n.navEcoChef,
+          ),
+          CustomNavItem(
+            assetPath: 'assets/images/icons/puan_icon.png',
+            label: l10n.navPoints,
+          ),
         ],
+      ),
+    );
+  }
+}
+
+/// Animated locale toggle button showing TR / EN with crossfade.
+class _LocaleToggle extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
+    final isTurkish = locale.languageCode == 'tr';
+
+    return GestureDetector(
+      onTap: () => ref.read(localeProvider.notifier).toggle(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: AppColors.brandOrange.withOpacity(0.3),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          transitionBuilder: (child, animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: animation,
+                child: child,
+              ),
+            );
+          },
+          child: Text(
+            isTurkish ? 'TR' : 'EN',
+            key: ValueKey(isTurkish),
+            style: TextStyle(
+              fontFamily: 'Manrope',
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppColors.brandOrange,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
       ),
     );
   }

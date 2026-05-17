@@ -1,6 +1,6 @@
 # Tech Context: Sıfır Atık Mutfak
 
-**Son Güncelleme:** Mart 2025
+**Son Guncelleme:** Mayis 2026
 
 ---
 
@@ -19,122 +19,140 @@
 - **go_router:** ^14.6.2
 
 ### Network & API
-- **dio:** ^5.7.0 (HTTP client)
+- **dio:** ^5.7.0 (HTTP client, redacted log interceptor)
 - **flutter_dotenv:** ^5.2.1 (environment variables)
 
 ### Firebase
 - **firebase_core:** ^3.8.1
 - **firebase_auth:** ^5.3.3 (admin paneli)
-- **cloud_firestore:** ^5.5.2 (tarif veritabanı)
+- **cloud_firestore:** ^5.5.2 (tarif, post, leaderboard veritabani)
+- **Firebase Spark (Ucretsiz) Plan:** 1GB depolama, 10K belge yazma/gun, 50K okuma/gun
 
 ### Data & Storage
-- **shared_preferences:** ^2.3.3 (RecentIngredients, SavedRecipes)
+- **shared_preferences:** ^2.3.3 (RecentIngredients, SavedRecipes, ChatSuggestions, nickname)
 - **path_provider:** ^2.1.4
 
 ### UI & Content
-- **flutter_markdown:** ^0.7.4+1
-- **image_picker:** ^1.1.2
+- **flutter_markdown:** ^0.7.4+1 (EcoChef sohbet balonlarinda Markdown render)
+- **image_picker:** ^1.1.2 (kamera/galeri entegrasyonu)
+- **flutter_svg:** ^2.0.17 (SVG logolar, splash ekrani sponsor logolari)
 
 ### Code Generation
 - **freezed:** ^2.5.7 + freezed_annotation
 - **json_serializable:** ^6.8.0 + json_annotation
 - **build_runner:** ^2.4.13
+- **riverpod_generator:** ^2.6.3
 
 ---
 
-## Proje Yapısı
+## Proje Yapisi
 
 ```
 zerowaste/
 ├── lib/
 │   ├── core/
-│   │   ├── constants/          # AppConstants (appName: 'Sıfır Atık Mutfak')
-│   │   ├── network/            # NetworkService
+│   │   ├── constants/
+│   │   ├── network/            # NetworkService (Dio + redacted log)
 │   │   ├── providers/          # Global providers
-│   │   ├── router/             # AppRouter
+│   │   ├── router/             # AppRouter (GoRouter, 10+ route)
 │   │   ├── services/           # DeepSeekService
 │   │   ├── shell/              # MainTabShell, CustomBottomNav
-│   │   ├── theme/              # AppTheme, AppColors (brand renkleri)
-│   │   └── widgets/            # EmptyPlaceholder (Manrope font)
+│   │   ├── theme/              # AppTheme, AppColors, AppTextStyle
+│   │   └── widgets/
 │   │
 │   ├── features/
 │   │   ├── home/               # Tarif listesi + malzeme filtreleme
-│   │   │   └── presentation/widgets/
-│   │   │       ├── recipe_blog_card.dart
-│   │   │       ├── recipe_detail_sheet.dart
-│   │   │       └── ingredient_filter_sheet.dart  # YENİ
-│   │   ├── recipe_generator/   # AI tarif üretimi
-│   │   │   └── presentation/widgets/
-│   │   │       ├── chef_loading_overlay.dart
-│   │   │       ├── recipe_result_sheet.dart
-│   │   │       └── saved_recipes_sheet.dart      # YENİ
-│   │   ├── chat/               # Leafy sohbet (mock data)
-│   │   ├── points/             # Puan sistemi
-│   │   └── admin/              # Web admin paneli
+│   │   ├── recipe_generator/   # AI tarif uretimi
+│   │   ├── chat/               # EcoChef sohbet
+│   │   ├── splash/             # Splash acilis ekrani
+│   │   ├── points/             # Puan sistemi (Firestore baglantili)
+│   │   │   ├── data/models/    # PostEntry, LeaderboardDoc
+│   │   │   ├── data/repositories/ # PointsRepository (Firestore)
+│   │   │   └── presentation/   # Page, Widgets, Providers
+│   │   └── admin/              # Admin paneli (Web)
+│   │       ├── data/           # (yeni modeller Points'ten import edilir)
+│   │       └── presentation/   # Pages, Providers, Widgets, Services
 │   │
 │   ├── firebase_options.dart
 │   └── main.dart
 │
 ├── assets/
-│   ├── data/
-│   │   └── recipes.json        # 7 detaylı tarif (fallback)
-│   ├── fonts/
-│   │   ├── Manrope-Regular.ttf
-│   │   ├── Manrope-Medium.ttf
-│   │   ├── Manrope-Bold.ttf
-│   │   └── Manrope-Light.ttf
-│   └── images/
-│       ├── icons/
-│       │   ├── tarifler_icon.png
-│       │   ├── chat_icon.png
-│       │   ├── puan_icon.png
-│       │   ├── oluştur_icon.png
-│       │   ├── alisveris_icon.png
-│       │   ├── search_icon.png
-│       │   └── arrow_icon.png      # YENİ
-│       └── image/
-│           └── yemek.png
+│   ├── data/recipes.json       # 7 detayli tarif (fallback)
+│   ├── fonts/                  # Manrope ailesi
+│   └── images/icons/ + image/  # PNG ikonlar (denizati.png dahil)
 │
-├── firestore.rules                 # YENİ
-├── memory-bank/
-└── docs/
+├── firestore.rules             # recipes, posts, leaderboard, admins koleksiyonlari
+├── firebase.json
+└── memory-bank/
 ```
 
 ---
 
-## Önemli Dosya Listesi
+## Onemli Dosya Listesi
 
-### Core
-| Dosya | Açıklama |
+### Points Feature (Yeni Firestore yapisi)
+| Dosya | Aciklama |
 |-------|----------|
-| `lib/core/theme/app_colors.dart` | Brand renkleri (brandOrange, brandCream), earth tones, neutrals |
-| `lib/core/theme/app_theme.dart` | ColorScheme.fromSeed(brandOrange) |
-| `lib/core/shell/custom_bottom_nav.dart` | Pill-shaped frosted glass navbar |
-| `lib/core/shell/main_tab_shell.dart` | TabBarView, extendBody: true |
+| `lib/features/points/data/models/post_entry.dart` | **YENI** PostEntry model + Firestore serilestirme (fromFirestore/toFirestore) |
+| `lib/features/points/data/models/leaderboard_doc.dart` | **YENI** LeaderboardEntry + LeaderboardDoc modelleri |
+| `lib/features/points/data/repositories/points_repository.dart` | **YENI** PointsRepository: submitPost, getPostsByNickname, getPendingPosts, approvePost, rejectPost, getLeaderboard |
+| `lib/features/points/presentation/providers/points_providers.dart` | **YENI** pointsRepositoryProvider (Riverpod) |
 
-### Home Feature
-| Dosya | Açıklama |
+### Admin Feature (Guncel)
+| Dosya | Aciklama |
 |-------|----------|
-| `home_page.dart` | Arama + filtre butonu + seçili chip'ler + tarif listesi |
-| `recipe_blog_card.dart` | Beyaz kart, "N malzeme · N adım" özeti, eşleşme göstergesi |
-| `recipe_detail_sheet.dart` | İstatistik barı, kenarlıklı kart bölümler, showPlaceholderImage |
-| `ingredient_filter_sheet.dart` | Malzeme filtre bottom sheet (arama + wrap + uygula/temizle) |
-| `home_providers.dart` | recipeListProvider (keepAlive: true) |
-| `recipe.dart` | Recipe model (Freezed, description alanı, Firestore helpers) |
-| `recipe_repository.dart` | Firestore + fallback (boşsa veya hata verirse yerel JSON) |
+| `admin_login_page.dart` | Email/Password giris |
+| `admin_dashboard_page.dart` | **GUNCELLENDI** Tarif listesi (InkWell bazli, ListTile yok) |
+| `admin_recipe_edit_page.dart` | **GUNCELLENDI** Tarif CRUD AdminShell'e baglandi |
+| `admin_recipe_form.dart` | **GUNCELLENDI** Form.of() -> widget.formKey duzeltmesi |
+| `admin_sidebar.dart` | **YENIDEN YAZILDI** AdminShell: responsive (sidebar/drawer), tek Scaffold |
+| `admin_posts_page.dart` | **YENI** Gonderi onay/red sayfasi |
+| `admin_guard.dart` | Auth guard (admin yetkisi kontrolu) |
+| `admin_auth_service.dart` | Firebase Auth servisi |
 
-### Recipe Generator Feature
-| Dosya | Açıklama |
+### Home Data (Guncel)
+| Dosya | Aciklama |
 |-------|----------|
-| `recipe_generator_page.dart` | Yeniden tasarlandı: input, dropdown, son eklenenler, kayıtlı tarifler |
-| `recipe_generator_providers.dart` | IngredientList, RecentIngredients, SelectedCuisine, SavedRecipes, GeneratedRecipe |
-| `saved_recipes_sheet.dart` | Tüm kayıtlı tarifler bottom sheet (arama + dikey liste) |
-| `cuisine_options.dart` | Mutfak seçenekleri listesi |
+| `lib/features/home/data/services/recipe_sync_service.dart` | **YENI** Gunluk Firestore tarif senkronizasyonu |
 
-### Diğer
-| Dosya | Açıklama |
-|-------|----------|
-| `firestore.rules` | Firestore Security Rules (recipes: okuma açık, yazma admin; admins: kendi kaydı) |
+---
+
+## Firestore Koleksiyon Yapisi
+
+### `posts` koleksiyonu
+```
+/posts/{postId}
+  nickname: string (zorunlu)
+  category: string (Dolap / Yemek Ani / ...)
+  points: int
+  status: string (pending / approved / rejected)
+  createdAt: timestamp
+  leaderboardOptIn: bool
+  imagePath: string? (ileride Storage URL)
+  imageColor: int? (placeholder rengi)
+  isAdminBonus: bool
+  adminNote: string?
+```
+
+### `leaderboard/current` dokumani
+```
+/leaderboard/current
+  entries: [{nickname: string, points: int}]
+  lastUpdated: timestamp
+```
+
+### `admins/{userId}` dokumani
+```
+/admins/{userId}
+  (bos ya da role: "admin")
+```
+
+---
+
+## Firestore Index'leri (Manuel Olusturuldu)
+1. `posts` koleksiyonu: `status` (Asc) + `createdAt` (Desc)
+2. `posts` koleksiyonu: `nickname` (Asc) + `createdAt` (Desc)
+3. `posts` koleksiyonu: `status` (Asc) + `leaderboardOptIn` (Asc)
 
 ---
 
@@ -142,54 +160,34 @@ zerowaste/
 
 ### Kurulum
 1. `flutter pub get`
-2. `.env` dosyası oluştur: `DEEPSEEK_API_KEY=your_key`
+2. `.env` dosyasi olustur: `DEEPSEEK_API_KEY=your_key`
 3. `dart run build_runner build --delete-conflicting-outputs`
 
 ### Build Commands
 ```bash
 flutter build apk --release          # Android
-flutter build web --release           # Admin paneli
-flutter run -d chrome                 # Web geliştirme
+flutter build web --release           # Admin paneli (web)
+flutter run -d chrome                 # Web gelistirme
 dart run build_runner build --delete-conflicting-outputs  # Code gen
 flutter clean                         # Build cache temizle
 ```
 
 ---
 
-## Bilinen Teknik Notlar
+## Gelecek Teknik Planlar
 
-### Firestore
-- Security Rules: `firestore.rules` dosyası mevcut
-- Emülatörde DEVELOPER_ERROR / "Unknown calling package" normal, Firestore'u engellemiyor
-- Firestore boşsa veya bağlantı hata verirse otomatik yerel JSON fallback
+### Admin Panel Web'e Tasima
+- Ayri Flutter Web projesi olusturulacak
+- Firebase Hosting'e deploy edilecek
+- Mobil uygulama icindeki admin route'lari kaldirilacak veya gizlenecek
+- Eger hosting plani sorun cikarirsa, mobilde gizli yol birakilacak
 
-### Code Generation
-- Provider değişikliklerinden sonra `build_runner` çalıştırılmalı
-- `@Riverpod(keepAlive: true)` için generated dosya yeniden oluşturulmalı
+### Firebase Plan Degerlendirmesi
+- Spark (ucretsiz): Storage icin 5GB, 20KB/gun upload -- yetersiz olabilir
+- Blaze (kullandikca ode): sinirsiz, sadece kullanim kadar odenir
+- Storage eklenmesi durumunda Blaze gecisi onerilir
 
-### SharedPreferences
-- RecentIngredients: `recent_ingredients` key, max 10 malzeme
-- SavedRecipes: local storage ile tarif kaydetme
-
-### PowerShell Komutları
-- `%USERPROFILE%` yerine `$env:USERPROFILE` kullan (SHA-1 alma vb.)
-- `&&` yerine `;` veya ayrı komutlar kullan
-
-### pubspec.yaml Asset Paths
-```yaml
-flutter:
-  assets:
-    - assets/data/
-    - assets/images/icons/
-    - assets/images/image/
-  fonts:
-    - family: Manrope
-      fonts:
-        - asset: assets/fonts/Manrope-Regular.ttf
-        - asset: assets/fonts/Manrope-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Manrope-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/Manrope-Light.ttf
-          weight: 300
-```
+### Gorsel Paylasimi Alternatifleri
+1. Firebase Storage (oncelikli)
+2. Firebase Storage kotasi asilirsa -> Google Drive API
+3. Base64 Firestore'da saklama (son care, onerilmez)

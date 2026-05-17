@@ -1,6 +1,6 @@
 # Product Context: Sıfır Atık Mutfak
 
-**Son Güncelleme:** Mart 2025
+**Son Güncelleme:** Mayıs 2026
 
 ---
 
@@ -19,15 +19,10 @@ Sıfır Atık Mutfak, AI teknolojisini kullanarak kullanıcıların elindeki mal
 ## Kullanıcı Yolculuğu
 
 ### 1. Tarifler Sayfası (Ana Sayfa)
-- Uygulama açılır, "Sıfır Atık Mutfak" başlığı görünür
+- Uygulama açılır splash ekrani sonrasi, "SıfırAtık Mutfak" başlığı görünür
 - Arama çubuğu (inner shadow efektli, beyaz, search_icon.png) + sağında filtre butonu
 - Filtre butonu: tune ikonu, seçili malzeme varsa turuncu + badge
-- Filtre butonuna tıklayınca bottom sheet açılır:
-  - Arama çubuğu ile malzeme ara
-  - Seçili malzemeler üstte turuncu chip'ler
-  - Tüm malzemeler wrap layout'ta (seçili: turuncu, değil: outline)
-  - "Temizle" + "Uygula (N)" butonları
-- Seçili malzemeler ana sayfada yatay chip bar'da gösterilir (+ "Temizle" chip'i)
+- Filtre butonuna tıklayınca bottom sheet açılır
 - Tarifler akıllı sıralama ile listelenir (en çok eşleşen üstte)
 - Her kartta: başlık, "N malzeme · N adım" özeti, malzeme chip'leri, eşleşme göstergesi, "Tarifi İncele" butonu
 - Karta tıklanınca bottom sheet detay açılır
@@ -47,45 +42,47 @@ Sıfır Atık Mutfak, AI teknolojisini kullanarak kullanıcıların elindeki mal
 - Eklenen malzemeler turuncu chip'ler
 - Son eklenenler: daha önce kullanılmış malzemeler (kalıcı, dokunulunca ekle)
 - Mutfak dropdown (pill-shape, inner shadow, arrow_icon.png)
-- "Tarif Oluştur" butonu → DeepSeek API → detay sheet
-- Kaydettiğim Tarifler: max 5 yatay + "Tümünü gör" bottom sheet
-- Tarif detayda fotoğraf yoksa placeholder gösterilmez, "Fotoğraf ekle" butonu çıkar
+- "Tarif Oluştur" butonu → DeepSeek API (retry mekanizmalı) → detay sheet
+- AI çıktısı RecipeParser ile Recipe modeline dönüştürülür (Markdown parsing)
+- Loading: "EcoChef pişiriyor" animasyonu (denizati.png ikonu)
 
-### 4. AI Sohbet (Chat/Leafy)
-- Sıfır atık mutfak yardımcısı ile sohbet
-- Input bar navbar'ın üzerinde konumlandırılmış
+### 4. AI Sohbet (Chat/EcoChef)
+- Iki asamali akis: Welcome (Giris) → Active Chat (Sohbet)
+- **Welcome:** denizati.png avatar, "Sohbete Basla" butonu, gunluk 5 oneri
+- **Sohbet:** DeepSeek API, Markdown render, typewriter efekti, input bar
+- **Limit:** Gunluk 20 mesaj, hata durumunda refund
 
-### 5. Puan Sistemi
-- Toplam puan gösterimi
-- 3 kategori kartı
-- Gönderi ekleme (gelecek: fotoğraf upload)
+### 5. Puan Sistemi (Gamification)
+- **PointsHeroCard:** Iki modlu animasyon
+- **5 Seviye:** Caylak, Merakli, Usta, Efsane, Efsane+
+- **Leaderboard:** Inline top 3, KVKK/GDPR opt-in
+- **Gonderi Paylasimi:** Firebase'e kaydedilir, admin onay/red yapar
+- **Nickname:** Ilk gonderi yuklemede sorulur, KVKK/GDPR acik riza
 
 ### 6. Admin Paneli (Web)
-- Email/Password ile giriş
-- Sidebar layout, tarif CRUD işlemleri
+- Flutter Web, responsive (sidebar desktop / drawer mobile)
+- Email/Password ile giris + Firestore admin check
+- Tarif CRUD + Gonderi onay/red sayfasi
+- **NOT:** Admin paneli ayri bir web sitesine tasinacak (Firebase Hosting)
 
 ---
 
 ## UI/UX Hedefleri
 
-### Tasarım Dili
-- **Beyaz kartlar** üzerine turuncu vurgular
-- **Manrope** font ailesi tüm metinlerde
-- **Custom PNG ikonlar** (arrow_icon, search_icon, alisveris_icon vb.)
+### Tasarim Dili
+- **Beyaz kartlar** uzerine turuncu vurgular
+- **Manrope** font ailesi tum metinlerde
+- **Custom PNG ikonlar** (denizati.png dahil)
 - **Pill-shaped navbar** frosted glass efektli
-- **Inner shadow** arama çubukları ve dropdown'lar
-- **Bottom sheet** bazlı detay/filtre/liste görünümleri
+- **Inner shadow** arama cubuklari ve dropdown'lar
 
 ### Navigation
-- Bottom tab bar (4 sekme): Tarifler, Oluştur, Chat, Puan
+- Bottom tab bar (4 sekme): Tarifler, Olustur, Chat, Puan
 - Custom ikonlar: tarifler_icon, olustur_icon, chat_icon, puan_icon
-- Aktif sekme: turuncu pill + beyaz ikon + Manrope Bold 12 yazı
-- Pasif sekme: beyaz daire + turuncu outline ikon
+- TabController listener ile swipe senkronizasyonu
 
-### Önemli UX Detayları
-- Tarifler sadece ilk açılışta fetch edilir (keepAlive: true)
-- Firestore boşsa veya hata verirse yerel JSON fallback
-- Malzeme filtresi bottom sheet ile (ana sayfada kalabalık yapmaz)
-- Son eklenenler kalıcı (SharedPreferences) - kullanıcı aynı malzemeleri tekrar yazmaz
-- Tarif oluşturulduktan sonra aktif malzeme listesi temizlenir
-- Kaydettiğim tarifler max 5 gösterilir + "Tümünü gör" ile aranabilir sheet
+### Onemli UX Detaylari
+- Splash screen: 4 asama, 5 saniye animasyonlu logo gosterimi
+- Instagram-style gonderi paylasimi + admin onay akisi
+- Gamification: seviye atlama animasyonu sirasinda icerik gizlenir
+- KVKK/GDPR: nickname ve leaderboard opt-in acik riza ile

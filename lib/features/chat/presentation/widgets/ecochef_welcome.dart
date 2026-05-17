@@ -1,48 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/providers/locale_provider.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../data/chat_suggestion_pool.dart';
+import '../providers/chat_providers.dart';
 
 /// Welcome screen shown before the chat starts.
-/// Displays EcoChef avatar, greeting, "Sohbete Başla" button,
-/// and suggestion chips below the button.
-class EcoChefWelcome extends StatelessWidget {
+class EcoChefWelcome extends ConsumerWidget {
   const EcoChefWelcome({
     super.key,
     required this.onStartChat,
     this.onSuggestionTap,
   });
 
-  /// Called when the user taps the "Sohbete Başla" button.
   final VoidCallback onStartChat;
+  final ValueChanged<ChatSuggestion>? onSuggestionTap;
 
-  /// Called when a suggestion chip is tapped — starts chat with that message.
-  final ValueChanged<String>? onSuggestionTap;
-
-  static const List<_Suggestion> _suggestions = [
-    _Suggestion(
-      icon: Icons.bakery_dining_rounded,
-      text: 'Bayat ekmeklerle ne yapabilirim?',
-    ),
-    _Suggestion(
-      icon: Icons.eco_rounded,
-      text: 'Sıfır atık mutfak ipuçları ver',
-    ),
-    _Suggestion(
-      icon: Icons.restaurant_rounded,
-      text: 'Meyve kabuklarını nasıl değerlendiririm?',
-    ),
-    _Suggestion(
-      icon: Icons.soup_kitchen_rounded,
-      text: 'Sebze artıklarından çorba tarifi',
-    ),
-    _Suggestion(
-      icon: Icons.lightbulb_outline_rounded,
-      text: 'Gıda israfını azaltmanın 5 yolu',
-    ),
-  ];
+  static const int _visibleCount = 5;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final localeCode = ref.watch(localeProvider).languageCode;
+    final suggestionsAsync = ref.watch(dailyChatSuggestionsProvider);
+    final suggestions = suggestionsAsync.maybeWhen(
+      data: (data) => data,
+      orElse: () => const <ChatSuggestion>[],
+    );
+    final isLoading = suggestionsAsync.isLoading && suggestions.isEmpty;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         return SingleChildScrollView(
@@ -80,10 +68,12 @@ class EcoChefWelcome extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.eco_rounded,
-                    color: AppColors.brandOrange,
-                    size: 48,
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Image.asset(
+                      'assets/images/icons/denizati.png',
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
 
@@ -105,7 +95,7 @@ class EcoChefWelcome extends StatelessWidget {
 
                 // ── Subtitle ──
                 Text(
-                  'Sıfır atık mutfak yardımcınız',
+                  l10n.chatWelcomeSubtitle,
                   style: TextStyle(
                     fontFamily: 'Manrope',
                     fontSize: 15,
@@ -128,8 +118,8 @@ class EcoChefWelcome extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      const Text(
-                        'Tarif önerileri, gıda israfını azaltma ipuçları ve sürdürülebilir mutfak pratikleri hakkında benimle sohbet edebilirsiniz! 🌿',
+                      Text(
+                        l10n.chatWelcomeDescription,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontFamily: 'Manrope',
@@ -152,7 +142,7 @@ class EcoChefWelcome extends StatelessWidget {
                             const Icon(Icons.info_outline_rounded, size: 14, color: AppColors.brandOrange),
                             const SizedBox(width: 4),
                             Text(
-                              'Günlük 20 mesaj hakkınız bulunmaktadır',
+                              l10n.chatDailyLimitInfo,
                               style: TextStyle(
                                 fontFamily: 'Manrope',
                                 fontSize: 12,
@@ -186,9 +176,9 @@ class EcoChefWelcome extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Ya da direkt sorun',
-                      style: TextStyle(
+                    Text(
+                      l10n.chatOrAskDirectly,
+                      style: const TextStyle(
                         fontFamily: 'Manrope',
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -201,17 +191,25 @@ class EcoChefWelcome extends StatelessWidget {
                 const SizedBox(height: 14),
 
                 // ── Suggestion Chips ──
-                ...List.generate(_suggestions.length, (index) {
-                  final suggestion = _suggestions[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: _SuggestionCard(
-                      icon: suggestion.icon,
-                      text: suggestion.text,
-                      onTap: () => onSuggestionTap?.call(suggestion.text),
-                    ),
-                  );
-                }),
+                if (isLoading)
+                  ...List.generate(_visibleCount, (_) {
+                    return const Padding(
+                      padding: EdgeInsets.only(bottom: 10),
+                      child: _SuggestionSkeleton(),
+                    );
+                  })
+                else
+                  ...List.generate(suggestions.length, (index) {
+                    final suggestion = suggestions[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _SuggestionCard(
+                        icon: suggestion.icon,
+                        text: suggestion.localized(localeCode),
+                        onTap: () => onSuggestionTap?.call(suggestion),
+                      ),
+                    );
+                  }),
               ],
             ),
           ),
@@ -219,12 +217,6 @@ class EcoChefWelcome extends StatelessWidget {
       },
     );
   }
-}
-
-class _Suggestion {
-  const _Suggestion({required this.icon, required this.text});
-  final IconData icon;
-  final String text;
 }
 
 // ── Start Chat Button ──────────────────────────────────────────────
@@ -250,7 +242,6 @@ class _StartChatButtonState extends State<_StartChatButton>
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
-
     _pulseAnimation = Tween<double>(begin: 0.0, end: 8.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
@@ -264,6 +255,7 @@ class _StartChatButtonState extends State<_StartChatButton>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (context, child) {
@@ -296,18 +288,18 @@ class _StartChatButtonState extends State<_StartChatButton>
                   ),
                 ],
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.chat_bubble_rounded,
                     color: Colors.white,
                     size: 22,
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Text(
-                    'Sohbete Başla',
-                    style: TextStyle(
+                    l10n.chatStartButton,
+                    style: const TextStyle(
                       fontFamily: 'Manrope',
                       fontSize: 17,
                       fontWeight: FontWeight.w700,
@@ -407,6 +399,48 @@ class _SuggestionCardState extends State<_SuggestionCard> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ── Skeleton ──────────────────────────────────────────────
+
+class _SuggestionSkeleton extends StatelessWidget {
+  const _SuggestionSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppColors.brandOrange.withOpacity(0.08),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppColors.brandOrange.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Container(
+              height: 12,
+              decoration: BoxDecoration(
+                color: AppColors.brandOrange.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

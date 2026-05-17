@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../data/models/recipe.dart';
 
 void showRecipeDetailSheet(
@@ -98,24 +99,25 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
 
   Future<void> _confirmDelete(BuildContext context) async {
     if (widget.onDelete == null) return;
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Tarifi sil',
-          style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700),
+        title: Text(
+          l10n.recipeDetailDelete,
+          style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700),
         ),
-        content: const Text(
-          'Bu tarifi kaydettiğiniz listeden silmek istediğinize emin misiniz?',
-          style: TextStyle(fontFamily: 'Manrope'),
+        content: Text(
+          l10n.recipeDetailDeleteConfirm,
+          style: const TextStyle(fontFamily: 'Manrope'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(
-              'İptal',
-              style: TextStyle(
+            child: Text(
+              l10n.recipeDetailCancel,
+              style: const TextStyle(
                 fontFamily: 'Manrope',
                 color: AppColors.inkLight,
               ),
@@ -129,9 +131,9 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text(
-              'Sil',
-              style: TextStyle(
+            child: Text(
+              l10n.recipeDetailDeleteAction,
+              style: const TextStyle(
                 fontFamily: 'Manrope',
                 fontWeight: FontWeight.w600,
               ),
@@ -147,6 +149,7 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
   }
 
   void _showImageSourcePicker() {
+    final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet<void>(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -161,9 +164,9 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                 Icons.photo_library,
                 color: AppColors.brandOrange,
               ),
-              title: const Text(
-                'Galeriden seç',
-                style: TextStyle(fontFamily: 'Manrope'),
+              title: Text(
+                l10n.recipeDetailGallery,
+                style: const TextStyle(fontFamily: 'Manrope'),
               ),
               onTap: () {
                 Navigator.pop(ctx);
@@ -175,9 +178,9 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                 Icons.camera_alt,
                 color: AppColors.brandOrange,
               ),
-              title: const Text(
-                'Fotoğraf çek',
-                style: TextStyle(fontFamily: 'Manrope'),
+              title: Text(
+                l10n.recipeDetailCamera,
+                style: const TextStyle(fontFamily: 'Manrope'),
               ),
               onTap: () {
                 Navigator.pop(ctx);
@@ -252,6 +255,7 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
   }
 
   Widget _buildImageWithAddOption() {
+    final l10n = AppLocalizations.of(context)!;
     if (widget.showPlaceholderImage) {
       final placeholder = ClipRRect(
         borderRadius: BorderRadius.circular(16),
@@ -283,18 +287,18 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                         color: Colors.black.withOpacity(0.5),
                         borderRadius: BorderRadius.circular(24),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.add_a_photo,
                             color: Colors.white,
                             size: 20,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
-                            'Fotoğraf ekle',
-                            style: TextStyle(
+                            l10n.recipeDetailAddPhoto,
+                            style: const TextStyle(
                               fontFamily: 'Manrope',
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
@@ -324,14 +328,14 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.stone.withOpacity(0.4)),
           ),
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.add_a_photo, color: AppColors.brandOrange, size: 20),
-              SizedBox(width: 8),
+              const Icon(Icons.add_a_photo, color: AppColors.brandOrange, size: 20),
+              const SizedBox(width: 8),
               Text(
-                'Fotoğraf ekle',
-                style: TextStyle(
+                l10n.recipeDetailAddPhoto,
+                style: const TextStyle(
                   fontFamily: 'Manrope',
                   color: AppColors.brandOrange,
                   fontWeight: FontWeight.w600,
@@ -348,6 +352,7 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final recipe = widget.recipe;
     return Container(
       decoration: BoxDecoration(
@@ -393,7 +398,7 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                     icon: const Icon(Icons.delete_outline, size: 22),
                     onPressed: () => _confirmDelete(context),
                     color: AppColors.terracotta,
-                    tooltip: 'Tarifi sil',
+                    tooltip: l10n.recipeDetailDelete,
                   ),
                 IconButton(
                   icon: const Icon(Icons.close, size: 22),
@@ -420,9 +425,9 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Kapat',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.recipeDetailClose,
+                        style: const TextStyle(
                           fontFamily: 'Manrope',
                           fontWeight: FontWeight.w600,
                         ),
@@ -444,9 +449,9 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Kaydet',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.recipeDetailSave,
+                        style: const TextStyle(
                           fontFamily: 'Manrope',
                           fontWeight: FontWeight.w700,
                         ),
@@ -477,7 +482,7 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                       _StatItem(
                         icon: Icons.shopping_basket_outlined,
                         value: '${recipe.ingredients.length}',
-                        label: 'Malzeme',
+                        label: l10n.recipeDetailIngredient,
                       ),
                       Container(
                         width: 1,
@@ -487,7 +492,7 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                       _StatItem(
                         icon: Icons.format_list_numbered,
                         value: '${recipe.instructions.length}',
-                        label: 'Adım',
+                        label: l10n.recipeDetailStep,
                       ),
                     ],
                   ),
@@ -529,9 +534,9 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                             height: 18,
                           ),
                           const SizedBox(width: 8),
-                          const Text(
-                            'Malzemeler',
-                            style: TextStyle(
+                          Text(
+                            l10n.recipeDetailIngredients,
+                            style: const TextStyle(
                               fontFamily: 'Manrope',
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
@@ -540,7 +545,7 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                           ),
                           const Spacer(),
                           Text(
-                            '${recipe.ingredients.length} adet',
+                            l10n.recipeDetailIngredientCount(recipe.ingredients.length),
                             style: const TextStyle(
                               fontFamily: 'Manrope',
                               fontSize: 12,
@@ -610,9 +615,9 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                             color: AppColors.brandOrange,
                           ),
                           const SizedBox(width: 8),
-                          const Text(
-                            'Yapılış',
-                            style: TextStyle(
+                          Text(
+                            l10n.recipeDetailInstructions,
+                            style: const TextStyle(
                               fontFamily: 'Manrope',
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
@@ -621,7 +626,7 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                           ),
                           const Spacer(),
                           Text(
-                            '${recipe.instructions.length} adım',
+                            l10n.recipeDetailStepCount(recipe.instructions.length),
                             style: const TextStyle(
                               fontFamily: 'Manrope',
                               fontSize: 12,

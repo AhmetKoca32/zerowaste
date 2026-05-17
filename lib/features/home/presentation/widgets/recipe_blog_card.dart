@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../data/models/recipe.dart';
 
 class RecipeBlogCard extends StatelessWidget {
@@ -17,6 +18,7 @@ class RecipeBlogCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       margin: const EdgeInsets.only(bottom: 20),
       elevation: 0,
@@ -54,7 +56,7 @@ class RecipeBlogCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          '$matchCount/${recipe.ingredients.length} malzeme elinizde',
+                          l10n.recipeCardMatchCount(matchCount ?? 0, recipe.ingredients.length),
                           style: TextStyle(
                             fontFamily: 'Manrope',
                             fontSize: 12,
@@ -78,7 +80,7 @@ class RecipeBlogCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '${recipe.ingredients.length} malzeme · ${recipe.instructions.length} adım',
+                  l10n.recipeCardStatSummary(recipe.ingredients.length, recipe.instructions.length),
                   style: const TextStyle(
                     fontFamily: 'Manrope',
                     fontSize: 13,
@@ -95,7 +97,7 @@ class RecipeBlogCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'Malzemeler',
+                      l10n.recipeCardIngredients,
                       style: TextStyle(
                         fontFamily: 'Manrope',
                         fontSize: 13,
@@ -148,11 +150,11 @@ class RecipeBlogCard extends StatelessWidget {
                         ),
                         elevation: 0,
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Text(
-                          'Tarifi İncele',
+                          l10n.recipeCardInspect,
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontFamily: 'Manrope',
                             fontSize: 14,
                             fontWeight: FontWeight.w700,

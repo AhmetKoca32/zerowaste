@@ -7,6 +7,7 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/shell/main_tab_shell.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/empty_placeholder.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../data/models/recipe.dart';
 import '../providers/home_providers.dart';
 import '../widgets/ingredient_filter_sheet.dart';
@@ -35,6 +36,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final recipesAsync = ref.watch(recipeListProvider);
 
     final body = recipesAsync.when(
@@ -42,7 +44,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         if (recipes.isEmpty) {
           return EmptyPlaceholder(
             icon: Icons.menu_book,
-            message: 'Henüz tarif yok. Malzeme ekleyip bir tarif oluşturun!',
+            message: l10n.homeEmpty,
             action: FilledButton.icon(
               onPressed: () {
                 if (widget.inTabs) {
@@ -52,9 +54,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                 }
               },
               icon: const Icon(Icons.add_circle_outline),
-              label: const Text(
-                'Tarif Oluştur',
-                style: TextStyle(fontFamily: 'Manrope'),
+              label: Text(
+                l10n.homeCreateRecipe,
+                style: const TextStyle(fontFamily: 'Manrope'),
               ),
             ),
           );
@@ -89,7 +91,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             if (index == 0) {
               return Column(
                 children: [
-                  _buildSearchBar(allIngredients),
+                  _buildSearchBar(allIngredients, l10n),
                   _buildSelectedChips(),
                   const SizedBox(height: 12),
                 ],
@@ -118,7 +120,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Tarifler yükleniyor…',
+              l10n.homeLoading,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontFamily: 'Manrope',
                 color: AppColors.inkLight,
@@ -129,13 +131,13 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
       error: (err, stack) => EmptyPlaceholder(
         icon: Icons.error_outline,
-        message: 'Tarifler yüklenemedi.\n$err',
+        message: l10n.homeError(err.toString()),
         action: TextButton.icon(
           onPressed: () => ref.invalidate(recipeListProvider),
           icon: const Icon(Icons.refresh),
-          label: const Text(
-            'Tekrar Dene',
-            style: TextStyle(fontFamily: 'Manrope'),
+          label: Text(
+            l10n.homeRetry,
+            style: const TextStyle(fontFamily: 'Manrope'),
           ),
         ),
       ),
@@ -145,7 +147,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          AppConstants.appName,
+          l10n.appName,
           style: const TextStyle(
             fontFamily: 'Manrope',
             color: AppColors.ink,
@@ -169,6 +171,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   Widget _buildSelectedChips() {
     if (_selectedIngredients.isEmpty) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: SizedBox(
@@ -192,14 +195,14 @@ class _HomePageState extends ConsumerState<HomePage> {
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: AppColors.stone.withOpacity(0.5)),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.close, size: 14, color: AppColors.inkLight),
-                        SizedBox(width: 4),
+                        const Icon(Icons.close, size: 14, color: AppColors.inkLight),
+                        const SizedBox(width: 4),
                         Text(
-                          'Temizle',
-                          style: TextStyle(
+                          l10n.homeClearFilter,
+                          style: const TextStyle(
                             fontFamily: 'Manrope',
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
@@ -251,7 +254,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Widget _buildSearchBar(List<String> allIngredients) {
+  Widget _buildSearchBar(List<String> allIngredients, AppLocalizations l10n) {
     final radius = BorderRadius.circular(50);
     final hasFilter = _selectedIngredients.isNotEmpty;
     return Padding(
@@ -289,7 +292,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     onChanged: (value) => setState(() => _searchQuery = value),
                     style: const TextStyle(fontFamily: 'Manrope', fontSize: 14),
                     decoration: InputDecoration(
-                      hintText: 'Tariflerde arayın',
+                      hintText: l10n.homeSearchHint,
                       hintStyle: TextStyle(
                         color: AppColors.inkLight.withOpacity(0.6),
                         fontFamily: 'Manrope',

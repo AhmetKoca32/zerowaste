@@ -2,39 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import 'package:zerowaste/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
-
-/// Post approval status — admin reviews before points are awarded.
-enum PostStatus {
-  pending,  // Submitted, waiting for admin review
-  approved, // Admin approved → points awarded
-  rejected, // Admin rejected → no points
-}
-
-/// A single post entry for the recent posts grid.
-class PostEntry {
-  const PostEntry({
-    required this.icon,
-    required this.category,
-    required this.points,
-    required this.date,
-    this.localImagePath,
-    this.imageColor,
-    this.status = PostStatus.pending,
-    this.isAdminBonus = false,
-    this.adminNote,
-  });
-
-  final IconData icon;
-  final String category;
-  final int points;
-  final String date; // e.g. "14 Nis"
-  final String? localImagePath; // Local file path for user images
-  final Color? imageColor; // placeholder until real images
-  final PostStatus status;
-  final bool isAdminBonus; // true if admin manually awarded points
-  final String? adminNote; // optional admin message
-}
+import '../../data/models/post_entry.dart';
 
 /// Instagram-style 2-column grid showing recent posts.
 /// Supports loading (shimmer), empty, and populated states.
@@ -84,7 +54,7 @@ class _RecentPostsGridState extends State<RecentPostsGrid>
             const Icon(Icons.grid_view_rounded, color: AppColors.brandOrange, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Son Gönderilerin',
+              AppLocalizations.of(context)!.pointsRecentTitle,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontFamily: 'Manrope',
                     color: AppColors.ink,
@@ -94,7 +64,7 @@ class _RecentPostsGridState extends State<RecentPostsGrid>
             const Spacer(),
             if (widget.posts.isNotEmpty)
               Text(
-                '${widget.posts.length} gönderi',
+                AppLocalizations.of(context)!.pointsPostCount(widget.posts.length),
                 style: TextStyle(
                   fontFamily: 'Manrope',
                   fontSize: 13,
@@ -178,9 +148,9 @@ class _RecentPostsGridState extends State<RecentPostsGrid>
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'İlk gönderini paylaş!',
-            style: TextStyle(
+          Text(
+            AppLocalizations.of(context)!.pointsEmptyTitle,
+            style: const TextStyle(
               fontFamily: 'Manrope',
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -189,7 +159,7 @@ class _RecentPostsGridState extends State<RecentPostsGrid>
           ),
           const SizedBox(height: 6),
           Text(
-            'Sıfır atık mutfağınla neler yaptığını göster\nve puan kazanmaya başla',
+            AppLocalizations.of(context)!.pointsEmptySubtitle,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'Manrope',
@@ -203,7 +173,7 @@ class _RecentPostsGridState extends State<RecentPostsGrid>
           FilledButton.icon(
             onPressed: widget.onAddPost,
             icon: const Icon(Icons.camera_alt_rounded, size: 18),
-            label: const Text('Gönderi Ekle'),
+            label: Text(AppLocalizations.of(context)!.pointsAddPost),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.brandOrange,
               foregroundColor: Colors.white,
@@ -243,6 +213,51 @@ class _PostCard extends StatelessWidget {
 
   final PostEntry post;
 
+  /// Derive icon from category.
+  IconData _categoryIcon() {
+    switch (post.category) {
+      case 'Dolap':
+        return Icons.kitchen_rounded;
+      case 'Yemek Anı':
+        return Icons.restaurant_rounded;
+      case 'Artık Değerlendirme':
+        return Icons.recycling_rounded;
+      case 'Admin Bonus':
+        return Icons.auto_awesome_rounded;
+      default:
+        return Icons.more_horiz_rounded;
+    }
+  }
+
+  /// Localized category name for display.
+  String _localizedCategory(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (post.category) {
+      case 'Dolap':
+        return l10n.pointsCategoryFridge;
+      case 'Yemek Anı':
+        return l10n.pointsCategoryCooking;
+      case 'Artık Değerlendirme':
+        return l10n.pointsCategoryLeftovers;
+      default:
+        return l10n.pointsCategoryOther;
+    }
+  }
+
+  Color? get _imageColor {
+    if (post.imageColor == null) return null;
+    return Color(post.imageColor!);
+  }
+
+  String _formattedDate(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final months = [
+      '', l10n.monthAbbrJan, l10n.monthAbbrFeb, l10n.monthAbbrMar, l10n.monthAbbrApr, l10n.monthAbbrMay, l10n.monthAbbrJun,
+      l10n.monthAbbrJul, l10n.monthAbbrAug, l10n.monthAbbrSep, l10n.monthAbbrOct, l10n.monthAbbrNov, l10n.monthAbbrDec,
+    ];
+    return '${post.createdAt.day} ${months[post.createdAt.month]}';
+  }
+
   /// Status-specific styling.
   Color get _statusColor => switch (post.status) {
         PostStatus.pending => const Color(0xFFFFA726),
@@ -256,9 +271,9 @@ class _PostCard extends StatelessWidget {
         PostStatus.rejected => Icons.cancel_rounded,
       };
 
-  String get _statusLabel => switch (post.status) {
-        PostStatus.pending => 'İnceleniyor',
-        PostStatus.approved => 'Onaylandı',
+  String _statusLabel(BuildContext context) => switch (post.status) {
+        PostStatus.pending => AppLocalizations.of(context)!.pointsStatusPending,
+        PostStatus.approved => AppLocalizations.of(context)!.pointsStatusApproved,
         PostStatus.rejected => 'Reddedildi',
       };
 
@@ -268,7 +283,7 @@ class _PostCard extends StatelessWidget {
     if (post.isAdminBonus) {
       return GestureDetector(
         onTap: () => _showPostDetails(context),
-        child: _buildAdminBonusCard(),
+        child: _buildAdminBonusCard(context),
       );
     }
 
@@ -300,7 +315,7 @@ class _PostCard extends StatelessWidget {
             child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: post.imageColor ?? AppColors.brandOrange.withOpacity(0.08),
+                color: _imageColor ?? AppColors.brandOrange.withOpacity(0.08),
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(16),
                 ),
@@ -318,9 +333,9 @@ class _PostCard extends StatelessWidget {
                     child: Opacity(
                       opacity: isPending ? 0.3 : 0.4,
                       child: Icon(
-                        post.icon,
+                        _categoryIcon(),
                         size: 36,
-                        color: post.imageColor != null
+                        color: _imageColor != null
                             ? Colors.white
                             : AppColors.brandOrange,
                       ),
@@ -332,7 +347,7 @@ class _PostCard extends StatelessWidget {
                     right: 8,
                     child: post.status == PostStatus.approved
                         ? _buildPointsBadge()
-                        : _buildStatusBadge(),
+                        : _buildStatusBadge(context),
                   ),
                   // Pending overlay
                   if (isPending)
@@ -358,11 +373,11 @@ class _PostCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(post.icon, size: 13, color: AppColors.brandOrange),
+                    Icon(_categoryIcon(), size: 13, color: AppColors.brandOrange),
                     const SizedBox(width: 5),
                     Expanded(
                       child: Text(
-                        post.category,
+                        _localizedCategory(context),
                         style: TextStyle(
                           fontFamily: 'Manrope',
                           fontSize: 12,
@@ -378,7 +393,7 @@ class _PostCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      post.date,
+                      _formattedDate(context),
                       style: TextStyle(
                         fontFamily: 'Manrope',
                         fontSize: 10,
@@ -395,7 +410,7 @@ class _PostCard extends StatelessWidget {
                     Icon(_statusIcon, size: 12, color: _statusColor),
                     const SizedBox(width: 4),
                     Text(
-                      _statusLabel,
+                      _statusLabel(context),
                       style: TextStyle(
                         fontFamily: 'Manrope',
                         fontSize: 10,
@@ -445,7 +460,7 @@ class _PostCard extends StatelessWidget {
                   height: 320,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: post.isAdminBonus ? const Color(0xFFFFD54F) : (post.imageColor ?? AppColors.brandOrange.withOpacity(0.08)),
+                    color: post.isAdminBonus ? const Color(0xFFFFD54F) : (_imageColor ?? AppColors.brandOrange.withOpacity(0.08)),
                     image: post.localImagePath != null
                         ? DecorationImage(
                             image: FileImage(File(post.localImagePath!)),
@@ -456,7 +471,7 @@ class _PostCard extends StatelessWidget {
                   child: post.localImagePath == null
                       ? Center(
                           child: Icon(
-                            post.isAdminBonus ? Icons.auto_awesome_rounded : post.icon,
+                            post.isAdminBonus ? Icons.auto_awesome_rounded : _categoryIcon(),
                             size: 80,
                             color: post.isAdminBonus ? Colors.white.withOpacity(0.8) : Colors.white,
                           ),
@@ -505,10 +520,10 @@ class _PostCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      _buildDetailStatusBadge(),
+                      _buildDetailStatusBadge(context),
                       const Spacer(),
                       Text(
-                        post.date,
+                        _formattedDate(context),
                         style: TextStyle(
                           fontFamily: 'Manrope',
                           fontSize: 13,
@@ -520,7 +535,7 @@ class _PostCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    post.category,
+                    _localizedCategory(context),
                     style: const TextStyle(
                       fontFamily: 'Manrope',
                       fontSize: 24,
@@ -533,8 +548,8 @@ class _PostCard extends StatelessWidget {
                   if (post.status == PostStatus.approved)
                     Row(
                       children: [
-                        const Text(
-                          'Kazanılan Puan:',
+                        Text(
+                          AppLocalizations.of(context)!.pointsEarned,
                           style: TextStyle(
                             fontFamily: 'Manrope',
                             fontSize: 14,
@@ -574,9 +589,9 @@ class _PostCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
-                      child: const Text(
-                        'Kapat',
-                        style: TextStyle(fontFamily: 'Manrope', fontSize: 16, fontWeight: FontWeight.w700),
+                      child: Text(
+                        AppLocalizations.of(context)!.recipeDetailClose,
+                        style: const TextStyle(fontFamily: 'Manrope', fontSize: 16, fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -589,7 +604,7 @@ class _PostCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailStatusBadge() {
+  Widget _buildDetailStatusBadge(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -602,7 +617,7 @@ class _PostCard extends StatelessWidget {
           Icon(_statusIcon, size: 16, color: _statusColor),
           const SizedBox(width: 6),
           Text(
-            _statusLabel.toUpperCase(),
+            _statusLabel(context).toUpperCase(),
             style: TextStyle(
               fontFamily: 'Manrope',
               fontSize: 11,
@@ -691,7 +706,7 @@ class _PostCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusBadge() {
+  Widget _buildStatusBadge(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -711,7 +726,7 @@ class _PostCard extends StatelessWidget {
           Icon(_statusIcon, size: 11, color: Colors.white),
           const SizedBox(width: 4),
           Text(
-            _statusLabel,
+            _statusLabel(context),
             style: const TextStyle(
               fontFamily: 'Manrope',
               fontSize: 10,
@@ -725,7 +740,7 @@ class _PostCard extends StatelessWidget {
   }
 
   /// Special card for admin-awarded bonus points.
-  Widget _buildAdminBonusCard() {
+  Widget _buildAdminBonusCard(BuildContext context) {
     const goldDark = Color(0xFFE8A817);
     const goldLight = Color(0xFFFFC947);
 
@@ -878,7 +893,7 @@ class _PostCard extends StatelessWidget {
                     ),
                     const Spacer(),
                     Text(
-                      post.date,
+                      _formattedDate(context),
                       style: TextStyle(
                         fontFamily: 'Manrope',
                         fontSize: 10,

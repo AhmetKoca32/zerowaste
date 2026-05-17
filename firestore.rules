@@ -10,6 +10,22 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
+    // Gonderiler: giris yapmamis kullanici yazabilir (firebase auth optional)
+    // Admin onay/red yapabilir
+    match /posts/{postId} {
+      allow create: if true;  // herkes gonderi olusturabilir
+      allow read: if true;    // herkes okuyabilir
+      allow update, delete: if request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Leaderboard: herkes okuyabilir, sadece sistem (admin) yazabilir
+    match /leaderboard/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
     // Admin listesi: giriş yapmış kullanıcı sadece kendi kaydını okuyabilir (admin mi kontrolü)
     match /admins/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;

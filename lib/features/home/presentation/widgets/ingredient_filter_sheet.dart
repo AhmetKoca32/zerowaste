@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 
 Future<Set<String>?> showIngredientFilterSheet(
   BuildContext context, {
@@ -51,6 +52,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final filtered = _search.isEmpty
         ? widget.allIngredients
         : widget.allIngredients
@@ -80,10 +82,10 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Malzeme Filtresi',
-                    style: TextStyle(
+                    l10n.filterTitle,
+                    style: const TextStyle(
                       fontFamily: 'Manrope',
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
@@ -93,7 +95,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                 ),
                 if (_selected.isNotEmpty)
                   Text(
-                    '${_selected.length} seçili',
+                    l10n.filterSelected(_selected.length),
                     style: const TextStyle(
                       fontFamily: 'Manrope',
                       fontSize: 13,
@@ -139,7 +141,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                     onChanged: (v) => setState(() => _search = v.trim()),
                     style: const TextStyle(fontFamily: 'Manrope', fontSize: 14),
                     decoration: InputDecoration(
-                      hintText: 'Malzeme ara...',
+                      hintText: l10n.filterSearchHint,
                       hintStyle: TextStyle(
                         fontFamily: 'Manrope',
                         fontSize: 14,
@@ -178,9 +180,9 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
               children: [
                 // Secili malzemeler ustte
                 if (_selected.isNotEmpty) ...[
-                  const Text(
-                    'Seçili malzemeler',
-                    style: TextStyle(
+                  Text(
+                    l10n.filterSelectedSection,
+                    style: const TextStyle(
                       fontFamily: 'Manrope',
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -206,14 +208,17 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                ingredient,
-                                style: const TextStyle(
+                              Flexible(
+                                child: Text(
+                                  ingredient,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
                                   fontFamily: 'Manrope',
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
                                   color: Colors.white,
                                 ),
+                              ),
                               ),
                               const SizedBox(width: 6),
                               const Icon(Icons.close, size: 14, color: Colors.white70),
@@ -228,9 +233,9 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
 
                 // Tum malzemeler
                 if (filtered.isNotEmpty) ...[
-                  const Text(
-                    'Tüm malzemeler',
-                    style: TextStyle(
+                  Text(
+                    l10n.filterAllSection,
+                    style: const TextStyle(
                       fontFamily: 'Manrope',
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -286,7 +291,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                     child: Padding(
                       padding: const EdgeInsets.only(top: 32),
                       child: Text(
-                        'Sonuç bulunamadı.',
+                        l10n.filterNoResults,
                         style: TextStyle(
                           fontFamily: 'Manrope',
                           color: AppColors.inkLight,
@@ -324,9 +329,9 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
-                      'Temizle',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.filterClear,
+                      style: const TextStyle(
                         fontFamily: 'Manrope',
                         fontWeight: FontWeight.w600,
                       ),
@@ -348,8 +353,8 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                     ),
                     child: Text(
                       _selected.isEmpty
-                          ? 'Uygula'
-                          : 'Uygula (${_selected.length})',
+                          ? l10n.filterApply
+                          : l10n.filterApplyWithCount(_selected.length),
                       style: const TextStyle(
                         fontFamily: 'Manrope',
                         fontWeight: FontWeight.w700,

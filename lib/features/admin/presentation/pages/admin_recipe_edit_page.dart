@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:zerowaste/l10n/app_localizations.dart';
 import '../../../../core/router/app_router.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../home/data/models/recipe.dart';
 import '../providers/admin_providers.dart';
 import '../widgets/admin_guard.dart';
@@ -25,6 +25,7 @@ class _AdminRecipeEditPageState extends ConsumerState<AdminRecipeEditPage> {
   bool _isLoading = false;
 
   Future<void> _handleSave(Recipe recipe) async {
+    final l10n = AppLocalizations.of(context)!;
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
@@ -54,7 +55,7 @@ class _AdminRecipeEditPageState extends ConsumerState<AdminRecipeEditPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Hata: $e')),
+        SnackBar(content: Text(l10n.homeError(e.toString()))),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -83,35 +84,29 @@ class _AdminRecipeEditPageState extends ConsumerState<AdminRecipeEditPage> {
     }
 
     return AdminGuard(
-      child: AdminSidebar(
-        currentPath: GoRouterState.of(context).uri.path,
-        onLogout: () async {
-          await ref.read(adminAuthServiceProvider).signOut();
-          if (context.mounted) context.go(AppRouter.adminLogin);
+      child: Consumer(
+        builder: (context, ref, _) {
+          return AdminShell(
+            title: isEditing ? 'Tarif Düzenle' : 'Yeni Tarif',
+            currentPath: GoRouterState.of(context).uri.path,
+            onLogout: () async {
+              await ref.read(adminAuthServiceProvider).signOut();
+              if (context.mounted) context.go(AppRouter.adminLogin);
+            },
+            body: isEditing && existingRecipe == null
+                ? recipesAsync.when(
+                    data: (_) => const Center(child: Text('Tarif bulunamadı')),
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    error: (e, _) => Center(child: Text('Hata: $e')),
+                  )
+                : AdminRecipeForm(
+                    formKey: _formKey,
+                    initialRecipe: existingRecipe,
+                    onSave: _handleSave,
+                    isLoading: _isLoading,
+                  ),
+          );
         },
-        child: Scaffold(
-          backgroundColor: AppColors.cream,
-          appBar: AppBar(
-            title: Text(isEditing ? 'Tarif Düzenle' : 'Yeni Tarif'),
-            backgroundColor: Colors.white,
-            foregroundColor: AppColors.ink,
-            elevation: 0,
-          ),
-          body: isEditing && existingRecipe == null
-              ? recipesAsync.when(
-                  data: (_) => const Center(
-                      child: Text('Tarif bulunamadı')),
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Hata: $e')),
-                )
-              : AdminRecipeForm(
-                  formKey: _formKey,
-                  initialRecipe: existingRecipe,
-                  onSave: _handleSave,
-                  isLoading: _isLoading,
-                ),
-        ),
       ),
     );
   }

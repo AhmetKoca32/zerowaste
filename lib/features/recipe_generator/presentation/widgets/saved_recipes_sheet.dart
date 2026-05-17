@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../home/presentation/widgets/recipe_detail_sheet.dart';
 import '../../data/saved_recipe.dart';
 import '../../data/saved_recipes_storage.dart';
@@ -65,6 +66,7 @@ class _SavedRecipesSheetContentState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final savedAsync = ref.watch(savedRecipesProvider);
 
     return Container(
@@ -84,13 +86,13 @@ class _SavedRecipesSheetContentState
             ),
           ),
           const SizedBox(height: 16),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'Kaydettiğim Tarifler',
-                style: TextStyle(
+                l10n.savedRecipesTitle,
+                style: const TextStyle(
                   fontFamily: 'Manrope',
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
@@ -131,7 +133,7 @@ class _SavedRecipesSheetContentState
                     onChanged: (v) => setState(() => _searchQuery = v.trim()),
                     style: const TextStyle(fontFamily: 'Manrope', fontSize: 14),
                     decoration: InputDecoration(
-                      hintText: 'Tariflerde arayın',
+                      hintText: l10n.homeSearchHint,
                       hintStyle: TextStyle(
                         fontFamily: 'Manrope',
                         fontSize: 14,
@@ -180,8 +182,8 @@ class _SavedRecipesSheetContentState
                   return Center(
                     child: Text(
                       _searchQuery.isEmpty
-                          ? 'Henüz kaydedilmiş tarif yok.'
-                          : 'Sonuç bulunamadı.',
+                          ? l10n.savedRecipesEmpty
+                          : l10n.filterNoResults,
                       style: const TextStyle(
                         fontFamily: 'Manrope',
                         color: AppColors.inkLight,
@@ -208,10 +210,10 @@ class _SavedRecipesSheetContentState
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, _) => const Center(
+              error: (_, _) => Center(
                 child: Text(
-                  'Tarifler yüklenirken hata oluştu.',
-                  style: TextStyle(
+                  l10n.savedRecipesError,
+                  style: const TextStyle(
                     fontFamily: 'Manrope',
                     color: AppColors.inkLight,
                   ),
@@ -233,6 +235,7 @@ class _SavedRecipeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final recipe = savedRecipe.recipe;
     final imagePath = savedRecipe.localImagePath;
 
@@ -274,7 +277,7 @@ class _SavedRecipeRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${recipe.ingredients.length} malzeme · ${recipe.instructions.length} adım',
+                    l10n.recipeCardStatSummary(recipe.ingredients.length, recipe.instructions.length),
                     style: const TextStyle(
                       fontFamily: 'Manrope',
                       fontSize: 13,

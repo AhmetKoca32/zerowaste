@@ -112,7 +112,7 @@ class GeneratedRecipe extends _$GeneratedRecipe {
     final ingredients = ref.read(ingredientListProvider);
     if (ingredients.isEmpty) {
       state = AsyncValue.data(
-        'Lütfen tarif oluşturmadan önce en az bir malzeme ekleyin.',
+        'Please add at least one ingredient before creating a recipe.',
       );
       return;
     }
