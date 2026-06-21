@@ -414,6 +414,10 @@
   "@pointsNicknameHint": {
     "description": "Nickname giriş ipucu"
   },
+  "pointsNicknameWarning": "⚠️ Bu adı bir daha değiştiremezsin. Lütfen dikkatli seç!",
+  "@pointsNicknameWarning": {
+    "description": "Nickname kalıcılık uyarısı"
+  },
   "pointsNicknameValidationEmpty": "Lütfen bir takma ad girin",
   "@pointsNicknameValidationEmpty": {
     "description": "Boş nickname uyarısı"
@@ -459,7 +463,7 @@
   "@pointsLevelUpTitle": {
     "description": "Seviye atlama başlığı"
   },
-  "pointsLevelUpDesc": "Gönderin admin tarafından onaylandı ve kazandığın yeni puanlar hesabına eklendi. Sıfır atık yolculuğunda ilham vermeye devam et!",
+  "pointsLevelUpDesc": "Gönderin onaylandı ve kazandığın yeni puanlar hesabına eklendi. Sıfır atık yolculuğunda ilham vermeye devam et!",
   "@pointsLevelUpDesc": {
     "description": "Seviye atlama açıklaması"
   },
@@ -556,50 +560,6 @@
   "monthAbbrNov": "Kas",
   "monthAbbrDec": "Ara",
 
-  "adminLoginTitle": "Admin Girişi",
-  "adminLoginSubtitle": "Atıksız Mutfak Admin Paneli",
-  "adminLoginEmailLabel": "Email",
-  "adminLoginPasswordLabel": "Şifre",
-  "adminLoginButton": "Giriş Yap",
-  "adminLoginBackToHome": "Ana Sayfaya Dön",
-  "adminLoginErrorInvalidEmail": "Geçerli bir email girin",
-  "adminLoginErrorPasswordRequired": "Şifre gerekli",
-  "adminLoginErrorPasswordMin": "Şifre en az 6 karakter olmalı",
-
-  "adminDashboardTitle": "Tarifler",
-  "adminDashboardEmpty": "Henüz tarif yok",
-  "adminDashboardEmptyHint": "Yeni tarif eklemek için sağ alttaki butonu kullanın",
-  "adminDashboardDeleteTitle": "Tarifi Sil",
-  "adminDashboardDeleteConfirm": "\"{title}\" tarifini silmek istediğinize emin misiniz?",
-  "adminDashboardDeleted": "Tarif silindi",
-
-  "adminSidebarBrand": "Atıksız Admin",
-  "adminSidebarRecipes": "Tarifler",
-  "adminSidebarNewRecipe": "Yeni Tarif",
-  "adminSidebarPosts": "Gönderiler",
-  "adminSidebarLogout": "Çıkış Yap",
-  "adminSidebarApprove": "Onayla",
-  "adminSidebarReject": "Reddet",
-
-  "adminFormTitle": "Tarif Başlığı *",
-  "adminFormTitleRequired": "Başlık gerekli",
-  "adminFormDescription": "Açıklama (Opsiyonel)",
-  "adminFormPhotoUrl": "Fotoğraf URL (Opsiyonel)",
-  "adminFormIngredientsHint": "Her satıra bir malzeme yazın",
-  "adminFormStepsLabel": "Yapılış Adımları *",
-  "adminFormStepsHint": "Her satıra bir adım yazın",
-  "adminFormStepsRequired": "En az bir adım gerekli",
-  "adminFormSave": "Kaydet",
-  "adminFormUpdate": "Güncelle",
-
-  "adminPostsTitle": "Bekleyen Gönderiler",
-  "adminPostsEmpty": "Bekleyen gönderi yok",
-  "adminPostsEmptySubtitle": "Her şey yolunda!",
-  "adminPostsApproveDialog": "Gönderiyi Onayla",
-  "adminPostsAdminNote": "Admin notu (isteğe bağlı)",
-  "adminPostsRejectDialog": "Gönderiyi Reddet",
-  "adminPostsRejectConfirm": "{nickname} kullanıcısının gönderisini reddetmek istediğinize emin misiniz?",
-
   "cuisineMediterranean": "Akdeniz mutfağı",
   "cuisineAegean": "Ege mutfağı",
   "cuisineBlackSea": "Karadeniz mutfağı",
@@ -617,5 +577,35 @@
   "cuisineUzbek": "Özbek mutfağı",
   "cuisineGreek": "Yunan mutfağı",
   "cuisineMiddleEastern": "Orta Doğu mutfağı",
-  "cuisineAsian": "Asya mutfağı"
+  "cuisineAsian": "Asya mutfağı",
+
+  "accountDeletedTitle": "Hesap Durumu",
+  "@accountDeletedTitle": {
+    "description": "Hesap silinme dialog başlığı"
+  },
+  "accountDeletedMessage": "Tüm gönderileriniz ve puanlarınız admin tarafından silinmiş. Detaylı bilgi için bizimle iletişime geçebilirsiniz.",
+  "@accountDeletedMessage": {
+    "description": "Hesap silinme dialog mesajı"
+  },
+  "accountDeletedOk": "Tamam",
+  "@accountDeletedOk": {
+    "description": "Hesap silinme dialog kapat butonu"
+  },
+
+  "optOutTitle": "Yarışmadan Çık",
+  "@optOutTitle": {
+    "description": "Opt-out dialog başlığı"
+  },
+  "optOutMessage": "Yarışmadan çıkarsan tüm puanların ve sıralamadaki yerin kaybolur. Yeni bir takma adla tekrar katılabilirsin.\n\nDevam etmek istediğine emin misin?",
+  "@optOutMessage": {
+    "description": "Opt-out dialog mesajı"
+  },
+  "optOutCancel": "Vazgeç",
+  "@optOutCancel": {
+    "description": "Opt-out iptal butonu"
+  },
+  "optOutConfirm": "Çık",
+  "@optOutConfirm": {
+    "description": "Opt-out onay butonu"
+  }
 }

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:zerowaste/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/shell/main_tab_shell.dart';
 import '../../data/models/leaderboard_doc.dart';
 import '../../data/models/post_entry.dart';
 import '../../data/repositories/points_repository.dart';
@@ -12,16 +14,16 @@ import '../widgets/points_hero_card.dart';
 import '../widgets/recent_posts_grid.dart';
 
 /// 4. sekme: Puan toplama sayfası (dolap / yemek anı / artıklardan ne yaptım).
-class PointsPage extends StatefulWidget {
+class PointsPage extends ConsumerStatefulWidget {
   const PointsPage({super.key, this.inTabs = false});
 
   final bool inTabs;
 
   @override
-  State<PointsPage> createState() => _PointsPageState();
+  ConsumerState<PointsPage> createState() => _PointsPageState();
 }
 
-class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
+class _PointsPageState extends ConsumerState<PointsPage> with TickerProviderStateMixin {
   // ── Page entrance animation ──
   late AnimationController _entranceController;
   late Animation<double> _fadeAnimation;
@@ -31,7 +33,7 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
-  /// Mock missions — will be driven by backend later.
+  /// Daily missions loaded from SharedPreferences.
   List<Mission> _missions(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return [
@@ -40,21 +42,70 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
         title: l10n.pointsMissionFridge,
         subtitle: l10n.pointsMissionFridgeDesc,
         points: 15,
-        completed: true,
+        completed: _missionCompleted[0],
       ),
       Mission(
         icon: Icons.restaurant_rounded,
         title: l10n.pointsMissionCooking,
         subtitle: l10n.pointsMissionCookingDesc,
         points: 20,
+        completed: _missionCompleted[1],
       ),
       Mission(
         icon: Icons.recycling_rounded,
         title: l10n.pointsMissionLeftovers,
         subtitle: l10n.pointsMissionLeftoversDesc,
         points: 25,
+        completed: _missionCompleted[2],
       ),
     ];
+  }
+
+  /// Load mission completion state from SharedPreferences.
+  /// Missions reset daily based on the stored date.
+  Future<void> _loadMissions() async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    final savedDate = prefs.getString('missions_date') ?? '';
+    if (savedDate != today) {
+      await prefs.setString('missions_date', today);
+      await prefs.setStringList('missions_completed', []);
+      setState(() => _missionCompleted = [false, false, false]);
+    } else {
+      final saved = prefs.getStringList('missions_completed') ?? [];
+      setState(() {
+        _missionCompleted = [
+          saved.contains('fridge'),
+          saved.contains('cooking'),
+          saved.contains('leftovers'),
+        ];
+      });
+    }
+  }
+
+  /// Mark a mission as completed in SharedPreferences.
+  Future<void> _completeMission(int index) async {
+    if (_missionCompleted[index]) return;
+    final keys = ['fridge', 'cooking', 'leftovers'];
+    final prefs = await SharedPreferences.getInstance();
+    final saved = (prefs.getStringList('missions_completed') ?? []);
+    if (!saved.contains(keys[index])) {
+      saved.add(keys[index]);
+      await prefs.setStringList('missions_completed', saved);
+    }
+    if (mounted) setState(() => _missionCompleted[index] = true);
+  }
+
+  /// Check if a submitted post matches a daily mission and mark it completed.
+  void _checkAndCompleteMission(_PostCategory cat) {
+    switch (cat.label) {
+      case 'Dolap':
+        _completeMission(0);
+      case 'Yemek Anı':
+        _completeMission(1);
+      case 'Artık Değerlendirme':
+        _completeMission(2);
+    }
   }
 
   /// Category definitions for the add-post picker.
@@ -118,6 +169,15 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
   bool _startHeroAnimation = false;
   bool _showPointsAddedOverlay = false;
 
+  /// Deletion detection
+  bool _showAccountDeleted = false;
+
+  /// Daily missions
+  List<bool> _missionCompleted = [false, false, false];
+
+  /// Tracks whether this is the first load (no animation) vs a revisit.
+  bool _initialLoadDone = false;
+
   late PointsRepository _repo;
 
   @override
@@ -127,8 +187,8 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
     _repo = PointsRepository();
 
     _loadNickname();
+    _loadMissions();
 
-    // ── Page entrance ──
     _entranceController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -160,6 +220,10 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
     );
   }
 
+  /// Fetch posts from Firestore once.
+  /// Compares current total with last-known points in SharedPreferences.
+  /// If points increased since last visit, triggers hero card animation.
+  /// Called on init and every time the user returns to this tab.
   Future<void> _loadPosts() async {
     if (_nickname == null) {
       setState(() => _isLoading = false);
@@ -168,28 +232,54 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
 
     try {
       final posts = await _repo.getPostsByNickname(_nickname!);
-      final approved = posts.where((p) => p.status == PostStatus.approved).toList();
-      final total = approved.fold(0, (sum, p) => sum + p.points);
+      final approved =
+          posts.where((p) => p.status == PostStatus.approved).toList();
+      final total =
+          approved.fold(0, (sum, p) => sum + p.points).clamp(0, 999999);
+
+      final prefs = await SharedPreferences.getInstance();
+      final previousPoints =
+          prefs.getInt('last_known_points_$_nickname') ?? 0;
+
+      // ── Account deletion detection ──
+      final bool wasDeleted =
+          previousPoints > 0 && approved.isEmpty && total == 0;
+      if (wasDeleted) {
+        await prefs.remove('last_known_points_$_nickname');
+        if (mounted) {
+          _showAccountDeletedDialog();
+          setState(() {
+            _posts = posts;
+            _totalPoints = 0;
+            _isLoading = false;
+            _showAccountDeleted = true;
+          });
+        }
+        return;
+      }
+
+      // Always save for next-visit comparison
+      await prefs.setInt('last_known_points_$_nickname', total);
+
+      // Determine if level-up happened since last visit
+      final isLevelUp =
+          _initialLoadDone &&
+          previousPoints > 0 &&
+          _getLevelName(previousPoints) != _getLevelName(total);
 
       if (mounted) {
         setState(() {
           _posts = posts;
           _totalPoints = total;
           _isLoading = false;
-
-          // Level-up detection
-          final prefs = SharedPreferences.getInstance();
-          prefs.then((p) {
-            _previousPoints = p.getInt('last_known_points') ?? 0;
-            _isLevelUp = _previousPoints > 0 &&
-                _getLevelName(_previousPoints) != _getLevelName(_totalPoints);
-            if (_isLevelUp) {
-              _showPointsAddedOverlay = true;
-            } else {
-              _startHeroAnimation = true;
-            }
-          });
+          _previousPoints = previousPoints;
+          _isLevelUp = isLevelUp;
+          _journeyDone = !isLevelUp;
+          _showPointsAddedOverlay = isLevelUp;
+          _startHeroAnimation = !isLevelUp;
         });
+
+        _initialLoadDone = true;
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
@@ -206,16 +296,128 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
 
   Future<void> _loadNickname() async {
     final prefs = await SharedPreferences.getInstance();
-    // Clear stored values so dialog appears fresh
-    await prefs.remove('leaderboard_nickname');
-    await prefs.remove('leaderboard_opt_in');
+    final savedNickname = prefs.getString('leaderboard_nickname');
+    final savedOptIn = prefs.getBool('leaderboard_opt_in');
     setState(() {
-      _nickname = null;
-      _leaderboardOptIn = false;
+      _nickname = savedNickname;
+      _leaderboardOptIn = savedOptIn ?? false;
       _nicknameLoaded = true;
     });
-    // Load posts after nickname
     _loadPosts();
+  }
+
+  void _showAccountDeletedDialog() {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.info_outline_rounded, color: Colors.orange.shade600, size: 24),
+            const SizedBox(width: 10),
+            Text(
+              l10n.accountDeletedTitle,
+              style: const TextStyle(
+                fontFamily: 'Manrope',
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          l10n.accountDeletedMessage,
+          style: const TextStyle(fontSize: 14, height: 1.5),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.brandOrange,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              l10n.accountDeletedOk,
+              style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showOptOutDialog() async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.logout_rounded, color: Colors.orange.shade600, size: 24),
+            const SizedBox(width: 10),
+            Text(
+              l10n.optOutTitle,
+              style: const TextStyle(
+                fontFamily: 'Manrope',
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          l10n.optOutMessage,
+          style: const TextStyle(fontSize: 14, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              l10n.optOutCancel,
+              style: const TextStyle(
+                fontFamily: 'Manrope',
+                fontWeight: FontWeight.w600,
+                color: AppColors.inkLight,
+              ),
+            ),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.orange.shade600,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              l10n.optOutConfirm,
+              style: const TextStyle(
+                fontFamily: 'Manrope',
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      // Firestore'da tüm gönderilerini opt-out yap → leaderboard'dan kaybolur
+      await _repo.optOutUser(_nickname!);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('leaderboard_opt_in', false);
+      await prefs.remove('leaderboard_nickname');
+      setState(() {
+        _leaderboardOptIn = false;
+        _nickname = null;
+      });
+      _loadPosts();
+    }
   }
 
   Future<bool> _showNicknameDialog() async {
@@ -259,6 +461,34 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
                           fontFamily: 'Manrope',
                           fontSize: 14,
                           color: AppColors.inkLight.withOpacity(0.8),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      // ── Uyarı: bir daha değiştirilemez ──
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.orange.withOpacity(0.2)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.warning_amber_rounded, size: 16, color: Colors.orange.shade700),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                l10n.pointsNicknameWarning,
+                                style: TextStyle(
+                                  fontFamily: 'Manrope',
+                                  fontSize: 11.5,
+                                  height: 1.4,
+                                  color: Colors.orange.shade800,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -592,6 +822,9 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
       _posts.insert(0, post);
     });
 
+    // Complete matching daily mission if applicable
+    _checkAndCompleteMission(cat);
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(l10n.pointsPostSent(_localizedCategoryLabel(context, cat.label))),
@@ -661,7 +894,7 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
                       child: ElevatedButton(
                         onPressed: () async {
                           final prefs = await SharedPreferences.getInstance();
-                          await prefs.setInt('last_known_points', _totalPoints);
+                          await prefs.setInt('last_known_points_$_nickname', _totalPoints);
                           if (mounted) {
                             setState(() {
                               _showPointsAddedOverlay = false;
@@ -702,6 +935,14 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    // ── Tab switch listener: reload posts when user returns to this tab ──
+    ref.listen<int>(tabIndexProvider, (int? prev, int next) {
+      if (prev != null && prev != next && next == 3 && mounted) {
+        _loadPosts();
+        _loadMissions();
+      }
+    });
+
     final bodyContent = FadeTransition(
       opacity: _fadeAnimation,
       child: SlideTransition(
@@ -715,9 +956,9 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
                   children: [
                     // ── Gamification Hero Card ──
                     PointsHeroCard(
+                      key: ValueKey('hero_$_totalPoints'),
                       totalPoints: _totalPoints,
-                      streakDays: 3,
-                      previousPoints: _previousPoints > 0 ? _previousPoints : null,
+                      previousPoints: _previousPoints,
                       startAnimation: _startHeroAnimation,
                       nickname: _nickname,
                       onJourneyComplete: () {
@@ -725,6 +966,7 @@ class _PointsPageState extends State<PointsPage> with TickerProviderStateMixin {
                           setState(() => _journeyDone = true);
                         }
                       },
+                      onOptOut: _leaderboardOptIn ? () => _showOptOutDialog() : null,
                     ),
                     const SizedBox(height: 16),
 
@@ -1174,7 +1416,7 @@ class _Top3Tile extends StatelessWidget {
                 ),
                 const SizedBox(width: 3),
                 Text(
-                  '$points',
+                  '${points.clamp(0, 999999)}',
                   style: const TextStyle(
                     fontFamily: 'Manrope',
                     fontSize: 13,

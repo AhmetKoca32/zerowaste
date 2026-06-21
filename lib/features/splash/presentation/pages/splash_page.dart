@@ -199,26 +199,6 @@ class _SplashPageState extends State<SplashPage>
               height: 40,
             ),
           ),
-          // ── Admin giris butonu (sag alt kose) ──
-          Positioned(
-            right: 16,
-            bottom: 60,
-            child: GestureDetector(
-              onTap: () => context.go('/admin/login'),
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.05),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.admin_panel_settings_outlined,
-                  size: 20,
-                  color: Colors.black38,
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );

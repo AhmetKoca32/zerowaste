@@ -329,6 +329,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pointsNicknameHint => 'e.g. EcoChef Fan';
 
   @override
+  String get pointsNicknameWarning =>
+      '⚠️ You cannot change this name later. Choose carefully!';
+
+  @override
   String get pointsNicknameValidationEmpty => 'Please enter a nickname';
 
   @override
@@ -367,7 +371,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pointsLevelUpDesc =>
-      'Your post was approved by the admin and the points have been added to your account. Keep inspiring on your zero-waste journey!';
+      'Your post was approved and the points have been added to your account. Keep inspiring on your zero-waste journey!';
 
   @override
   String get pointsKeepGoing => 'Great! Keep Going';
@@ -467,129 +471,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get monthAbbrDec => 'Dec';
 
   @override
-  String get adminLoginTitle => 'Admin Login';
-
-  @override
-  String get adminLoginSubtitle => 'Atıksız Mutfak Admin Panel';
-
-  @override
-  String get adminLoginEmailLabel => 'Email';
-
-  @override
-  String get adminLoginPasswordLabel => 'Password';
-
-  @override
-  String get adminLoginButton => 'Sign In';
-
-  @override
-  String get adminLoginBackToHome => 'Back to Home';
-
-  @override
-  String get adminLoginErrorInvalidEmail => 'Enter a valid email';
-
-  @override
-  String get adminLoginErrorPasswordRequired => 'Password is required';
-
-  @override
-  String get adminLoginErrorPasswordMin =>
-      'Password must be at least 6 characters';
-
-  @override
-  String get adminDashboardTitle => 'Recipes';
-
-  @override
-  String get adminDashboardEmpty => 'No recipes yet';
-
-  @override
-  String get adminDashboardEmptyHint =>
-      'Use the button at the bottom right to add a new recipe';
-
-  @override
-  String get adminDashboardDeleteTitle => 'Delete Recipe';
-
-  @override
-  String adminDashboardDeleteConfirm(Object title) {
-    return 'Are you sure you want to delete \"$title\"?';
-  }
-
-  @override
-  String get adminDashboardDeleted => 'Recipe deleted';
-
-  @override
-  String get adminSidebarBrand => 'Atıksız Admin';
-
-  @override
-  String get adminSidebarRecipes => 'Recipes';
-
-  @override
-  String get adminSidebarNewRecipe => 'New Recipe';
-
-  @override
-  String get adminSidebarPosts => 'Posts';
-
-  @override
-  String get adminSidebarLogout => 'Log Out';
-
-  @override
-  String get adminSidebarApprove => 'Approve';
-
-  @override
-  String get adminSidebarReject => 'Reject';
-
-  @override
-  String get adminFormTitle => 'Recipe Title *';
-
-  @override
-  String get adminFormTitleRequired => 'Title is required';
-
-  @override
-  String get adminFormDescription => 'Description (Optional)';
-
-  @override
-  String get adminFormPhotoUrl => 'Photo URL (Optional)';
-
-  @override
-  String get adminFormIngredientsHint => 'Write one ingredient per line';
-
-  @override
-  String get adminFormStepsLabel => 'Instructions *';
-
-  @override
-  String get adminFormStepsHint => 'Write one step per line';
-
-  @override
-  String get adminFormStepsRequired => 'At least one step is required';
-
-  @override
-  String get adminFormSave => 'Save';
-
-  @override
-  String get adminFormUpdate => 'Update';
-
-  @override
-  String get adminPostsTitle => 'Pending Posts';
-
-  @override
-  String get adminPostsEmpty => 'No pending posts';
-
-  @override
-  String get adminPostsEmptySubtitle => 'All clear!';
-
-  @override
-  String get adminPostsApproveDialog => 'Approve Post';
-
-  @override
-  String get adminPostsAdminNote => 'Admin note (optional)';
-
-  @override
-  String get adminPostsRejectDialog => 'Reject Post';
-
-  @override
-  String adminPostsRejectConfirm(Object nickname) {
-    return 'Are you sure you want to reject $nickname\'s post?';
-  }
-
-  @override
   String get cuisineMediterranean => 'Mediterranean cuisine';
 
   @override
@@ -642,4 +523,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cuisineAsian => 'Asian cuisine';
+
+  @override
+  String get accountDeletedTitle => 'Account Status';
+
+  @override
+  String get accountDeletedMessage =>
+      'All your posts and points have been removed by the admin. Please contact us for more information.';
+
+  @override
+  String get accountDeletedOk => 'OK';
+
+  @override
+  String get optOutTitle => 'Leave Contest';
+
+  @override
+  String get optOutMessage =>
+      'If you leave the contest, all your points and your leaderboard rank will be lost. You can rejoin later with a new nickname.\n\nAre you sure you want to continue?';
+
+  @override
+  String get optOutCancel => 'Cancel';
+
+  @override
+  String get optOutConfirm => 'Leave';
 }

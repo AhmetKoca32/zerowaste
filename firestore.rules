@@ -12,18 +12,21 @@ service cloud.firestore {
 
     // Gonderiler: giris yapmamis kullanici yazabilir (firebase auth optional)
     // Admin onay/red yapabilir
+    // Mobil kullanici kendi opt-out islemi icin sadece leaderboardOptIn alanini guncelleyebilir
     match /posts/{postId} {
       allow create: if true;  // herkes gonderi olusturabilir
       allow read: if true;    // herkes okuyabilir
-      allow update, delete: if request.auth != null
+      allow update: if (request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid)))
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['leaderboardOptIn']);
+      allow delete: if request.auth != null
         && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
-    // Leaderboard: herkes okuyabilir, sadece sistem (admin) yazabilir
+    // Leaderboard: herkes okuyabilir ve yazabilir (veri posts koleksiyonundan hesaplanir)
     match /leaderboard/{docId} {
       allow read: if true;
-      allow write: if request.auth != null
-        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow write: if true;
     }
 
     // Admin listesi: giriş yapmış kullanıcı sadece kendi kaydını okuyabilir (admin mi kontrolü)

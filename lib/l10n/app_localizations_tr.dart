@@ -329,6 +329,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pointsNicknameHint => 'Örn. Atıksız Şef';
 
   @override
+  String get pointsNicknameWarning =>
+      '⚠️ Bu adı bir daha değiştiremezsin. Lütfen dikkatli seç!';
+
+  @override
   String get pointsNicknameValidationEmpty => 'Lütfen bir takma ad girin';
 
   @override
@@ -367,7 +371,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get pointsLevelUpDesc =>
-      'Gönderin admin tarafından onaylandı ve kazandığın yeni puanlar hesabına eklendi. Sıfır atık yolculuğunda ilham vermeye devam et!';
+      'Gönderin onaylandı ve kazandığın yeni puanlar hesabına eklendi. Sıfır atık yolculuğunda ilham vermeye devam et!';
 
   @override
   String get pointsKeepGoing => 'Harika! Devam Et';
@@ -467,128 +471,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get monthAbbrDec => 'Ara';
 
   @override
-  String get adminLoginTitle => 'Admin Girişi';
-
-  @override
-  String get adminLoginSubtitle => 'Atıksız Mutfak Admin Paneli';
-
-  @override
-  String get adminLoginEmailLabel => 'Email';
-
-  @override
-  String get adminLoginPasswordLabel => 'Şifre';
-
-  @override
-  String get adminLoginButton => 'Giriş Yap';
-
-  @override
-  String get adminLoginBackToHome => 'Ana Sayfaya Dön';
-
-  @override
-  String get adminLoginErrorInvalidEmail => 'Geçerli bir email girin';
-
-  @override
-  String get adminLoginErrorPasswordRequired => 'Şifre gerekli';
-
-  @override
-  String get adminLoginErrorPasswordMin => 'Şifre en az 6 karakter olmalı';
-
-  @override
-  String get adminDashboardTitle => 'Tarifler';
-
-  @override
-  String get adminDashboardEmpty => 'Henüz tarif yok';
-
-  @override
-  String get adminDashboardEmptyHint =>
-      'Yeni tarif eklemek için sağ alttaki butonu kullanın';
-
-  @override
-  String get adminDashboardDeleteTitle => 'Tarifi Sil';
-
-  @override
-  String adminDashboardDeleteConfirm(Object title) {
-    return '\"$title\" tarifini silmek istediğinize emin misiniz?';
-  }
-
-  @override
-  String get adminDashboardDeleted => 'Tarif silindi';
-
-  @override
-  String get adminSidebarBrand => 'Atıksız Admin';
-
-  @override
-  String get adminSidebarRecipes => 'Tarifler';
-
-  @override
-  String get adminSidebarNewRecipe => 'Yeni Tarif';
-
-  @override
-  String get adminSidebarPosts => 'Gönderiler';
-
-  @override
-  String get adminSidebarLogout => 'Çıkış Yap';
-
-  @override
-  String get adminSidebarApprove => 'Onayla';
-
-  @override
-  String get adminSidebarReject => 'Reddet';
-
-  @override
-  String get adminFormTitle => 'Tarif Başlığı *';
-
-  @override
-  String get adminFormTitleRequired => 'Başlık gerekli';
-
-  @override
-  String get adminFormDescription => 'Açıklama (Opsiyonel)';
-
-  @override
-  String get adminFormPhotoUrl => 'Fotoğraf URL (Opsiyonel)';
-
-  @override
-  String get adminFormIngredientsHint => 'Her satıra bir malzeme yazın';
-
-  @override
-  String get adminFormStepsLabel => 'Yapılış Adımları *';
-
-  @override
-  String get adminFormStepsHint => 'Her satıra bir adım yazın';
-
-  @override
-  String get adminFormStepsRequired => 'En az bir adım gerekli';
-
-  @override
-  String get adminFormSave => 'Kaydet';
-
-  @override
-  String get adminFormUpdate => 'Güncelle';
-
-  @override
-  String get adminPostsTitle => 'Bekleyen Gönderiler';
-
-  @override
-  String get adminPostsEmpty => 'Bekleyen gönderi yok';
-
-  @override
-  String get adminPostsEmptySubtitle => 'Her şey yolunda!';
-
-  @override
-  String get adminPostsApproveDialog => 'Gönderiyi Onayla';
-
-  @override
-  String get adminPostsAdminNote => 'Admin notu (isteğe bağlı)';
-
-  @override
-  String get adminPostsRejectDialog => 'Gönderiyi Reddet';
-
-  @override
-  String adminPostsRejectConfirm(Object nickname) {
-    return '$nickname kullanıcısının gönderisini reddetmek istediğinize emin misiniz?';
-  }
-
-  @override
   String get cuisineMediterranean => 'Akdeniz mutfağı';
 
   @override
@@ -641,4 +523,27 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get cuisineAsian => 'Asya mutfağı';
+
+  @override
+  String get accountDeletedTitle => 'Hesap Durumu';
+
+  @override
+  String get accountDeletedMessage =>
+      'Tüm gönderileriniz ve puanlarınız admin tarafından silinmiş. Detaylı bilgi için bizimle iletişime geçebilirsiniz.';
+
+  @override
+  String get accountDeletedOk => 'Tamam';
+
+  @override
+  String get optOutTitle => 'Yarışmadan Çık';
+
+  @override
+  String get optOutMessage =>
+      'Yarışmadan çıkarsan tüm puanların ve sıralamadaki yerin kaybolur. Yeni bir takma adla tekrar katılabilirsin.\n\nDevam etmek istediğine emin misin?';
+
+  @override
+  String get optOutCancel => 'Vazgeç';
+
+  @override
+  String get optOutConfirm => 'Çık';
 }

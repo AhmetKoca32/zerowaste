@@ -371,7 +371,10 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
                           Expanded(
                             child: Text(
                               selectedCuisine != null
-                                  ? CuisineOptions.localized(selectedCuisine!, locale.languageCode)
+                                  ? CuisineOptions.localized(
+                                      selectedCuisine,
+                                      locale.languageCode,
+                                    )
                                   : l10n.recipeGeneratorNoCuisine,
                               style: TextStyle(
                                 fontFamily: 'Manrope',

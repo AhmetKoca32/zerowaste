@@ -1,6 +1,6 @@
-# Tech Context: Sıfır Atık Mutfak
+# Tech Context: Atıksız Mutfak
 
-**Son Guncelleme:** Mayis 2026
+**Son Güncelleme:** Mayıs 2026
 
 ---
 
@@ -24,18 +24,25 @@
 
 ### Firebase
 - **firebase_core:** ^3.8.1
-- **firebase_auth:** ^5.3.3 (admin paneli)
-- **cloud_firestore:** ^5.5.2 (tarif, post, leaderboard veritabani)
-- **Firebase Spark (Ucretsiz) Plan:** 1GB depolama, 10K belge yazma/gun, 50K okuma/gun
+- **firebase_auth:** ^5.3.3 (web admin paneli)
+- **cloud_firestore:** ^5.5.2 (tarif, post, leaderboard veritabanı)
+- **Firebase Spark (Ücretsiz) Plan:** 1GB depolama, 10K belge yazma/gün, 50K okuma/gün
+  - Storage: 5GB depolama, 20KB yükleme/gün, 20KB indirme/gün
+  - Hosting: 10GB depolama, 100MB/gün bant genişliği
 
 ### Data & Storage
-- **shared_preferences:** ^2.3.3 (RecentIngredients, SavedRecipes, ChatSuggestions, nickname)
+- **shared_preferences:** ^2.3.3 (RecentIngredients, SavedRecipes, ChatSuggestions, nickname, missions, points cache)
 - **path_provider:** ^2.1.4
 
 ### UI & Content
-- **flutter_markdown:** ^0.7.4+1 (EcoChef sohbet balonlarinda Markdown render)
+- **flutter_markdown:** ^0.7.4+1 (EcoChef sohbet balonlarında Markdown render)
 - **image_picker:** ^1.1.2 (kamera/galeri entegrasyonu)
-- **flutter_svg:** ^2.0.17 (SVG logolar, splash ekrani sponsor logolari)
+- **flutter_svg:** ^2.0.17 (SVG logolar, splash ekranı sponsor logoları)
+
+### Localization
+- **flutter_localizations:** Çoklu dil desteği
+- **intl:** ARB dosya tabanlı string yönetimi
+- Desteklenen diller: Türkçe (TR) + İngilizce (EN)
 
 ### Code Generation
 - **freezed:** ^2.5.7 + freezed_annotation
@@ -45,7 +52,7 @@
 
 ---
 
-## Proje Yapisi
+## Proje Yapısı
 
 ```
 zerowaste/
@@ -53,106 +60,117 @@ zerowaste/
 │   ├── core/
 │   │   ├── constants/
 │   │   ├── network/            # NetworkService (Dio + redacted log)
-│   │   ├── providers/          # Global providers
-│   │   ├── router/             # AppRouter (GoRouter, 10+ route)
+│   │   ├── providers/          # Global providers (localeProvider)
+│   │   ├── router/             # AppRouter (GoRouter)
 │   │   ├── services/           # DeepSeekService
-│   │   ├── shell/              # MainTabShell, CustomBottomNav
+│   │   ├── shell/              # MainTabShell, CustomBottomNav, tabIndexProvider
 │   │   ├── theme/              # AppTheme, AppColors, AppTextStyle
 │   │   └── widgets/
 │   │
 │   ├── features/
 │   │   ├── home/               # Tarif listesi + malzeme filtreleme
-│   │   ├── recipe_generator/   # AI tarif uretimi
+│   │   ├── recipe_generator/   # AI tarif üretimi
 │   │   ├── chat/               # EcoChef sohbet
-│   │   ├── splash/             # Splash acilis ekrani
-│   │   ├── points/             # Puan sistemi (Firestore baglantili)
-│   │   │   ├── data/models/    # PostEntry, LeaderboardDoc
-│   │   │   ├── data/repositories/ # PointsRepository (Firestore)
-│   │   │   └── presentation/   # Page, Widgets, Providers
-│   │   └── admin/              # Admin paneli (Web)
-│   │       ├── data/           # (yeni modeller Points'ten import edilir)
-│   │       └── presentation/   # Pages, Providers, Widgets, Services
+│   │   ├── splash/             # Splash açılış ekranı
+│   │   └── points/             # Puan sistemi (Firestore bağlantılı)
+│   │       ├── data/models/    # PostEntry, LeaderboardDoc
+│   │       ├── data/repositories/ # PointsRepository (Firestore)
+│   │       └── presentation/   # PointsPage, PointsHeroCard, RecentPostsGrid, MissionCards
 │   │
+│   ├── l10n/                   # ARB dosyaları (app_en.arb, app_tr.arb)
 │   ├── firebase_options.dart
 │   └── main.dart
 │
 ├── assets/
-│   ├── data/recipes.json       # 7 detayli tarif (fallback)
+│   ├── data/recipes.json       # Fallback tarifler
 │   ├── fonts/                  # Manrope ailesi
-│   └── images/icons/ + image/  # PNG ikonlar (denizati.png dahil)
+│   └── images/icons/           # PNG ikonlar (denizati.png, ab-baskanligi-logo.png, vb.)
 │
-├── firestore.rules             # recipes, posts, leaderboard, admins koleksiyonlari
+├── firestore.rules
 ├── firebase.json
 └── memory-bank/
 ```
 
 ---
 
-## Onemli Dosya Listesi
+## Önemli Dosya Listesi
 
-### Points Feature (Yeni Firestore yapisi)
-| Dosya | Aciklama |
+### Points Feature
+| Dosya | Açıklama |
 |-------|----------|
-| `lib/features/points/data/models/post_entry.dart` | **YENI** PostEntry model + Firestore serilestirme (fromFirestore/toFirestore) |
-| `lib/features/points/data/models/leaderboard_doc.dart` | **YENI** LeaderboardEntry + LeaderboardDoc modelleri |
-| `lib/features/points/data/repositories/points_repository.dart` | **YENI** PointsRepository: submitPost, getPostsByNickname, getPendingPosts, approvePost, rejectPost, getLeaderboard |
-| `lib/features/points/presentation/providers/points_providers.dart` | **YENI** pointsRepositoryProvider (Riverpod) |
+| `lib/features/points/data/models/post_entry.dart` | PostEntry model + Firestore serileştirme (fromFirestore/toFirestore), çift dilli adminNote, isAdminPenalty |
+| `lib/features/points/data/models/leaderboard_doc.dart` | LeaderboardEntry + LeaderboardDoc modelleri |
+| `lib/features/points/data/repositories/points_repository.dart` | PointsRepository: submitPost, getPostsByNickname, approvePost, rejectPost, getLeaderboard, _recalculateLeaderboard, deductPoints, addBonusPoints, optOutUser |
+| `lib/features/points/presentation/pages/points_page.dart` | Ana points sayfası: ConsumerStatefulWidget, tab switch listener, _loadPosts, SharedPrefs karşılaştırma, animasyon yönetimi |
+| `lib/features/points/presentation/widgets/points_hero_card.dart` | Gamification hero card: 2 modlu animasyon, _GradientArcPainter, _BackgroundRingPainter |
+| `lib/features/points/presentation/widgets/recent_posts_grid.dart` | Gönderi gridi + admin bonus/penalty kartları |
+| `lib/features/points/presentation/widgets/mission_cards.dart` | Günlük görev kartları (staggered giriş animasyonu) |
 
-### Admin Feature (Guncel)
-| Dosya | Aciklama |
+### Core
+| Dosya | Açıklama |
 |-------|----------|
-| `admin_login_page.dart` | Email/Password giris |
-| `admin_dashboard_page.dart` | **GUNCELLENDI** Tarif listesi (InkWell bazli, ListTile yok) |
-| `admin_recipe_edit_page.dart` | **GUNCELLENDI** Tarif CRUD AdminShell'e baglandi |
-| `admin_recipe_form.dart` | **GUNCELLENDI** Form.of() -> widget.formKey duzeltmesi |
-| `admin_sidebar.dart` | **YENIDEN YAZILDI** AdminShell: responsive (sidebar/drawer), tek Scaffold |
-| `admin_posts_page.dart` | **YENI** Gonderi onay/red sayfasi |
-| `admin_guard.dart` | Auth guard (admin yetkisi kontrolu) |
-| `admin_auth_service.dart` | Firebase Auth servisi |
+| `lib/core/shell/main_tab_shell.dart` | Tab yapısı + tabIndexProvider + locale toggle |
+| `lib/core/shell/custom_bottom_nav.dart` | Liquid glass navbar |
+| `lib/core/services/deep_seek_service.dart` | DeepSeek API servisi |
 
-### Home Data (Guncel)
-| Dosya | Aciklama |
+### L10n
+| Dosya | Açıklama |
 |-------|----------|
-| `lib/features/home/data/services/recipe_sync_service.dart` | **YENI** Gunluk Firestore tarif senkronizasyonu |
+| `lib/l10n/app_en.arb` | İngilizce string'ler |
+| `lib/l10n/app_tr.arb` | Türkçe string'ler |
 
 ---
 
-## Firestore Koleksiyon Yapisi
+## Firestore Koleksiyon Yapısı
 
 ### `posts` koleksiyonu
 ```
 /posts/{postId}
   nickname: string (zorunlu)
-  category: string (Dolap / Yemek Ani / ...)
-  points: int
+  category: string (Dolap / Yemek Anı / Artık Değerlendirme / Diğer / Puan Kesintisi / Admin Bonusu)
+  points: int (negatif olabilir, kesinti için)
   status: string (pending / approved / rejected)
   createdAt: timestamp
   leaderboardOptIn: bool
   imagePath: string? (ileride Storage URL)
   imageColor: int? (placeholder rengi)
   isAdminBonus: bool
-  adminNote: string?
+  isAdminPenalty: bool
+  adminNote: string? (TR not)
+  adminNoteEn: string? (EN not)
 ```
 
-### `leaderboard/current` dokumani
+### `leaderboard/current` dokümanı
 ```
 /leaderboard/current
   entries: [{nickname: string, points: int}]
   lastUpdated: timestamp
 ```
 
-### `admins/{userId}` dokumani
+### `admins/{userId}` dokümanı
 ```
 /admins/{userId}
-  (bos ya da role: "admin")
+  role: string? ("admin" veya boş)
 ```
 
 ---
 
-## Firestore Index'leri (Manuel Olusturuldu)
+## Firestore Index'leri (Manuel Oluşturuldu)
 1. `posts` koleksiyonu: `status` (Asc) + `createdAt` (Desc)
 2. `posts` koleksiyonu: `nickname` (Asc) + `createdAt` (Desc)
 3. `posts` koleksiyonu: `status` (Asc) + `leaderboardOptIn` (Asc)
+
+---
+
+## SharedPreferences Anahtarları
+
+| Anahtar | Kullanım |
+|---------|----------|
+| `leaderboard_nickname` | Kullanıcının takma adı |
+| `leaderboard_opt_in` | Leaderboard'a katılım izni |
+| `last_known_points_{nickname}` | Son bilinen puan (değişiklik tespiti için) |
+| `missions_date` | Günlük görevlerin son sıfırlanma tarihi |
+| `missions_completed` | Tamamlanan görev listesi ['fridge', 'cooking', 'leftovers'] |
 
 ---
 
@@ -160,14 +178,12 @@ zerowaste/
 
 ### Kurulum
 1. `flutter pub get`
-2. `.env` dosyasi olustur: `DEEPSEEK_API_KEY=your_key`
+2. `.env` dosyası oluştur: `DEEPSEEK_API_KEY=your_key`
 3. `dart run build_runner build --delete-conflicting-outputs`
 
 ### Build Commands
 ```bash
 flutter build apk --release          # Android
-flutter build web --release           # Admin paneli (web)
-flutter run -d chrome                 # Web gelistirme
 dart run build_runner build --delete-conflicting-outputs  # Code gen
 flutter clean                         # Build cache temizle
 ```
@@ -176,18 +192,18 @@ flutter clean                         # Build cache temizle
 
 ## Gelecek Teknik Planlar
 
-### Admin Panel Web'e Tasima
-- Ayri Flutter Web projesi olusturulacak
+### Admin Panel Web'e Taşıma
+- Ayrı Flutter Web projesi oluşturulacak
 - Firebase Hosting'e deploy edilecek
-- Mobil uygulama icindeki admin route'lari kaldirilacak veya gizlenecek
-- Eger hosting plani sorun cikarirsa, mobilde gizli yol birakilacak
+- Kullanıcı silme/opt-out durumunun admin panele yansıması sağlanacak
 
-### Firebase Plan Degerlendirmesi
-- Spark (ucretsiz): Storage icin 5GB, 20KB/gun upload -- yetersiz olabilir
-- Blaze (kullandikca ode): sinirsiz, sadece kullanim kadar odenir
-- Storage eklenmesi durumunda Blaze gecisi onerilir
+### Firebase Spark Plan Kısıtlamalarını Aşma
+- Firestore: 10K yazma/gün, 50K okuma/gün
+- Storage: 20KB/gün upload (son derece yetersiz)
+- Blaze geçişi değerlendirilecek (tahmini maliyet $0-$5/ay)
+- Stream yerine tek seferlik get() kullanımı ile okuma sayısı minimize edildi
 
-### Gorsel Paylasimi Alternatifleri
-1. Firebase Storage (oncelikli)
-2. Firebase Storage kotasi asilirsa -> Google Drive API
-3. Base64 Firestore'da saklama (son care, onerilmez)
+### Fotoğraf Yükleme Alternatifleri
+1. 🔴 Firebase Storage (Spark limitleri çok düşük)
+2. 🟡 **Google Drive API** (öncelikli alternatif)
+3. ⚪ Base64 Firestore'da saklama (son çare, önerilmez)

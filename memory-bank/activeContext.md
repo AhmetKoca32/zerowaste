@@ -1,82 +1,98 @@
 # Active Context: Sıfır Atık Mutfak
 
-**Son Guncelleme:** Mayis 2026 (17 Mayis)  
-**Aktif Calisma:** Admin paneli + Firestore entegrasyonu tamamlandi. Test asamasinda.
+**Son Güncelleme:** Mayıs 2026 (18 Mayıs)  
+**Aktif Çalışma:** Puan sistemi animasyon sorunları, test ve iyileştirme aşaması.
 
 ---
 
-## Son Yapilan Degisiklikler
+## Son Yapılan Değişiklikler
 
-### 1. Admin Paneli + Firestore Entegrasyonu (MAJOR)
+### 1. Admin Paneli Mobil'den Tamamen Temizlendi
+- **`lib/features/admin/`** klasörü tamamen silindi (10+ dosya)
+- Admin paneli ayrı bir Flutter Web projesine taşınıyor
+- **`lib/core/router/app_router.dart`**: Admin route'ları kaldırıldı
+- **`lib/features/splash/presentation/pages/splash_page.dart`**: Admin giriş butonu kaldırıldı
+- **`lib/l10n/app_tr.arb` & `app_en.arb`**: admin* string'leri kaldırıldı
 
-#### Yeni Dosyalar
-- **`lib/features/points/data/models/post_entry.dart`**: PostEntry modeli (fromFirestore/toFirestore), ayri dosyaya tasindi
-- **`lib/features/points/data/models/leaderboard_doc.dart`**: LeaderboardEntry + LeaderboardDoc modelleri
-- **`lib/features/points/data/repositories/points_repository.dart`**: submitPost, getPostsByNickname, getPendingPosts, approvePost, rejectPost, getLeaderboard, _recalculateLeaderboard
-- **`lib/features/points/presentation/providers/points_providers.dart`**: pointsRepositoryProvider (Riverpod)
-- **`lib/features/admin/presentation/pages/admin_posts_page.dart`**: Bekleyen gonderi listesi + onay/red
-- **`lib/features/home/data/services/recipe_sync_service.dart`**: Gunluk Firestore tarif senkronizasyonu
+### 2. Puan Sistemi Geliştirmeleri
 
-#### Guncellenen Dosyalar
-- **`lib/features/admin/presentation/widgets/admin_sidebar.dart`**: YENIDEN YAZILDI -> AdminShell (responsive: sidebar desktop / drawer mobile, tek Scaffold)
-- **`lib/features/admin/presentation/pages/admin_dashboard_page.dart`**: ListTile kaldirildi, InkWell+Row kullanildi
-- **`lib/features/admin/presentation/pages/admin_recipe_edit_page.dart`**: AdminShell baglantili
-- **`lib/features/admin/presentation/widgets/admin_recipe_form.dart`**: Form.of() -> widget.formKey duzeltmesi
-- **`lib/features/admin/presentation/pages/admin_posts_page.dart`**: AdminGuard + AdminShell entegre
-- **`lib/features/points/presentation/pages/points_page.dart`**: Firestore baglantisi canli, mock data kaldirildi, nickname sistemi, leaderboard
-- **`lib/features/points/presentation/widgets/recent_posts_grid.dart`**: Eski PostEntry/PostStatus kaldirildi, yeni model kullanimi
-- **`lib/core/router/app_router.dart`**: /admin/posts rotasi eklendi
-- **`lib/features/splash/presentation/pages/splash_page.dart`**: Admin giris butonu eklendi (sag alt kose)
-- **`lib/features/chat/presentation/widgets/ecochef_welcome.dart`**: denizati.png ikonu
-- **`lib/features/chat/presentation/widgets/ecochef_chat_empty.dart`**: denizati.png ikonu
-- **`lib/features/chat/presentation/widgets/chat_bubble.dart`**: denizati.png ikonu
-- **`lib/features/chat/presentation/widgets/ecochef_typing_indicator.dart`**: denizati.png ikonu
-- **`lib/features/chat/presentation/pages/chat_page.dart`**: denizati.png ikonu, keyboard fix, klavye acilinca layout duzeltmesi
-- **`lib/features/recipe_generator/presentation/widgets/chef_loading_overlay.dart`**: denizati.png, "EcoChef pisiriyor" yazisi
-- **`lib/core/services/deep_seek_service.dart`**: SifirAtik prompt guncellemesi
-- **`lib/features/recipe_generator/data/recipe_parser.dart`**: Baslik temizleme
-- **`lib/main.dart`**: SifirAtikApp olarak yeniden adlandirma
-- **`lib/features/points/presentation/widgets/points_hero_card.dart`**: nickname parametresi
-- **`lib/features/home/presentation/widgets/ingredient_filter_sheet.dart`**: Overflow fix
-- **`firestore.rules`**: posts ve leaderboard koleksiyonlari eklendi
+#### Yeni Özellikler
+- **`deductPoints()`**: Admin puan kesintisi metodu (negatif puan, `isAdminPenalty`)
+- **Çift Dilli Admin Notları**: `adminNote` (TR) + `adminNoteEn` (EN), locale'e göre otomatik gösterim
+- **Kullanıcı Silme Tespiti**: SharedPreferences karşılaştırması ile admin tarafından silinme algılama + dialog
+- **Yarışmadan Çıkma (Opt-Out)**: HeroCard sağ üst buton, Firestore batch ile leaderboardOptIn=false
+- **Kullanıcı Adı Uyarısı**: Nickname dialog'da "bir daha değiştiremezsin" uyarısı
+- **Admin Bonus Kartı**: Özel altın temalı UI (`_buildAdminBonusCard`)
 
----
+#### Günlük Görevler (Missions)
+- Mock yapı kaldırıldı, SharedPreferences tabanlı kalıcılık
+- Gönderi gönderince ilgili görev otomatik tamamlanır
+- Her gün sıfırlanma (tarih karşılaştırması)
+- Anahtarlar: `missions_date`, `missions_completed`
 
-## Cozulen Sorunlar
+#### Points Sayfası Temizliği
+- `streakDays: 3` mock verisi kaldırıldı
+- Streak badge UI'dan tamamen çıkarıldı (veri kaynağı olmadığı için)
+- HeroCard `_buildTopRow` sadece seviye rozetini gösteriyor
 
-- **ListTile hatalari**: Tum admin sayfalarinda ListTile -> InkWell+Row, nested Scaffold cozumu
-- **Form.of() hatasi**: AdminRecipeForm'da widget.formKey kullanimi
-- **Firestore index gereksinimi**: posts(status, createdAt), posts(nickname, createdAt), posts(status, leaderboardOptIn) index'leri olusturuldu
-- **Fotograf gosterimi**: Yerel dosya yoluyla calisiyor, Firebase Storage henuz entegre degil (fotograf admin panelinde gozukmez)
-- **SifirAtik markalama**: ZeroWaste -> SifirAtik, denizati.png EcoChef ikonu
+#### Puan Animasyon Sistemi (AKTİF PROBLEM — Çözüm Aşamasında)
+- **Akış**: `_loadPosts()` her tab geçişinde çalışır → SharedPreferences'dan son kaydedilen puanı alır → karşılaştırır
+- **İlk yükleme**: Animasyon oynar (counter 0→X, progress bar dolar)
+- **Değişiklik varsa**: Yine animasyon oynar (counter previousPoints→totalPoints)
+- **Değişiklik yoksa**: Statik gösterim
+- **Level-up**: Seviye atlama overlay'i + journey animasyonu
+- **BİLİNEN SORUN**: Counter her zaman level minimumundan (0) başlıyor, önceki puandan değil. Değişiklik olmayan dönüşlerde bile 0→X animasyonu oynuyor.
 
----
+### 3. Firestore Entegrasyonu ve Rules
 
-## Bilinen Sorunlar
+#### Yeni Repository Metodları
+- `deductPoints()`: Negatif puanlı admin kesintisi
+- `addBonusPoints()`: Admin bonusu (approved statüde)
+- `optOutUser()`: Batch write ile tüm gönderileri opt-out
+- `_recalculateLeaderboard()`: catch bloğunda print eklendi
 
-- [ ] Fotograflar Firebase Storage'a yuklenmiyor (sadece yerel gosterim)
-- [ ] Fotograf admin panelinde gozukmez (gecici dosyaya erisilemez)
-- [ ] RecipeSyncService main() icinde henuz cagrilmadi
-- [ ] Gunluk mesaj limiti reset'i su an hardcoded olabilir
+#### Firestore Rules Güncellemeleri
+- `posts/{postId}`: update için `leaderboardOptIn` alanı herkese açık
+- `leaderboard/{docId}`: write herkese açık (derlenmiş veri olduğu için güvenli)
 
 ---
 
-## Firebase Yapilandirmasi (Tamamlandi)
+## Bilinen Sorunlar (Öncelik Sırasına Göre)
 
-- [x] `posts` koleksiyonu olusturuldu
-- [x] `leaderboard/current` dokumani olusturuldu (bos entries)
-- [x] `admins/{uid}` dokumani olusturuldu (role: "admin")
+### 🔴 KRİTİK — Çözülmesi Gerekenler
+
+- [ ] **Puan Sayfası Animasyon Sorunu**: HeroCard counter her sayfa açılışında 0'dan sayıyor. Değişiklik olmasa bile. Beklenen: sadece puan arttığında önceki puandan başlayıp yeni puana animasyon yapmalı; değişiklik yoksa doğrudan mevcut puanı göstermeli.
+- [ ] **Progress Bar Hizalama**: `_GradientArcPainter` ile `_BackgroundRingPainter` arasında hizalama sorunu olabilir (arka plan dairesi ile ön gradient arc tam örtüşmüyor).
+
+### 🟡 YÜKSEK — Planlanan
+
+- [ ] **Mobil Kullanıcı Çıkışı/Yarışmadan Ayrılma → Admin Panel Güncellemesi**: Kullanıcı mobilde opt-out yaparsa veya kendini silerse, admin web panelindeki leaderboard ve kullanıcı listesi bu durumu yansıtmıyor. Admin panelinde canlı/güncel veri göstermek için Firestore listener veya manuel refresh mekanizması eklenmeli.
+- [ ] **Fotoğraf Sorunu — Google Drive Çözümü**: Firebase Storage Spark planında 20KB/gün upload limiti çok düşük. Fotoğraflar şu an sadece local dosya yolunda saklanıyor, admin panelinde görünmüyor. Çözüm: Google Drive API ile fotoğraf yükleme. Firebase Storage -> Google Drive geçiş planı yapılacak.
+- [ ] **Firebase Spark Plan Kısıtlamalarını Aşma Planı**: Testler bittikten sonra Spark (ücretsiz) planının sınırlarını aşmamak için genel bir strateji belirlenecek. Firestore okuma/yazma limitleri, Storage upload limitleri, Hosting bant genişliği gibi tüm kısıtlar dökümante edilip bir aksiyon planı çıkarılacak.
+
+### 🟢 DÜŞÜK
+
+- [ ] Günlük chat limit reset mekanizması (şu an hardcoded olabilir)
+- [ ] RecipeSyncService main()'de çağrılmadı
+
+---
+
+## Firebase Yapılandırması
+
+- [x] `posts` koleksiyonu oluşturuldu
+- [x] `leaderboard/current` dokümanı oluşturuldu (boş entries)
+- [x] `admins/{uid}` dokümanı oluşturuldu (role: "admin")
 - [x] Firebase Authentication Email/Password etkin
-- [x] Firestore rules guncellendi
-- [x] Firebase index'leri olusturuldu
+- [x] Firestore rules güncellendi
+- [x] Firebase index'leri oluşturuldu
 
 ---
 
-## Planlanan Ozellikler
+## Karar Günlüğü
 
-### Ingilizce Dil Destegi
-- Uygulamaya `flutter_localizations` ve `intl` paketleri ile Ingilizce destegi eklenecek
-- Baslangicta 2 dil: Turkce (TR) + Ingilizce (EN)
-- Tum hardcoded string'ler `.arb` dosyalarina tasinacak ve `AppLocalizations` uzerinden kullanilacak
-- Dil secimi: Cihaz diline otomatik uyum veya kullanici tercihi (ayarlar sayfasi)
-- Asamali plan: once ana arayuz (navbar, butonlar, basliklar), sonra icerik (tarif detay, sohbet, puan)
+| Tarih | Karar | Gerekçe |
+|-------|-------|---------|
+| 18 Mayıs | Puan animasyonu her sayfa açılışında tetiklensin | Kullanıcı deneyimi için küçük progress animasyonu önemli; sadece level-up overlay'i gerçek seviye atlamada gösterilsin |
+| 18 Mayıs | Realtime stream yerine tab-switch listener kullanıldı | Stream gereksiz Firestore okuma kotası tüketiyor; tab değişiminde `_loadPosts()` tek seferlik `get()` ile yeterli |
+| 18 Mayıs | Fotoğraf için Google Drive API planı | Firebase Storage Spark limitleri (20KB/gün upload) çok düşük; Drive API daha esnek |
+| 18 Mayıs | `firestore.rules` leaderboard write herkese açık | Leaderboard verisi posts koleksiyonundan türetildiği için güvenli; admin yazma zorunluluğu mobil opt-out'u engelliyordu |

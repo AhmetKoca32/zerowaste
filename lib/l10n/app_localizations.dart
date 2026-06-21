@@ -668,6 +668,12 @@ abstract class AppLocalizations {
   /// **'Örn. Atıksız Şef'**
   String get pointsNicknameHint;
 
+  /// Nickname kalıcılık uyarısı
+  ///
+  /// In tr, this message translates to:
+  /// **'⚠️ Bu adı bir daha değiştiremezsin. Lütfen dikkatli seç!'**
+  String get pointsNicknameWarning;
+
   /// Boş nickname uyarısı
   ///
   /// In tr, this message translates to:
@@ -737,7 +743,7 @@ abstract class AppLocalizations {
   /// Seviye atlama açıklaması
   ///
   /// In tr, this message translates to:
-  /// **'Gönderin admin tarafından onaylandı ve kazandığın yeni puanlar hesabına eklendi. Sıfır atık yolculuğunda ilham vermeye devam et!'**
+  /// **'Gönderin onaylandı ve kazandığın yeni puanlar hesabına eklendi. Sıfır atık yolculuğunda ilham vermeye devam et!'**
   String get pointsLevelUpDesc;
 
   /// Devam et butonu
@@ -920,240 +926,6 @@ abstract class AppLocalizations {
   /// **'Ara'**
   String get monthAbbrDec;
 
-  /// No description provided for @adminLoginTitle.
-  ///
-  /// In tr, this message translates to:
-  /// **'Admin Girişi'**
-  String get adminLoginTitle;
-
-  /// No description provided for @adminLoginSubtitle.
-  ///
-  /// In tr, this message translates to:
-  /// **'Atıksız Mutfak Admin Paneli'**
-  String get adminLoginSubtitle;
-
-  /// No description provided for @adminLoginEmailLabel.
-  ///
-  /// In tr, this message translates to:
-  /// **'Email'**
-  String get adminLoginEmailLabel;
-
-  /// No description provided for @adminLoginPasswordLabel.
-  ///
-  /// In tr, this message translates to:
-  /// **'Şifre'**
-  String get adminLoginPasswordLabel;
-
-  /// No description provided for @adminLoginButton.
-  ///
-  /// In tr, this message translates to:
-  /// **'Giriş Yap'**
-  String get adminLoginButton;
-
-  /// No description provided for @adminLoginBackToHome.
-  ///
-  /// In tr, this message translates to:
-  /// **'Ana Sayfaya Dön'**
-  String get adminLoginBackToHome;
-
-  /// No description provided for @adminLoginErrorInvalidEmail.
-  ///
-  /// In tr, this message translates to:
-  /// **'Geçerli bir email girin'**
-  String get adminLoginErrorInvalidEmail;
-
-  /// No description provided for @adminLoginErrorPasswordRequired.
-  ///
-  /// In tr, this message translates to:
-  /// **'Şifre gerekli'**
-  String get adminLoginErrorPasswordRequired;
-
-  /// No description provided for @adminLoginErrorPasswordMin.
-  ///
-  /// In tr, this message translates to:
-  /// **'Şifre en az 6 karakter olmalı'**
-  String get adminLoginErrorPasswordMin;
-
-  /// No description provided for @adminDashboardTitle.
-  ///
-  /// In tr, this message translates to:
-  /// **'Tarifler'**
-  String get adminDashboardTitle;
-
-  /// No description provided for @adminDashboardEmpty.
-  ///
-  /// In tr, this message translates to:
-  /// **'Henüz tarif yok'**
-  String get adminDashboardEmpty;
-
-  /// No description provided for @adminDashboardEmptyHint.
-  ///
-  /// In tr, this message translates to:
-  /// **'Yeni tarif eklemek için sağ alttaki butonu kullanın'**
-  String get adminDashboardEmptyHint;
-
-  /// No description provided for @adminDashboardDeleteTitle.
-  ///
-  /// In tr, this message translates to:
-  /// **'Tarifi Sil'**
-  String get adminDashboardDeleteTitle;
-
-  /// No description provided for @adminDashboardDeleteConfirm.
-  ///
-  /// In tr, this message translates to:
-  /// **'\"{title}\" tarifini silmek istediğinize emin misiniz?'**
-  String adminDashboardDeleteConfirm(Object title);
-
-  /// No description provided for @adminDashboardDeleted.
-  ///
-  /// In tr, this message translates to:
-  /// **'Tarif silindi'**
-  String get adminDashboardDeleted;
-
-  /// No description provided for @adminSidebarBrand.
-  ///
-  /// In tr, this message translates to:
-  /// **'Atıksız Admin'**
-  String get adminSidebarBrand;
-
-  /// No description provided for @adminSidebarRecipes.
-  ///
-  /// In tr, this message translates to:
-  /// **'Tarifler'**
-  String get adminSidebarRecipes;
-
-  /// No description provided for @adminSidebarNewRecipe.
-  ///
-  /// In tr, this message translates to:
-  /// **'Yeni Tarif'**
-  String get adminSidebarNewRecipe;
-
-  /// No description provided for @adminSidebarPosts.
-  ///
-  /// In tr, this message translates to:
-  /// **'Gönderiler'**
-  String get adminSidebarPosts;
-
-  /// No description provided for @adminSidebarLogout.
-  ///
-  /// In tr, this message translates to:
-  /// **'Çıkış Yap'**
-  String get adminSidebarLogout;
-
-  /// No description provided for @adminSidebarApprove.
-  ///
-  /// In tr, this message translates to:
-  /// **'Onayla'**
-  String get adminSidebarApprove;
-
-  /// No description provided for @adminSidebarReject.
-  ///
-  /// In tr, this message translates to:
-  /// **'Reddet'**
-  String get adminSidebarReject;
-
-  /// No description provided for @adminFormTitle.
-  ///
-  /// In tr, this message translates to:
-  /// **'Tarif Başlığı *'**
-  String get adminFormTitle;
-
-  /// No description provided for @adminFormTitleRequired.
-  ///
-  /// In tr, this message translates to:
-  /// **'Başlık gerekli'**
-  String get adminFormTitleRequired;
-
-  /// No description provided for @adminFormDescription.
-  ///
-  /// In tr, this message translates to:
-  /// **'Açıklama (Opsiyonel)'**
-  String get adminFormDescription;
-
-  /// No description provided for @adminFormPhotoUrl.
-  ///
-  /// In tr, this message translates to:
-  /// **'Fotoğraf URL (Opsiyonel)'**
-  String get adminFormPhotoUrl;
-
-  /// No description provided for @adminFormIngredientsHint.
-  ///
-  /// In tr, this message translates to:
-  /// **'Her satıra bir malzeme yazın'**
-  String get adminFormIngredientsHint;
-
-  /// No description provided for @adminFormStepsLabel.
-  ///
-  /// In tr, this message translates to:
-  /// **'Yapılış Adımları *'**
-  String get adminFormStepsLabel;
-
-  /// No description provided for @adminFormStepsHint.
-  ///
-  /// In tr, this message translates to:
-  /// **'Her satıra bir adım yazın'**
-  String get adminFormStepsHint;
-
-  /// No description provided for @adminFormStepsRequired.
-  ///
-  /// In tr, this message translates to:
-  /// **'En az bir adım gerekli'**
-  String get adminFormStepsRequired;
-
-  /// No description provided for @adminFormSave.
-  ///
-  /// In tr, this message translates to:
-  /// **'Kaydet'**
-  String get adminFormSave;
-
-  /// No description provided for @adminFormUpdate.
-  ///
-  /// In tr, this message translates to:
-  /// **'Güncelle'**
-  String get adminFormUpdate;
-
-  /// No description provided for @adminPostsTitle.
-  ///
-  /// In tr, this message translates to:
-  /// **'Bekleyen Gönderiler'**
-  String get adminPostsTitle;
-
-  /// No description provided for @adminPostsEmpty.
-  ///
-  /// In tr, this message translates to:
-  /// **'Bekleyen gönderi yok'**
-  String get adminPostsEmpty;
-
-  /// No description provided for @adminPostsEmptySubtitle.
-  ///
-  /// In tr, this message translates to:
-  /// **'Her şey yolunda!'**
-  String get adminPostsEmptySubtitle;
-
-  /// No description provided for @adminPostsApproveDialog.
-  ///
-  /// In tr, this message translates to:
-  /// **'Gönderiyi Onayla'**
-  String get adminPostsApproveDialog;
-
-  /// No description provided for @adminPostsAdminNote.
-  ///
-  /// In tr, this message translates to:
-  /// **'Admin notu (isteğe bağlı)'**
-  String get adminPostsAdminNote;
-
-  /// No description provided for @adminPostsRejectDialog.
-  ///
-  /// In tr, this message translates to:
-  /// **'Gönderiyi Reddet'**
-  String get adminPostsRejectDialog;
-
-  /// No description provided for @adminPostsRejectConfirm.
-  ///
-  /// In tr, this message translates to:
-  /// **'{nickname} kullanıcısının gönderisini reddetmek istediğinize emin misiniz?'**
-  String adminPostsRejectConfirm(Object nickname);
-
   /// No description provided for @cuisineMediterranean.
   ///
   /// In tr, this message translates to:
@@ -1261,6 +1033,48 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Asya mutfağı'**
   String get cuisineAsian;
+
+  /// Hesap silinme dialog başlığı
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesap Durumu'**
+  String get accountDeletedTitle;
+
+  /// Hesap silinme dialog mesajı
+  ///
+  /// In tr, this message translates to:
+  /// **'Tüm gönderileriniz ve puanlarınız admin tarafından silinmiş. Detaylı bilgi için bizimle iletişime geçebilirsiniz.'**
+  String get accountDeletedMessage;
+
+  /// Hesap silinme dialog kapat butonu
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamam'**
+  String get accountDeletedOk;
+
+  /// Opt-out dialog başlığı
+  ///
+  /// In tr, this message translates to:
+  /// **'Yarışmadan Çık'**
+  String get optOutTitle;
+
+  /// Opt-out dialog mesajı
+  ///
+  /// In tr, this message translates to:
+  /// **'Yarışmadan çıkarsan tüm puanların ve sıralamadaki yerin kaybolur. Yeni bir takma adla tekrar katılabilirsin.\n\nDevam etmek istediğine emin misin?'**
+  String get optOutMessage;
+
+  /// Opt-out iptal butonu
+  ///
+  /// In tr, this message translates to:
+  /// **'Vazgeç'**
+  String get optOutCancel;
+
+  /// Opt-out onay butonu
+  ///
+  /// In tr, this message translates to:
+  /// **'Çık'**
+  String get optOutConfirm;
 }
 
 class _AppLocalizationsDelegate

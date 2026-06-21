@@ -18,7 +18,9 @@ class PostEntry {
     this.imageColor,
     this.status = PostStatus.pending,
     this.isAdminBonus = false,
+    this.isAdminPenalty = false,
     this.adminNote,
+    this.adminNoteEn,
     this.leaderboardOptIn = false,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
@@ -31,9 +33,18 @@ class PostEntry {
   final int? imageColor;
   final PostStatus status;
   final bool isAdminBonus;
+  final bool isAdminPenalty;
   final String? adminNote;
+  final String? adminNoteEn;
   final bool leaderboardOptIn;
   final DateTime createdAt;
+
+  /// Returns the admin note appropriate for the given locale.
+  /// Falls back to the other language if the primary is missing.
+  String? localizedAdminNote(String localeCode) {
+    if (localeCode == 'en') return adminNoteEn ?? adminNote;
+    return adminNote ?? adminNoteEn;
+  }
 
   PostEntry copyWith({
     String? id,
@@ -44,7 +55,9 @@ class PostEntry {
     int? imageColor,
     PostStatus? status,
     bool? isAdminBonus,
+    bool? isAdminPenalty,
     String? adminNote,
+    String? adminNoteEn,
     bool? leaderboardOptIn,
     DateTime? createdAt,
   }) {
@@ -57,7 +70,9 @@ class PostEntry {
       imageColor: imageColor ?? this.imageColor,
       status: status ?? this.status,
       isAdminBonus: isAdminBonus ?? this.isAdminBonus,
+      isAdminPenalty: isAdminPenalty ?? this.isAdminPenalty,
       adminNote: adminNote ?? this.adminNote,
+      adminNoteEn: adminNoteEn ?? this.adminNoteEn,
       leaderboardOptIn: leaderboardOptIn ?? this.leaderboardOptIn,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -74,7 +89,9 @@ class PostEntry {
       imageColor: data['imageColor'] as int?,
       status: _parseStatus(data['status'] as String?),
       isAdminBonus: data['isAdminBonus'] as bool? ?? false,
+      isAdminPenalty: data['isAdminPenalty'] as bool? ?? false,
       adminNote: data['adminNote'] as String?,
+      adminNoteEn: data['adminNoteEn'] as String?,
       leaderboardOptIn: data['leaderboardOptIn'] as bool? ?? false,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
@@ -88,7 +105,9 @@ class PostEntry {
         if (imageColor != null) 'imageColor': imageColor,
         'status': status.name,
         'isAdminBonus': isAdminBonus,
+        'isAdminPenalty': isAdminPenalty,
         if (adminNote != null) 'adminNote': adminNote,
+        if (adminNoteEn != null) 'adminNoteEn': adminNoteEn,
         'leaderboardOptIn': leaderboardOptIn,
         'createdAt': Timestamp.fromDate(createdAt),
       };

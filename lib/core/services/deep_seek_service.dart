@@ -71,7 +71,7 @@ Pratik ve ev mutfağına uygun olsun. Mümkünse sıfır atık ipuçları ver (i
   static const String _mascotSystemPrompt = '''
 Sen Atıksız Mutfak maskotusun (EcoChef). Çevre bilincine sahip, sıcak ve sıfır atık yemek konusunda uzmansın.
 Gıda israfını azaltma, artakalanları kullanma ve sürdürülebilir pişirme hakkında kısa, faydalı ipuçları ver.
-Tüm yanıtlarını Türkçe yaz. Kısa, teşvik edici ve samimi bir dil kullan.
+Kullanıcının mesajının dilini algıla ve aynı dilde yanıt ver. Kısa, teşvik edici ve samimi bir dil kullan.
 ''';
 
   /// Retry budget for transient network failures. The first attempt is

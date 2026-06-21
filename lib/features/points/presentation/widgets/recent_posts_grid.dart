@@ -222,8 +222,11 @@ class _PostCard extends StatelessWidget {
         return Icons.restaurant_rounded;
       case 'Artık Değerlendirme':
         return Icons.recycling_rounded;
+      case 'Admin Bonusu':
       case 'Admin Bonus':
         return Icons.auto_awesome_rounded;
+      case 'Puan Kesintisi':
+        return Icons.remove_circle_outline_rounded;
       default:
         return Icons.more_horiz_rounded;
     }
@@ -239,6 +242,8 @@ class _PostCard extends StatelessWidget {
         return l10n.pointsCategoryCooking;
       case 'Artık Değerlendirme':
         return l10n.pointsCategoryLeftovers;
+      case 'Puan Kesintisi':
+        return 'Puan Kesintisi';
       default:
         return l10n.pointsCategoryOther;
     }
@@ -284,6 +289,14 @@ class _PostCard extends StatelessWidget {
       return GestureDetector(
         onTap: () => _showPostDetails(context),
         child: _buildAdminBonusCard(context),
+      );
+    }
+
+    // ── Admin Penalty: deduction card ──
+    if (post.isAdminPenalty) {
+      return GestureDetector(
+        onTap: () => _showPostDetails(context),
+        child: _buildAdminPenaltyCard(context),
       );
     }
 
@@ -460,7 +473,7 @@ class _PostCard extends StatelessWidget {
                   height: 320,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: post.isAdminBonus ? const Color(0xFFFFD54F) : (_imageColor ?? AppColors.brandOrange.withOpacity(0.08)),
+                    color: post.isAdminBonus ? const Color(0xFFFFD54F) : (post.isAdminPenalty ? const Color(0xFFEF9A9A) : (_imageColor ?? AppColors.brandOrange.withOpacity(0.08))),
                     image: post.localImagePath != null
                         ? DecorationImage(
                             image: FileImage(File(post.localImagePath!)),
@@ -471,7 +484,7 @@ class _PostCard extends StatelessWidget {
                   child: post.localImagePath == null
                       ? Center(
                           child: Icon(
-                            post.isAdminBonus ? Icons.auto_awesome_rounded : _categoryIcon(),
+                            post.isAdminBonus ? Icons.auto_awesome_rounded : post.isAdminPenalty ? Icons.remove_circle_outline_rounded : _categoryIcon(),
                             size: 80,
                             color: post.isAdminBonus ? Colors.white.withOpacity(0.8) : Colors.white,
                           ),
@@ -549,7 +562,7 @@ class _PostCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          AppLocalizations.of(context)!.pointsEarned,
+                          post.isAdminPenalty ? 'Kesinti' : AppLocalizations.of(context)!.pointsEarned,
                           style: TextStyle(
                             fontFamily: 'Manrope',
                             fontSize: 14,
@@ -559,20 +572,24 @@ class _PostCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '+${post.points} ${post.isAdminBonus ? '⭐' : '🌟'}',
+                          post.isAdminPenalty ? '${post.points}' : '+${post.points} ${post.isAdminBonus ? '⭐' : '🌟'}',
                           style: TextStyle(
                             fontFamily: 'Manrope',
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
-                            color: post.isAdminBonus ? const Color(0xFFE8A817) : const Color(0xFF4CAF50),
+                            color: post.isAdminPenalty
+                                ? const Color(0xFFD32F2F)
+                                : post.isAdminBonus
+                                    ? const Color(0xFFE8A817)
+                                    : const Color(0xFF4CAF50),
                           ),
                         ),
                       ],
                     ),
                   
-                  if (post.adminNote != null) ...[
+                  if (post.adminNote != null || post.adminNoteEn != null) ...[
                     const SizedBox(height: 20),
-                    _buildAdminNoteBox(),
+                    _buildAdminNoteBox(context),
                   ],
                   
                   const SizedBox(height: 32),
@@ -631,35 +648,42 @@ class _PostCard extends StatelessWidget {
     );
   }
 
-  Widget _buildAdminNoteBox() {
+  Widget _buildAdminNoteBox(BuildContext context) {
+    final isPenalty = post.isAdminPenalty;
+    final accentColor = isPenalty ? const Color(0xFFD32F2F) : const Color(0xFFE8A817);
+    final bgColor = isPenalty ? const Color(0xFFD32F2F).withOpacity(0.08) : const Color(0xFFFFC107).withOpacity(0.08);
+    final borderColor = isPenalty ? const Color(0xFFD32F2F).withOpacity(0.3) : const Color(0xFFFFC107).withOpacity(0.3);
+    final icon = isPenalty ? Icons.warning_amber_rounded : Icons.stars_rounded;
+    final title = isPenalty ? 'Kesinti Notu' : 'EcoChef Ekibi Notu';
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFC107).withOpacity(0.08),
+        color: bgColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFFC107).withOpacity(0.3)),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.stars_rounded, size: 18, color: Color(0xFFE8A817)),
+              Icon(icon, size: 18, color: accentColor),
               const SizedBox(width: 8),
               Text(
-                'EcoChef Ekibi Notu',
+                title,
                 style: TextStyle(
                   fontFamily: 'Manrope',
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFFE8A817).withOpacity(0.9),
+                  color: accentColor.withOpacity(0.9),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
-            post.adminNote!,
+            post.localizedAdminNote(Localizations.localeOf(context).languageCode)!,
             style: const TextStyle(
               fontFamily: 'Manrope',
               fontSize: 14,
@@ -732,6 +756,177 @@ class _PostCard extends StatelessWidget {
               fontSize: 10,
               fontWeight: FontWeight.w700,
               color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Special card for admin penalty (point deduction).
+  Widget _buildAdminPenaltyCard(BuildContext context) {
+    const redDark = Color(0xFFD32F2F);
+    const redLight = Color(0xFFEF9A9A);
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFFFEBEE), Color(0xFFFFCDD2)],
+        ),
+        border: Border.all(color: redLight.withOpacity(0.6), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: redDark.withOpacity(0.1),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Red top area ──
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFFEF9A9A), Color(0xFFE57373)],
+                ),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+              ),
+              child: Stack(
+                children: [
+                  Center(
+                    child: Icon(
+                      Icons.remove_circle_outline_rounded,
+                      size: 40,
+                      color: Colors.white.withOpacity(0.5),
+                    ),
+                  ),
+                  // Points badge - top right
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: redDark,
+                        borderRadius: BorderRadius.circular(999),
+                        boxShadow: [
+                          BoxShadow(
+                            color: redDark.withOpacity(0.4),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${post.points}',
+                            style: const TextStyle(
+                              fontFamily: 'Manrope',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          const Text('💔', style: TextStyle(fontSize: 9)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Penalty badge - top left
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.warning_amber_rounded, size: 10, color: redDark),
+                          SizedBox(width: 3),
+                          Text(
+                            'Kesinti',
+                            style: TextStyle(
+                              fontFamily: 'Manrope',
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: redDark,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // ── Info bar ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.remove_circle_outline_rounded, size: 13, color: redDark),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Text(
+                        post.localizedAdminNote(Localizations.localeOf(context).languageCode) ?? 'Puan Kesintisi',
+                        style: const TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFB71C1C),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    const Icon(Icons.verified_rounded, size: 11, color: redDark),
+                    const SizedBox(width: 4),
+                    const Text(
+                      'Puan Kesintisi',
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: redDark,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      _formattedDate(context),
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.inkLight.withOpacity(0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
@@ -865,7 +1060,7 @@ class _PostCard extends StatelessWidget {
                     const SizedBox(width: 5),
                     Expanded(
                       child: Text(
-                        post.adminNote ?? 'Bonus Puan',
+                        post.localizedAdminNote(Localizations.localeOf(context).languageCode) ?? 'Bonus Puan',
                         style: const TextStyle(
                           fontFamily: 'Manrope',
                           fontSize: 11,

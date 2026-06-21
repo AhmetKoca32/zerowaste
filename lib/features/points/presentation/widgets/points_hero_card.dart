@@ -76,15 +76,14 @@ class PointsHeroCard extends StatefulWidget {
   const PointsHeroCard({
     super.key,
     this.totalPoints = 0,
-    this.streakDays = 0,
     this.previousPoints,
     this.onJourneyComplete,
     this.startAnimation = true,
     this.nickname,
+    this.onOptOut,
   });
 
   final int totalPoints;
-  final int streakDays;
 
   /// Set this only when admin approved a post and points changed.
   /// If the level boundary was crossed, the full journey animation plays.
@@ -96,6 +95,9 @@ class PointsHeroCard extends StatefulWidget {
 
   /// User's display name shown at the top of the card.
   final String? nickname;
+
+  /// Called when the user taps the opt-out (leave contest) button.
+  final VoidCallback? onOptOut;
 
   @override
   State<PointsHeroCard> createState() => _PointsHeroCardState();
@@ -137,9 +139,17 @@ class _PointsHeroCardState extends State<PointsHeroCard>
     final prevIdx = prevPts != null ? _levelIndex(prevPts) : _currentLevelIdx;
     _hasLevelUp = prevPts != null && prevIdx < _currentLevelIdx;
 
-    // Level-up: start from 0 (Çaylak). Normal: start at current level.
-    _displayLevelIdx = _hasLevelUp ? 0 : _currentLevelIdx;
-    _displayPoints = _hasLevelUp ? 0.0 : _currentLevel.minPoints.toDouble();
+    if (widget.startAnimation) {
+      // Animated mode: start from previous points, animate up to current
+      _displayPoints = (prevPts ?? _currentLevel.minPoints).toDouble();
+      _displayLevelIdx = _hasLevelUp ? 0 : (prevIdx);
+    } else {
+      // Static mode: show final values immediately
+      _displayPoints = widget.totalPoints.toDouble();
+      _displayLevelIdx = _currentLevelIdx;
+      final range = (_currentLevel.maxPoints - _currentLevel.minPoints).clamp(1, 999999);
+      _displayProgress = ((widget.totalPoints - _currentLevel.minPoints) / range).clamp(0.0, 1.0);
+    }
 
     // Fade-in happens immediately
     _fadeController = AnimationController(
@@ -149,12 +159,12 @@ class _PointsHeroCardState extends State<PointsHeroCard>
     _fadeAnimation = CurvedAnimation(parent: _fadeController, curve: Curves.easeOut);
     _fadeController.forward();
 
-    // Small delay to let fade-in finish, then check startAnimation
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (mounted && widget.startAnimation) {
-        _triggerAnimations();
-      }
-    });
+    // Start progress animation on the next frame
+    if (widget.startAnimation) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_isAnimating) _triggerAnimations();
+      });
+    }
   }
 
   @override
@@ -197,6 +207,11 @@ class _PointsHeroCardState extends State<PointsHeroCard>
 
     final range = (_currentLevel.maxPoints - _currentLevel.minPoints).clamp(1, 999999);
     final targetProgress = ((widget.totalPoints - _currentLevel.minPoints) / range).clamp(0.0, 1.0);
+
+    setState(() {
+      _displayPoints = _currentLevel.minPoints.toDouble();
+      _displayProgress = 0.0;
+    });
 
     await _animateProgress(
       fromProgress: 0.0,
@@ -452,6 +467,28 @@ class _PointsHeroCardState extends State<PointsHeroCard>
             ),
             if (_showCelebration)
               Positioned.fill(child: _buildCelebrationOverlay()),
+            // ── Opt-out button (top-right corner) ──
+            if (widget.onOptOut != null)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: GestureDetector(
+                  onTap: widget.onOptOut,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.15),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white.withOpacity(0.3)),
+                    ),
+                    child: Icon(
+                      Icons.logout_rounded,
+                      size: 14,
+                      color: Colors.white.withOpacity(0.8),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -529,7 +566,7 @@ class _PointsHeroCardState extends State<PointsHeroCard>
 
   Widget _buildTopRow(_Level level) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 400),
@@ -561,31 +598,6 @@ class _PointsHeroCardState extends State<PointsHeroCard>
             ),
           ),
         ),
-        if (widget.streakDays > 0)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: Colors.white.withOpacity(0.3)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('🔥', style: TextStyle(fontSize: 14)),
-                const SizedBox(width: 4),
-                Text(
-                  AppLocalizations.of(context)!.pointsStreak(widget.streakDays),
-                  style: const TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
       ],
     );
   }
@@ -600,11 +612,8 @@ class _PointsHeroCardState extends State<PointsHeroCard>
           SizedBox(
             width: 160,
             height: 160,
-            child: CircularProgressIndicator(
-              value: 1.0,
-              strokeWidth: 10,
-              strokeCap: StrokeCap.round,
-              color: Colors.white.withOpacity(0.15),
+            child: CustomPaint(
+              painter: _BackgroundRingPainter(strokeWidth: 10),
             ),
           ),
           SizedBox(
@@ -678,6 +687,31 @@ class _PointsHeroCardState extends State<PointsHeroCard>
       ),
     );
   }
+}
+
+/// Custom painter for a gradient arc (white glowing progress).
+class _BackgroundRingPainter extends CustomPainter {
+  _BackgroundRingPainter({required this.strokeWidth});
+
+  final double strokeWidth;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.15)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawCircle(
+      size.center(Offset.zero),
+      size.width / 2 - strokeWidth / 2,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_BackgroundRingPainter oldDelegate) => false;
 }
 
 /// Custom painter for a gradient arc (white glowing progress).

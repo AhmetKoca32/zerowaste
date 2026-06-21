@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
-import '../../features/admin/presentation/pages/admin_login_page.dart';
-import '../../features/admin/presentation/pages/admin_posts_page.dart';
-import '../../features/admin/presentation/pages/admin_recipe_edit_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
 import '../shell/main_tab_shell.dart';
 
@@ -16,12 +12,6 @@ abstract final class AppRouter {
   static const String recipeGenerator = '/generate';
   static const String chat = '/chat';
   static const String points = '/puan';
-
-  static const String adminLogin = '/admin/login';
-  static const String adminDashboard = '/admin/dashboard';
-  static const String adminRecipeNew = '/admin/recipes/new';
-  static String adminRecipeEdit(String id) => '/admin/recipes/$id';
-  static const String adminPosts = '/admin/posts';
 
   static final GoRouter router = GoRouter(
     initialLocation: splash,
@@ -66,54 +56,6 @@ abstract final class AppRouter {
           child: const MainTabShell(initialIndex: 3),
           transitionsBuilder: _slideTransition,
         ),
-      ),
-      GoRoute(
-        path: adminLogin,
-        name: 'adminLogin',
-        pageBuilder: (context, state) => CustomTransitionPage<void>(
-          key: state.pageKey,
-          child: const AdminLoginPage(),
-          transitionsBuilder: _slideTransition,
-        ),
-      ),
-      GoRoute(
-        path: '/admin/dashboard',
-        name: 'adminDashboard',
-        pageBuilder: (context, state) => CustomTransitionPage<void>(
-          key: state.pageKey,
-          child: const AdminDashboardPage(),
-          transitionsBuilder: _slideTransition,
-        ),
-      ),
-      GoRoute(
-        path: '/admin/recipes/new',
-        name: 'adminRecipeNew',
-        pageBuilder: (context, state) => CustomTransitionPage<void>(
-          key: state.pageKey,
-          child: const AdminRecipeEditPage(),
-          transitionsBuilder: _slideTransition,
-        ),
-      ),
-      GoRoute(
-        path: '/admin/posts',
-        name: 'adminPosts',
-        pageBuilder: (context, state) => CustomTransitionPage<void>(
-          key: state.pageKey,
-          child: const AdminPostsPage(),
-          transitionsBuilder: _slideTransition,
-        ),
-      ),
-      GoRoute(
-        path: '/admin/recipes/:id',
-        name: 'adminRecipeEdit',
-        pageBuilder: (context, state) {
-          final id = state.pathParameters['id'] ?? '';
-          return CustomTransitionPage<void>(
-            key: state.pageKey,
-            child: AdminRecipeEditPage(recipeId: id.isEmpty ? null : id),
-            transitionsBuilder: _slideTransition,
-          );
-        },
       ),
     ],
   );
