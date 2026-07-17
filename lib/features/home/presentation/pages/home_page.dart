@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/app_router.dart';
-import '../../../../core/shell/main_tab_shell.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/empty_placeholder.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -12,6 +11,7 @@ import '../providers/home_providers.dart';
 import '../widgets/ingredient_filter_sheet.dart';
 import '../widgets/recipe_blog_card.dart';
 import '../widgets/recipe_detail_sheet.dart';
+import '../widgets/recipes_coming_soon.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key, this.inTabs = false});
@@ -41,24 +41,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     final body = recipesAsync.when(
       data: (recipes) {
         if (recipes.isEmpty) {
-          return EmptyPlaceholder(
-            icon: Icons.menu_book,
-            message: l10n.homeEmpty,
-            action: FilledButton.icon(
-              onPressed: () {
-                if (widget.inTabs) {
-                  ref.read(tabIndexProvider.notifier).state = 1;
-                } else {
-                  context.go(AppRouter.recipeGenerator);
-                }
-              },
-              icon: const Icon(Icons.add_circle_outline),
-              label: Text(
-                l10n.homeCreateRecipe,
-                style: const TextStyle(fontFamily: 'Manrope'),
-              ),
-            ),
-          );
+          return const RecipesComingSoon();
         }
 
         final allIngredients = recipes

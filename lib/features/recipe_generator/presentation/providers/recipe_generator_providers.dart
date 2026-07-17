@@ -2,6 +2,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/providers/core_providers.dart';
+import '../../../../core/providers/locale_provider.dart';
+import '../../data/cuisine_options.dart';
 import '../../data/saved_recipe.dart';
 import '../../data/saved_recipes_storage.dart';
 import '../../../home/data/models/recipe.dart';
@@ -110,19 +112,31 @@ class GeneratedRecipe extends _$GeneratedRecipe {
   Future<void> generate() async {
     state = const AsyncLoading();
     final ingredients = ref.read(ingredientListProvider);
+    final locale = ref.read(localeProvider);
+    final isEnglish = locale.languageCode == 'en';
+
     if (ingredients.isEmpty) {
       state = AsyncValue.data(
-        'Please add at least one ingredient before creating a recipe.',
+        isEnglish
+            ? 'Please add at least one ingredient before creating a recipe.'
+            : 'Lütfen en az bir malzeme ekleyin.',
       );
       return;
     }
     // Kullanılan malzemeleri geçmişe kaydet
     ref.read(recentIngredientsProvider.notifier).addAll(ingredients);
 
-    final cuisine = ref.read(selectedCuisineProvider);
+    final cuisineKey = ref.read(selectedCuisineProvider);
+    final cuisine = cuisineKey != null
+        ? CuisineOptions.localized(cuisineKey, locale.languageCode)
+        : null;
     final deepSeek = ref.read(deepSeekServiceProvider);
     state = await AsyncValue.guard(
-      () => deepSeek.generateRecipe(ingredients, cuisine: cuisine),
+      () => deepSeek.generateRecipe(
+        ingredients,
+        cuisine: cuisine,
+        languageCode: locale.languageCode,
+      ),
     );
   }
 

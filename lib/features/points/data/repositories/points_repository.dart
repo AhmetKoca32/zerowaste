@@ -18,9 +18,14 @@ class PointsRepository {
   static const String _leaderboardDoc = 'leaderboard';
   static const String _leaderboardId = 'current';
 
+  /// Generate a new post document ID before Storage upload.
+  String newPostId() => _firestore.collection(_postsCollection).doc().id;
+
   /// Submit a new post (1 Firestore write).
-  Future<void> submitPost(PostEntry post) async {
-    final docRef = _firestore.collection(_postsCollection).doc();
+  Future<void> submitPost(PostEntry post, {String? id}) async {
+    final docRef = id != null
+        ? _firestore.collection(_postsCollection).doc(id)
+        : _firestore.collection(_postsCollection).doc();
     await docRef.set(post.copyWith(id: docRef.id).toFirestore());
   }
 

@@ -1,10 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import 'package:zerowaste/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/post_entry.dart';
+import 'post_image_thumbnail.dart';
 
 /// Instagram-style 2-column grid showing recent posts.
 /// Supports loading (shimmer), empty, and populated states.
@@ -323,37 +322,40 @@ class _PostCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Image placeholder ──
+          // ── Image ──
           Expanded(
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: _imageColor ?? AppColors.brandOrange.withOpacity(0.08),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-                image: post.localImagePath != null
-                    ? DecorationImage(
-                        image: FileImage(File(post.localImagePath!)),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
               ),
               child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  // Category icon
-                  Center(
-                    child: Opacity(
-                      opacity: isPending ? 0.3 : 0.4,
-                      child: Icon(
-                        _categoryIcon(),
-                        size: 36,
-                        color: _imageColor != null
-                            ? Colors.white
-                            : AppColors.brandOrange,
+                  PostImageThumbnail(
+                    imageUrl: post.imageUrl,
+                    localPreviewPath: post.localPreviewPath,
+                    placeholderColor:
+                        _imageColor ?? AppColors.brandOrange.withOpacity(0.08),
+                    placeholderIcon: _categoryIcon(),
+                    placeholderIconColor: _imageColor != null
+                        ? Colors.white
+                        : AppColors.brandOrange,
+                    placeholderIconOpacity: isPending ? 0.3 : 0.4,
+                  ),
+                  // Category icon overlay when no photo
+                  if (post.imageUrl == null && post.localPreviewPath == null)
+                    Center(
+                      child: Opacity(
+                        opacity: isPending ? 0.3 : 0.4,
+                        child: Icon(
+                          _categoryIcon(),
+                          size: 36,
+                          color: _imageColor != null
+                              ? Colors.white
+                              : AppColors.brandOrange,
+                        ),
                       ),
                     ),
-                  ),
                   // Points badge or status badge - top right
                   Positioned(
                     top: 8,
@@ -469,27 +471,26 @@ class _PostCard extends StatelessWidget {
             // ── Header Image Section ──
             Stack(
               children: [
-                Container(
+                SizedBox(
                   height: 320,
                   width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: post.isAdminBonus ? const Color(0xFFFFD54F) : (post.isAdminPenalty ? const Color(0xFFEF9A9A) : (_imageColor ?? AppColors.brandOrange.withOpacity(0.08))),
-                    image: post.localImagePath != null
-                        ? DecorationImage(
-                            image: FileImage(File(post.localImagePath!)),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
+                  child: PostImageThumbnail(
+                    imageUrl: post.imageUrl,
+                    localPreviewPath: post.localPreviewPath,
+                    placeholderColor: post.isAdminBonus
+                        ? const Color(0xFFFFD54F)
+                        : (post.isAdminPenalty
+                            ? const Color(0xFFEF9A9A)
+                            : (_imageColor ??
+                                AppColors.brandOrange.withOpacity(0.08))),
+                    placeholderIcon: post.isAdminBonus
+                        ? Icons.auto_awesome_rounded
+                        : post.isAdminPenalty
+                            ? Icons.remove_circle_outline_rounded
+                            : _categoryIcon(),
+                    placeholderIconColor: Colors.white,
+                    placeholderIconOpacity: 0.8,
                   ),
-                  child: post.localImagePath == null
-                      ? Center(
-                          child: Icon(
-                            post.isAdminBonus ? Icons.auto_awesome_rounded : post.isAdminPenalty ? Icons.remove_circle_outline_rounded : _categoryIcon(),
-                            size: 80,
-                            color: post.isAdminBonus ? Colors.white.withOpacity(0.8) : Colors.white,
-                          ),
-                        )
-                      : null,
                 ),
                 // Gradient Overlay for better contrast on top icons
                 Positioned.fill(

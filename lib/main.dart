@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/providers/core_providers.dart';
 import 'core/providers/locale_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
@@ -23,9 +24,14 @@ Future<void> main() async {
     // .env optional when using --dart-define for API key
   }
 
-  // Pre-load locale before rendering
+  // Pre-load locale and anonymous auth (for Storage uploads) before rendering.
   final container = ProviderContainer();
   await container.read(localeProvider.notifier).load();
+  try {
+    await container.read(anonymousAuthServiceProvider).ensureSignedIn();
+  } catch (_) {
+    // Upload flow retries sign-in if startup auth fails (e.g. provider disabled).
+  }
 
   runApp(
     UncontrolledProviderScope(

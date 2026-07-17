@@ -14,7 +14,8 @@ class PostEntry {
     required this.nickname,
     required this.category,
     required this.points,
-    this.localImagePath,
+    this.imageUrl,
+    this.localPreviewPath,
     this.imageColor,
     this.status = PostStatus.pending,
     this.isAdminBonus = false,
@@ -29,7 +30,13 @@ class PostEntry {
   final String nickname;
   final String category;
   final int points;
-  final String? localImagePath;
+
+  /// Firebase Storage download URL persisted in Firestore.
+  final String? imageUrl;
+
+  /// Local file path for optimistic preview during upload (not persisted).
+  final String? localPreviewPath;
+
   final int? imageColor;
   final PostStatus status;
   final bool isAdminBonus;
@@ -51,7 +58,8 @@ class PostEntry {
     String? nickname,
     String? category,
     int? points,
-    String? localImagePath,
+    String? imageUrl,
+    String? localPreviewPath,
     int? imageColor,
     PostStatus? status,
     bool? isAdminBonus,
@@ -66,7 +74,8 @@ class PostEntry {
       nickname: nickname ?? this.nickname,
       category: category ?? this.category,
       points: points ?? this.points,
-      localImagePath: localImagePath ?? this.localImagePath,
+      imageUrl: imageUrl ?? this.imageUrl,
+      localPreviewPath: localPreviewPath ?? this.localPreviewPath,
       imageColor: imageColor ?? this.imageColor,
       status: status ?? this.status,
       isAdminBonus: isAdminBonus ?? this.isAdminBonus,
@@ -85,7 +94,7 @@ class PostEntry {
       nickname: data['nickname'] as String? ?? '',
       category: data['category'] as String? ?? '',
       points: data['points'] as int? ?? 0,
-      localImagePath: data['imagePath'] as String?,
+      imageUrl: _parseImageUrl(data),
       imageColor: data['imageColor'] as int?,
       status: _parseStatus(data['status'] as String?),
       isAdminBonus: data['isAdminBonus'] as bool? ?? false,
@@ -97,11 +106,24 @@ class PostEntry {
     );
   }
 
+  /// Reads `imageUrl` first, then legacy `imagePath` if it looks like a URL.
+  static String? _parseImageUrl(Map<String, dynamic> data) {
+    final url = data['imageUrl'] as String?;
+    if (url != null && _isHttpUrl(url)) return url;
+
+    final legacy = data['imagePath'] as String?;
+    if (legacy != null && _isHttpUrl(legacy)) return legacy;
+    return null;
+  }
+
+  static bool _isHttpUrl(String value) =>
+      value.startsWith('http://') || value.startsWith('https://');
+
   Map<String, dynamic> toFirestore() => {
         'nickname': nickname,
         'category': category,
         'points': points,
-        if (localImagePath != null) 'imagePath': localImagePath,
+        if (imageUrl != null) 'imageUrl': imageUrl,
         if (imageColor != null) 'imageColor': imageColor,
         'status': status.name,
         'isAdminBonus': isAdminBonus,

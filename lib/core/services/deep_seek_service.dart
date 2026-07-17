@@ -46,12 +46,45 @@ class DeepSeekService {
   final Dio _dio;
   final String _apiKey;
 
-  static const String _recipeSystemPrompt = '''
-Sen profesyonel bir şefsin adın EcoChef. Kullanıcının verdiği malzemelerle yaratıcı bir tarif oluştur. Resmi bir dilden ziyade arkadaş canlısı bir dil kullan.
+  static String _recipeSystemPrompt(String languageCode) {
+    if (languageCode == 'en') {
+      return '''
+You are EcoChef, a professional chef. Create a creative recipe from the user's ingredients. Use a friendly, casual tone.
 
-ASLA giriş cümlesi, selamlama, "elbette", "işte tarifiniz", "karşınızda" veya benzeri hiçbir tanıtım metni ekleme. Doğrudan tarife geç.
+LANGUAGE — highest priority:
+- Write the entire recipe in English only. Never use Turkish words or headers.
+- The recipe title (text after "## Title:") MUST be in English — e.g. "Tomato & Egg Skillet", NOT "Domatesli Omlet".
+- Use "## Title:" only. NEVER use "## Başlık:" or any Turkish section headers.
 
-Yanıtını aşağıdaki sabit formatta, başlıkla başlayarak yaz:
+Never add intro phrases, greetings, "sure", "here is your recipe", or similar. Start directly with the recipe.
+
+Use exactly this format:
+
+## Title: [recipe name]
+
+**Short Description:** [1-2 sentence description]
+
+**Ingredients:**
+- [ingredient 1]
+- [ingredient 2]
+
+**Steps:**
+1. [step 1]
+2. [step 2]
+
+Keep it practical and home-kitchen friendly. Add zero-waste tips when possible (optional).
+''';
+    }
+
+    return '''
+You are EcoChef, a professional chef. Create a creative recipe from the user's ingredients. Use a friendly, casual tone.
+
+LANGUAGE — highest priority:
+- Write the entire recipe in Turkish only. Never use English words or headers.
+
+Never add intro phrases, greetings, "elbette", "işte tarifiniz", "karşınızda", or similar. Start directly with the recipe.
+
+Use exactly this format:
 
 ## Başlık: [tarif adı]
 
@@ -65,13 +98,22 @@ Yanıtını aşağıdaki sabit formatta, başlıkla başlayarak yaz:
 1. [adım 1]
 2. [adım 2]
 
-Pratik ve ev mutfağına uygun olsun. Mümkünse sıfır atık ipuçları ver (isteğe bağlı).
+Keep it practical and home-kitchen friendly. Add zero-waste tips when possible (optional).
 ''';
+  }
 
   static const String _mascotSystemPrompt = '''
-Sen Atıksız Mutfak maskotusun (EcoChef). Çevre bilincine sahip, sıcak ve sıfır atık yemek konusunda uzmansın.
-Gıda israfını azaltma, artakalanları kullanma ve sürdürülebilir pişirme hakkında kısa, faydalı ipuçları ver.
-Kullanıcının mesajının dilini algıla ve aynı dilde yanıt ver. Kısa, teşvik edici ve samimi bir dil kullan.
+You are EcoChef, the mascot of Zero-Waste Kitchen (Atıksız Mutfak). You are warm, eco-conscious, and an expert on reducing food waste, using leftovers, and sustainable cooking.
+
+LANGUAGE — highest priority, never violate:
+- Read the user's latest message and reply entirely in that same language only.
+- English in → English out. Every word must be English. No Turkish words, greetings, or phrases.
+- Turkish in → Turkish out. Every word must be Turkish.
+- Never default to Turkish because of your brand name, this prompt, or the app locale.
+- Do not mix languages in one reply. Do not translate the user's question unless they ask.
+- If a [LANGUAGE RULE] tag is present in the user message, follow it exactly.
+
+Style: short, helpful, encouraging, friendly. Stay on zero-waste cooking and kitchen topics.
 ''';
 
   /// Retry budget for transient network failures. The first attempt is
@@ -189,23 +231,116 @@ Kullanıcının mesajının dilini algıla ve aynı dilde yanıt ver. Kısa, te�
   }
 
   /// Generates a recipe using the given ingredients and optional cuisine style.
-  Future<String> generateRecipe(List<String> ingredients, {String? cuisine}) async {
+  Future<String> generateRecipe(
+    List<String> ingredients, {
+    String? cuisine,
+    String languageCode = 'tr',
+  }) async {
+    final isEnglish = languageCode == 'en';
     if (ingredients.isEmpty) {
-      return 'Lütfen en az bir malzeme ekleyin.';
+      return isEnglish
+          ? 'Please add at least one ingredient.'
+          : 'Lütfen en az bir malzeme ekleyin.';
     }
     final list = ingredients.map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-    if (list.isEmpty) return 'Lütfen en az bir malzeme ekleyin.';
-    var userContent = 'Sadece şu malzemelerle bir tarif oluştur:\n${list.join('\n')}';
-    if (cuisine != null && cuisine.isNotEmpty) {
-      userContent += '\n\nTercih edilen mutfak: $cuisine. Tarif bu mutfağın lezzet ve tekniklerine uygun olsun.';
+    if (list.isEmpty) {
+      return isEnglish
+          ? 'Please add at least one ingredient.'
+          : 'Lütfen en az bir malzeme ekleyin.';
     }
-    return _chat(systemPrompt: _recipeSystemPrompt, userContent: userContent);
+
+    final languageRule = isEnglish
+        ? 'Write the entire recipe in English only. The recipe title must be in English. Use "## Title:" as the first header — never "## Başlık:".'
+        : 'Tarifin tamamını yalnızca Türkçe yaz. Tüm başlıklar, malzemeler ve adımlar Türkçe olmalı.';
+
+    var userContent = isEnglish
+        ? 'Create a recipe using only these ingredients:\n${list.join('\n')}\n\n'
+            'Ingredients may be in any language, but the recipe title, description, '
+            'ingredient names in the list, and steps must all be in English. '
+            'Give the dish an English name (e.g. "Tomato & Egg Skillet", not "Domatesli Omlet").'
+        : 'Sadece şu malzemelerle bir tarif oluştur:\n${list.join('\n')}';
+    if (cuisine != null && cuisine.isNotEmpty) {
+      userContent += isEnglish
+          ? '\n\nPreferred cuisine: $cuisine. Match this cuisine\'s flavors and techniques.'
+          : '\n\nTercih edilen mutfak: $cuisine. Tarif bu mutfağın lezzet ve tekniklerine uygun olsun.';
+    }
+
+    userContent = '''
+[LANGUAGE RULE: $languageRule]
+
+$userContent''';
+
+    return _chat(
+      systemPrompt: _recipeSystemPrompt(languageCode),
+      userContent: userContent,
+    );
   }
 
   /// Chat with the Atıksız mascot (friendly, eco-conscious, zero-waste expert).
   Future<String> chatWithMascot(String message) async {
     final trimmed = message.trim();
-    if (trimmed.isEmpty) return 'Atıksız mutfak veya ipuçları hakkında ne olursa olsun sorabilirsiniz!';
-    return _chat(systemPrompt: _mascotSystemPrompt, userContent: trimmed);
+    if (trimmed.isEmpty) {
+      return 'Ask me anything about zero-waste cooking and kitchen tips! / Sıfır atık mutfak ve ipuçları hakkında ne olursa olsun sorabilirsin!';
+    }
+
+    final languageRule = _languageRuleForMessage(trimmed);
+    final userContent = '''
+[LANGUAGE RULE: $languageRule]
+
+User message:
+$trimmed''';
+
+    return _chat(systemPrompt: _mascotSystemPrompt, userContent: userContent);
+  }
+
+  /// Returns an explicit reply-language instruction derived from the user's text.
+  static String _languageRuleForMessage(String message) {
+    switch (_detectMessageLanguage(message)) {
+      case _MessageLanguage.english:
+        return 'The user wrote in English. Reply ONLY in English. Do not use any Turkish.';
+      case _MessageLanguage.turkish:
+        return 'Kullanıcı Türkçe yazdı. Yanıtını YALNIZCA Türkçe ver. İngilizce kullanma.';
+      case _MessageLanguage.unknown:
+        return 'Detect the language of the user message and reply entirely in that same language only.';
+    }
+  }
+
+  static _MessageLanguage _detectMessageLanguage(String message) {
+    final lower = message.toLowerCase();
+
+    if (RegExp(r'[ğüşöçı]').hasMatch(lower)) {
+      return _MessageLanguage.turkish;
+    }
+
+    const turkishWords = [
+      'merhaba', 'nasıl', 'neden', 'ne ', ' bir ', 'için', 'olan', 'var',
+      'yok', 'yemek', 'mutfak', 'atık', 'tarif', 'pişir', 'lütfen',
+      'teşekkür', 'evet', 'hayır', 'artık', 'malzeme', 'soğan', 'domates',
+    ];
+    const englishWords = [
+      'hello', 'how', 'what', 'the', 'is', 'are', 'you', 'can', 'could',
+      'would', 'please', 'thanks', 'thank', 'yes', 'no', 'why', 'when',
+      'where', 'food', 'waste', 'recipe', 'cook', 'kitchen', 'leftover',
+      'ingredient', 'help', 'good', 'morning', 'evening', 'hey', 'hi ',
+    ];
+
+    var trScore = 0;
+    var enScore = 0;
+    for (final word in turkishWords) {
+      if (lower.contains(word)) trScore++;
+    }
+    for (final word in englishWords) {
+      if (RegExp('\\b${RegExp.escape(word.trim())}\\b').hasMatch(lower)) {
+        enScore++;
+      }
+    }
+
+    if (trScore > enScore) return _MessageLanguage.turkish;
+    if (enScore > trScore) return _MessageLanguage.english;
+    if (enScore > 0) return _MessageLanguage.english;
+
+    return _MessageLanguage.unknown;
   }
 }
+
+enum _MessageLanguage { english, turkish, unknown }

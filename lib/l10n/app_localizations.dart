@@ -140,6 +140,18 @@ abstract class AppLocalizations {
   /// **'Henüz tarif yok. Malzeme ekleyip bir tarif oluşturun!'**
   String get homeEmpty;
 
+  /// Tarifler sekmesi — yakında başlığı
+  ///
+  /// In tr, this message translates to:
+  /// **'Çok Yakında'**
+  String get homeComingSoonTitle;
+
+  /// Tarifler sekmesi — yakında alt metni
+  ///
+  /// In tr, this message translates to:
+  /// **'Atıksız mutfak tarifleri hazırlanıyor. EcoChef ile kendi tarifini oluşturmaya devam edebilirsin!'**
+  String get homeComingSoonSubtitle;
+
   /// Tarif oluşturma butonu
   ///
   /// In tr, this message translates to:
@@ -733,6 +745,18 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'⏳ {category} gönderin incelemeye gönderildi!'**
   String pointsPostSent(String category);
+
+  /// Gönderi fotoğrafı Storage'a yüklenirken
+  ///
+  /// In tr, this message translates to:
+  /// **'Fotoğraf yükleniyor…'**
+  String get pointsPhotoUploading;
+
+  /// Storage yükleme hatası
+  ///
+  /// In tr, this message translates to:
+  /// **'Fotoğraf yüklenemedi. Lütfen tekrar deneyin.'**
+  String get pointsPhotoUploadError;
 
   /// Seviye atlama başlığı
   ///

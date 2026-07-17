@@ -78,6 +78,7 @@ class PointsHeroCard extends StatefulWidget {
     this.totalPoints = 0,
     this.previousPoints,
     this.onJourneyComplete,
+    this.onAnimationComplete,
     this.startAnimation = true,
     this.nickname,
     this.onOptOut,
@@ -89,6 +90,7 @@ class PointsHeroCard extends StatefulWidget {
   /// If the level boundary was crossed, the full journey animation plays.
   final int? previousPoints;
   final VoidCallback? onJourneyComplete;
+  final VoidCallback? onAnimationComplete;
 
   /// Controls when the progress animations begin.
   final bool startAnimation;
@@ -184,8 +186,12 @@ class _PointsHeroCardState extends State<PointsHeroCard>
   @override
   void didUpdateWidget(PointsHeroCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // If startAnimation flipped from false to true, trigger immediately.
     if (!oldWidget.startAnimation && widget.startAnimation) {
+      _currentLevel = _levelForPoints(widget.totalPoints);
+      _currentLevelIdx = _levelIndex(widget.totalPoints);
+      final prevPts = widget.previousPoints;
+      final prevIdx = prevPts != null ? _levelIndex(prevPts) : _currentLevelIdx;
+      _hasLevelUp = prevPts != null && prevIdx < _currentLevelIdx;
       _triggerAnimations();
     }
   }
@@ -200,28 +206,38 @@ class _PointsHeroCardState extends State<PointsHeroCard>
     }
   }
 
-  /// Normal mode: simple progress fill within current level.
+  /// Normal mode: animate from previous points to current within the level.
   Future<void> _startNormalAnimation() async {
     if (_isAnimating || _isDisposed) return;
     _isAnimating = true;
 
+    _currentLevel = _levelForPoints(widget.totalPoints);
+    _currentLevelIdx = _levelIndex(widget.totalPoints);
+    final prevPts = widget.previousPoints ?? _currentLevel.minPoints;
     final range = (_currentLevel.maxPoints - _currentLevel.minPoints).clamp(1, 999999);
-    final targetProgress = ((widget.totalPoints - _currentLevel.minPoints) / range).clamp(0.0, 1.0);
+    final fromProgress =
+        ((prevPts - _currentLevel.minPoints) / range).clamp(0.0, 1.0);
+    final targetProgress =
+        ((widget.totalPoints - _currentLevel.minPoints) / range).clamp(0.0, 1.0);
 
     setState(() {
-      _displayPoints = _currentLevel.minPoints.toDouble();
-      _displayProgress = 0.0;
+      _displayPoints = prevPts.toDouble();
+      _displayProgress = fromProgress;
+      _displayLevelIdx = _levelIndex(prevPts);
     });
 
     await _animateProgress(
-      fromProgress: 0.0,
+      fromProgress: fromProgress,
       toProgress: targetProgress,
-      fromPoints: _currentLevel.minPoints.toDouble(),
+      fromPoints: prevPts.toDouble(),
       toPoints: widget.totalPoints.toDouble(),
       durationMs: 1200,
     );
-    
+
     _isAnimating = false;
+    if (mounted && !_isDisposed) {
+      widget.onAnimationComplete?.call();
+    }
   }
 
   /// Level-up mode: full journey from previous level to current.

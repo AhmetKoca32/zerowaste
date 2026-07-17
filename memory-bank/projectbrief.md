@@ -3,24 +3,25 @@
 **Proje Adı:** Atıksız Mutfak  
 **Versiyon:** 0.4.0  
 **Oluşturulma Tarihi:** Şubat 2025  
-**Son Güncelleme:** Mayıs 2026  
-**Durum:** Aktif Geliştirme (Test + İyileştirme Aşaması)
+**Son Güncelleme:** Temmuz 2026 (17 Temmuz)  
+**Durum:** Aktif Geliştirme (Admin panel web projesi + mobil iyileştirmeler)
 
 ---
 
 ## Proje Özeti
 
-Atıksız Mutfak (eski adıyla Sıfır Atık Mutfak), kullanıcıların elindeki malzemelerle atıksız prensiplerine uygun tarifler oluşturmasına yardımcı olan bir Flutter mobil uygulamasıdır. AI destekli tarif üretimi (DeepSeek API), malzeme bazlı tarif filtreleme, çevre bilinci odaklı sohbet (EcoChef maskotu), gamification (puan/seviye sistemi + leaderboard) ile sürdürülebilir mutfak pratiklerini teşvik eder. Admin paneli ayrı bir web projesine taşınmıştır.
+Atıksız Mutfak, kullanıcıların elindeki malzemelerle atıksız prensiplerine uygun tarifler oluşturmasına yardımcı olan bir Flutter mobil uygulamasıdır. AI destekli tarif üretimi (DeepSeek API), malzeme bazlı tarif filtreleme, çevre bilinci odaklı sohbet (EcoChef maskotu), gamification (puan/seviye sistemi + leaderboard) ile sürdürülebilir mutfak pratiklerini teşvik eder. Admin paneli ayrı bir Flutter Web projesine taşınmıştır.
 
 ---
 
 ## Temel Gereksinimler
 
 ### 1. Tarif Yönetimi
-- Firestore'dan tarifler yükleniyor (keepAlive: true, sadece ilk açılışta fetch)
-- Firestore boşsa veya hata verirse yerel JSON fallback (7 detaylı tarif)
-- JSON→Firestore migration helper (RecipeMigrationHelper)
-- Admin paneli web üzerinden tarif ekleme/düzenleme/silme
+- Firestore `recipes` koleksiyonundan tarifler yükleniyor (keepAlive: true)
+- Firestore boşsa **RecipesComingSoon** placeholder gösterilir (local JSON fallback kaldırıldı)
+- Admin paneli (ayrı web projesi) üzerinden tarif ekleme/düzenleme/silme
+- Tarif şeması: `title`, `description?`, `image_url?`, `ingredients[]`, `instructions[]`
+- Admin formu mobil görünümle uyumlu: malzeme/adım dinamik liste input
 
 ### 2. AI Tarif Üretimi
 - DeepSeek API (OpenAI uyumlu, retry mekanizmalı)
@@ -41,19 +42,28 @@ Atıksız Mutfak (eski adıyla Sıfır Atık Mutfak), kullanıcıların elindeki
 ### 4. Puan Sistemi (Gamification)
 - **PointsHeroCard**: İki modlu animasyon (Normal progress + Level-up Journey)
 - 5 seviye: Çaylak → Meraklı → Usta → Efsane → Efsane+
-- Parlayan dairesel progress bar (CustomPaint _GradientArcPainter)
-- Günlük Görev Kartları (SharedPreferences tabanlı, günlük sıfırlanma)
-- Gönderi Paylaşımı: Firestore'a kayıt, admin onayı ile puan kazanma
+- Parlayan dairesel progress bar (CustomPaint)
+- Günlük Görev Kartları (SharedPreferences tabanlı)
+- Gönderi Paylaşımı: Firebase Storage upload → Firestore → admin onayı → puan
 - **Leaderboard**: Firestore tabanlı, opt-in, inline top 3
-- **Nickname sistemi**: KVKK/GDPR uyumlu, ilk gönderide sorulur
-- **Yarışmadan Çıkma (Opt-Out)**: Kullanıcı istediği zaman ayrılabilir
-- **Admin Kesintisi/Bonusu**: Çift dilli not desteği (TR/EN)
+- **Nickname sistemi**: KVKK/GDPR uyumlu
+- **Yarışmadan Çıkma (Opt-Out)**
+- **Admin Kesintisi/Bonusu**: Çift dilli not (TR/EN)
 
-### 5. Admin Paneli (Ayrı Web Projesi)
-- Admin paneli mobil uygulamadan tamamen ayrılmıştır
-- Ayrı Flutter Web projesi olarak geliştirilecek
-- Firebase Hosting'de yayınlanacak (plan değerlendirmesi sürüyor)
-- Tarif CRUD + gönderi onay/red + kullanıcı yönetimi
+### 5. Gönderi Fotoğrafları (Firebase Storage)
+- Anonim Firebase Auth ile oturum (kullanıcıdan login istenmez)
+- `posts/{postId}/photo.jpg` yoluna upload (max 2 MB)
+- Firestore'da `imageUrl` olarak download URL saklanır
+- Admin panelde fotoğraf URL üzerinden görüntülenebilir
+
+### 6. Admin Paneli (Ayrı Web Projesi)
+- Mobil uygulamadan tamamen ayrılmış
+- Ayrı Flutter Web projesi, Firebase Hosting'de yayınlanacak
+- Tarif CRUD: mobil ile aynı Firestore şeması
+  - Malzemeler: dinamik liste (`string[]`)
+  - Adımlar: dinamik numaralı liste (`string[]`)
+  - Açıklama: tek textarea (`string?`)
+- Gönderi onay/red + kullanıcı yönetimi
 
 ---
 
@@ -61,7 +71,6 @@ Atıksız Mutfak (eski adıyla Sıfır Atık Mutfak), kullanıcıların elindeki
 
 ### Renk Paleti
 - **Brand Ana Renkler:** brandOrange (#ED6826), brandCream (#FFFFCC), brandBlack, brandWhite
-- **Brand Yardımcı:** brandOrange84, brandOrange70, brandCream84, brandCream70, brandBlack84, brandBlack70
 - **Toprak Tonları:** Sand, Stone, Terracotta, Clay, Bark
 - **Nötr Renkler:** Cream, Paper, Ink, InkLight
 
@@ -78,31 +87,25 @@ Atıksız Mutfak (eski adıyla Sıfır Atık Mutfak), kullanıcıların elindeki
 
 ## Platform
 - **Android:** Mobil uygulama (aktif)
-- **iOS:** Gelecek
+- **iOS:** SceneDelegate eklendi, geliştirme devam
 - **Web:** Sadece admin paneli (ayrı proje)
-- **Dil:** Türkçe (TR) + İngilizce (EN) — flutter_localizations + intl
+- **Dil:** Türkçe (TR) + İngilizce (EN)
 - **Minimum SDK:** Dart 3.10.7
 
 ---
 
-## Gelecek Planlar (Kritik Kararlar)
+## Gelecek Planlar
 
-### Firebase Spark Plan Kısıtlamalarını Aşma
-- Testler bittikten sonra kapsamlı bir Firestore kota yönetim planı yapılacak
-- Spark (ücretsiz): 1GB depolama, 10K yazma/gün, 50K okuma/gün
-- Storage: 20KB/gün upload → çok yetersiz
-- Blaze (kullan-at) geçişi değerlendirilecek
+### Admin Panel Tarif Formu
+- `DynamicStringListField` widget (malzeme + adım için ortak)
+- `AdminRecipeForm` ile Firestore CRUD
+- İlk tariflerin admin panelden eklenmesi
 
-### Fotoğraf Sorunu — Google Drive Çözümü
-- Firebase Storage Spark limitleri yetersiz (20KB/gün upload)
-- Çözüm: **Google Drive API** ile fotoğraf yükleme
-- Veya base64 Firestore'da saklama (son çare, önerilmez)
+### Firebase Spark Plan Kotası
+- Storage 20KB/gün upload limiti izlenmeli
+- Yoğun kullanımda Blaze geçişi değerlendirilecek
+- Stream yerine tek seferlik `get()` ile okuma minimize edildi
 
-### Admin Panelin Web'e Taşınması
-- Admin paneli ayrı Flutter Web projesi olarak Firebase Hosting'de yayınlanacak
-- Kullanıcı silme/çıkış durumunun admin panele anlık yansıması sağlanacak
-
-### Mobil Kullanıcı Çıkışı → Admin Panel Senkronizasyonu
-- Kullanıcı mobilde opt-out yaparsa/kendini silerse admin panel güncellenmeli
-- Firestore realtime listener veya manuel refresh mekanizması
-
+### Admin ↔ Mobil Senkronizasyon
+- Kullanıcı opt-out/silme durumunun admin panele yansıması
+- Firestore listener veya manuel refresh

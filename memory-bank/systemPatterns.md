@@ -1,6 +1,6 @@
 # System Patterns: Atıksız Mutfak
 
-**Son Güncelleme:** Mayıs 2026
+**Son Güncelleme:** Temmuz 2026 (17 Temmuz)
 
 ---
 
@@ -18,22 +18,19 @@ lib/
 ├── core/
 │   ├── theme/              # AppColors, AppTheme, AppTextStyle
 │   ├── shell/              # MainTabShell, CustomBottomNav, tabIndexProvider
-│   ├── services/           # DeepSeekService (retry, exceptions)
-│   ├── network/            # NetworkService (Dio, redacted log)
+│   ├── services/           # DeepSeek, AnonymousAuth, PostImageStorage
+│   ├── network/            # NetworkService (Dio)
 │   ├── router/             # AppRouter (GoRouter)
-│   ├── constants/          # AppConstants
-│   ├── providers/          # Global providers (localeProvider vs.)
-│   └── widgets/            # Ortak UI bileşenleri
+│   ├── constants/
+│   ├── providers/          # core_providers, localeProvider
+│   └── widgets/
 │
 └── features/
-    ├── home/               # Tarif listesi + malzeme filtreleme
+    ├── home/               # Tarif listesi + RecipesComingSoon
     ├── recipe_generator/   # AI tarif üretimi (DeepSeek)
-    ├── chat/               # EcoChef AI sohbet (Limitli: 20 mesaj/gün)
-    ├── splash/             # Splash açılış ekranı
-    └── points/             # Gamification sistemi (Firestore bağlantılı)
-        ├── data/models/    # PostEntry, LeaderboardDoc
-        ├── data/repositories/ # PointsRepository (Firestore)
-        └── presentation/   # Page, Widgets
+    ├── chat/               # EcoChef AI sohbet
+    ├── splash/
+    └── points/             # Gamification + gönderi upload
 ```
 
 ---
@@ -43,86 +40,125 @@ lib/
 ### Riverpod Kullanımı
 
 #### Provider Tipleri
-1. **Provider:** Singleton servisler (NetworkService, DeepSeekService, PointsRepository)
-2. **FutureProvider (keepAlive: true):** Tarif listesi, RecentIngredients, DailyChatSuggestions
-3. **StateProvider:** dailyMessageCountProvider (int, max 20), tabIndexProvider
-4. **StateNotifierProvider:** ChatMessages (message list management)
+1. **Provider:** Singleton servisler (NetworkService, DeepSeekService, AnonymousAuthService, PostImageStorageService)
+2. **FutureProvider (keepAlive: true):** `recipeList`, RecentIngredients, DailyChatSuggestions
+3. **StateProvider:** `dailyMessageCountProvider`, `tabIndexProvider`
+4. **StateNotifierProvider:** ChatMessages
 
 #### Önemli Providerlar
 ```dart
-// pointsRepositoryProvider: Points işlemleri için Firestore repository
-final pointsRepositoryProvider = Provider<PointsRepository>((ref) {
-  return PointsRepository();
-});
+// core_providers.dart
+final anonymousAuthServiceProvider = Provider<AnonymousAuthService>(...);
+final postImageStorageServiceProvider = Provider<PostImageStorageService>(...);
 
-// tabIndexProvider: Bottom nav sekmeleri (0=Tarifler, 1=Oluştur, 2=Chat, 3=Puan)
-final tabIndexProvider = StateProvider<int>((ref) => 0);
+// home_providers.dart
+@Riverpod(keepAlive: true)
+Future<List<Recipe>> recipeList(RecipeListRef ref) async { ... }
+
+// tabIndexProvider: 0=Tarifler, 1=Oluştur, 2=Chat, 3=Puan
 ```
 
 ---
 
 ## Tasarım & Animasyon Pattern'leri
 
-### 1. PointsHeroCard Animation Pattern (Ardışık Animasyon)
-İki mod:
-- **Normal**: Counter + progress bar animasyonu (0→X veya previous→current)
-- **Level-up Journey**: Multi-level geçiş, her seviye için celebration overlay
-- Ticker sızıntı koruması: `_activeProgressController` pattern (dispose + null)
-- `didUpdateWidget` ile `startAnimation` false→true geçişi
+### 1. PointsHeroCard Animation Pattern
+- **Normal**: Counter + progress bar (0→X veya previous→current)
+- **Level-up Journey**: Multi-level geçiş + celebration overlay
+- Ticker sızıntı koruması: `_activeProgressController` pattern
 
 ### 2. Points Page Data Refresh Pattern
-- Tab değişiminde (`tabIndexProvider` listener) `_loadPosts()` tetiklenir
+- Tab değişiminde `tabIndexProvider` listener → `_loadPosts()`
 - SharedPreferences karşılaştırması ile animasyon kararı
-- `previousPoints > 0` ise animasyon, değilse statik gösterim
 - `key: ValueKey('hero_$_totalPoints')` ile widget yeniden oluşturma
 
-### 3. Çift Dilli Admin Notları Pattern
-- PostEntry'de `adminNote` (TR) + `adminNoteEn` (EN) alanları
-- `localizedAdminNote(localeCode)` metodu: EN locale'de adminNoteEn, diğer durumlarda adminNote
-- Admin panel web'de iki input alanı
+### 3. RecipesComingSoon Empty State Pattern
+- `RecipeRepository._loadFromFirestore()` boş veya hata → `[]`
+- `HomePage`: `recipes.isEmpty` → `RecipesComingSoon` widget
+- Admin panelden tarif eklenene kadar placeholder gösterilir
 
-### 4. SharedPreferences Daily Reset Pattern
-- Günlük görevler için `missions_date` + `missions_completed`
-- Tarih karşılaştırması ile sıfırlama
-- Aynı pattern nickname ve leaderboard opt-in için de kullanılır
+### 4. Post Image Upload Pattern
+```
+Startup: main() → anonymousAuthService.ensureSignedIn()
+Submit:  image_picker → bytes → ensureSignedIn() (retry)
+         → postId = repo.newPostId()
+         → PostImageStorageService.uploadPostImage(bytes, postId)
+         → PostEntry(imageUrl: url) → PointsRepository.submitPost()
+Display: PostImageThumbnail(imageUrl, localPreviewPath)
+         → CachedNetworkImage (remote) veya Image.file (local preview)
+```
+
+### 5. Recipe Data Model ↔ Admin Form Alignment
+Mobil ve admin panel aynı Firestore şemasını paylaşır:
+```
+title:        string          → tek satır input
+description:  string?         → multiline textarea
+ingredients:  string[]        → DynamicStringListField (bullet list mobilde)
+instructions: string[]        → DynamicStringListField + showNumbers (numaralı adım mobilde)
+image_url:    string?         → URL input (ileride upload)
+```
+**Kural:** ingredients/instructions asla tek string veya virgülle ayrılmış metin olarak kaydedilmez.
+
+### 6. Çift Dilli Admin Notları Pattern
+- `adminNote` (TR) + `adminNoteEn` (EN)
+- `localizedAdminNote(localeCode)` metodu
+
+### 7. SharedPreferences Daily Reset Pattern
+- `missions_date` + `missions_completed` ile günlük görev sıfırlama
 
 ---
 
 ## Data Flow Patterns
 
-### Points & Admin Entegrasyonu (Firestore)
+### Points & Admin Entegrasyonu
 ```
 Kullanıcı fotoğraf çeker → Nickname dialog (ilk sefer)
-  → PostEntry oluşturulur → PointsRepository.submitPost()
-  → Firestore'da posts koleksiyonu
-  → Admin web panel → getPendingPosts() ile listele
-  → Onayla → approvePost() → status='approved' + leaderboard recalculate
-  → Kullanıcı tab değiştirince → _loadPosts() → SharedPrefs karşılaştırması → animasyon
+  → anonymousAuth.ensureSignedIn()
+  → Storage upload (posts/{postId}/photo.jpg)
+  → PostEntry(imageUrl) → PointsRepository.submitPost()
+  → Admin web panel → getPendingPosts() → onayla/reddet
+  → Kullanıcı tab değiştirince → _loadPosts() → animasyon kararı
+```
+
+### Recipe Data Flow
+```
+Admin panel → Firestore recipes/{id} (ingredients[], instructions[])
+  → RecipeRepository.getRecipes() → recipeListProvider
+  → HomePage → RecipeBlogCard → RecipeDetailSheet
+  → ingredients: bullet list, instructions: numbered steps
 ```
 
 ### Leaderboard Mekanizması
 ```
-Admin post onaylar → _recalculateLeaderboard()
-  → Tüm approved + optIn postlar sorgulanır → puanlar toplanır
-  → leaderboard/current dokümanı güncellenir
-  → PointsPage'deki _LeaderboardTop3 → getLeaderboard() → top 3 gösterilir
+Admin onaylar → _recalculateLeaderboard()
+  → approved + optIn postlar → puan toplama
+  → leaderboard/current güncelleme
 
-Kullanıcı opt-out yapar → optOutUser() → batch update leaderboardOptIn=false
-  → _recalculateLeaderboard() → kullanıcı leaderboard'dan kaybolur
-```
-
-### Account Deletion Detection
-```
-_loadPosts() çalışır
-  → SharedPreferences'dan 'last_known_points_{nickname}' okunur
-  → previousPoints > 0 && approved.isEmpty && total == 0 ise
-  → Hesap silinmiş demektir → _showAccountDeletedDialog()
-  → Dialog: "Tüm gönderileriniz ve puanlarınız admin tarafından silinmiş"
+Kullanıcı opt-out → optOutUser() → leaderboardOptIn=false batch
+  → _recalculateLeaderboard()
 ```
 
-### Admin Panel Responsive Tasarım
+---
+
+## Admin Panel Responsive Tasarım (Ayrı Web Projesi)
 ```
-LayoutBuilder → genişlik >= 600px ise Row(sidebar | content)
-               → genişlik < 600px ise Scaffold(drawer | body)
+LayoutBuilder → genişlik >= 600px → Row(sidebar | content)
+               → genişlik < 600px → Scaffold(drawer | body)
 ```
 
+### Admin Recipe Form (Planlanan)
+```
+DynamicStringListField
+  ├── items: List<String>
+  ├── onChanged: (List<String>) → void
+  ├── addButtonText, placeholder, label
+  └── showNumbers: bool (adımlar için true)
+
+AdminRecipeForm
+  ├── title (TextField)
+  ├── description (TextField, multiline)
+  ├── image_url (TextField, optional)
+  ├── ingredients (DynamicStringListField)
+  ├── instructions (DynamicStringListField, showNumbers: true)
+  └── validation: title required, min 1 ingredient, min 1 instruction
+```

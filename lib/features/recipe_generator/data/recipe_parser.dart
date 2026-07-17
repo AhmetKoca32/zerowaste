@@ -18,8 +18,9 @@ class RecipeParser {
   }
 
   /// Tries to parse [markdown] into [Recipe]. Returns null if parsing fails.
-  static Recipe? parse(String markdown, {String? id}) {
+  static Recipe? parse(String markdown, {String? id, String languageCode = 'tr'}) {
     if (markdown.trim().isEmpty) return null;
+    final isEnglish = languageCode == 'en';
 
     // Strip any introductory lines before the first section header (## or **)
     var cleaned = markdown.trim();
@@ -27,11 +28,16 @@ class RecipeParser {
     int firstHeaderIdx = -1;
     for (int i = 0; i < linesAll.length; i++) {
       final line = linesAll[i].trim();
+      final lower = line.toLowerCase();
       if (line.startsWith('## ') ||
-          line.toLowerCase().contains('başlık') ||
-          line.toLowerCase().contains('malzeme') ||
-          line.toLowerCase().contains('yapılış') ||
-          line.toLowerCase().contains('hazırlanış')) {
+          lower.contains('başlık') ||
+          lower.contains('title') ||
+          lower.contains('malzeme') ||
+          lower.contains('ingredient') ||
+          lower.contains('yapılış') ||
+          lower.contains('hazırlanış') ||
+          lower.contains('steps') ||
+          lower.contains('instruction')) {
         firstHeaderIdx = i;
         break;
       }
@@ -44,10 +50,10 @@ class RecipeParser {
     final lines = cleaned.split('\n').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
     if (lines.isEmpty) return null;
 
-    final title = stripMarkdown(_extractTitle(lines));
-    final description = _extractDescription(lines);
-    final ingredients = _extractIngredients(lines).map(stripMarkdown).toList();
-    final instructions = _extractInstructions(lines).map(stripMarkdown).toList();
+    final title = stripMarkdown(_extractTitle(lines, isEnglish: isEnglish));
+    final description = _extractDescription(lines, isEnglish: isEnglish);
+    final ingredients = _extractIngredients(lines, isEnglish: isEnglish).map(stripMarkdown).toList();
+    final instructions = _extractInstructions(lines, isEnglish: isEnglish).map(stripMarkdown).toList();
 
     if (title.isEmpty || (ingredients.isEmpty && instructions.isEmpty)) return null;
 
@@ -57,12 +63,16 @@ class RecipeParser {
       imageUrl: null,
       description: (description == null || description.isEmpty) ? null : description,
       ingredients: ingredients,
-      instructions: instructions.isEmpty ? ['Tarif metnini detaylı inceleyin.'] : instructions,
+      instructions: instructions.isEmpty
+          ? [isEnglish ? 'Review the recipe text for details.' : 'Tarif metnini detaylı inceleyin.']
+          : instructions,
     );
   }
 
-  static String? _extractDescription(List<String> lines) {
-    const markers = ['**Kısa Açıklama:**', '**Kısa Açıklama**', 'Kısa Açıklama:'];
+  static String? _extractDescription(List<String> lines, {required bool isEnglish}) {
+    final markers = isEnglish
+        ? ['**Short Description:**', '**Short Description**', 'Short Description:', '**Description:**', 'Description:']
+        : ['**Kısa Açıklama:**', '**Kısa Açıklama**', 'Kısa Açıklama:'];
     int foundIndex = -1;
     String? sameLineSuffix;
     for (int i = 0; i < lines.length; i++) {
@@ -100,7 +110,66 @@ class RecipeParser {
     return null;
   }
 
-  static String _extractTitle(List<String> lines) {
+  static String _extractTitle(List<String> lines, {required bool isEnglish}) {
+    if (isEnglish) {
+      const prefixes = [
+        '## Title:', '## Title', '**Title:**', '**Title**', 'Title:',
+        '## Başlık:', '## Başlık', '**Başlık:**', '**Başlık**', 'Başlık:',
+        '## Başlik:', 'Başlik:',
+      ];
+      for (final line in lines) {
+        final lower = line.toLowerCase();
+        if (lower.contains('title:') ||
+            lower.contains('başlık:') ||
+            lower.contains('başlik:')) {
+          for (final prefix in prefixes) {
+            final idx = lower.indexOf(prefix.toLowerCase());
+            if (idx >= 0) {
+              final after = line.substring(idx + prefix.length).trim();
+              if (after.isNotEmpty) return _cleanTitleLabel(after);
+            }
+          }
+          final afterColon = _textAfterFirstColon(line);
+          if (afterColon != null && afterColon.isNotEmpty) {
+            return _cleanTitleLabel(afterColon);
+          }
+        }
+      }
+
+      // First markdown heading without a section keyword → treat as title
+      for (final line in lines) {
+        if (!line.startsWith('##') && !line.startsWith('**')) continue;
+        final lower = line.toLowerCase();
+        if (_isNonTitleSectionHeader(lower)) continue;
+        final stripped = line
+            .replaceFirst(RegExp(r'^#+\s*'), '')
+            .replaceFirst(RegExp(r'^\*\*'), '')
+            .replaceFirst(RegExp(r'\*\*$'), '')
+            .trim();
+        final afterColon = _textAfterFirstColon(stripped);
+        if (afterColon != null && afterColon.isNotEmpty) {
+          return _cleanTitleLabel(afterColon);
+        }
+        if (stripped.isNotEmpty && stripped.length < 120) {
+          return _cleanTitleLabel(stripped);
+        }
+      }
+
+      for (final line in lines) {
+        final t = line.replaceFirst(RegExp(r'^#+\s*'), '').trim();
+        const greetings = ['sure', 'here is', 'here\'s', 'hello', 'of course'];
+        final lower = t.toLowerCase();
+        if (_isNonTitleSectionHeader(lower)) continue;
+        if (t.isNotEmpty && t.length < 200 && !greetings.any((g) => lower.startsWith(g))) {
+          return _cleanTitleLabel(t);
+        }
+      }
+      if (lines.isEmpty) return 'New Recipe';
+      final first = lines.first;
+      if (first.length <= 80) return _cleanTitleLabel(first);
+      return '${_cleanTitleLabel(first.substring(0, 80).trim())}...';
+    }
+
     // Prefer lines that match "## Başlık: ..." or "**Başlık:** ..." format
     final titleMarkers = ['başlık:', 'başlik:'];
     for (final line in lines) {
@@ -135,14 +204,41 @@ class RecipeParser {
     return '${first.substring(0, 80).trim()}...';
   }
 
+  static bool _isNonTitleSectionHeader(String lower) =>
+      lower.contains('ingredient') ||
+      lower.contains('malzeme') ||
+      lower.contains('description') ||
+      lower.contains('açıklama') ||
+      lower.contains('steps') ||
+      lower.contains('instruction') ||
+      lower.contains('yapılış') ||
+      lower.contains('hazırlanış');
+
+  static String? _textAfterFirstColon(String line) {
+    final idx = line.indexOf(':');
+    if (idx < 0 || idx >= line.length - 1) return null;
+    return line.substring(idx + 1).trim();
+  }
+
+  static String _cleanTitleLabel(String title) {
+    return title
+        .replaceFirst(RegExp(r'^(title|başlık|başlik)\s*:?\s*', caseSensitive: false), '')
+        .trim();
+  }
+
   static bool _isSectionHeader(String line) =>
       line.startsWith('##') || (line.startsWith('**') && line.length > 3);
 
-  static List<String> _extractIngredients(List<String> lines) {
-    const markers = [
-      '**Malzemeler:**', '**Malzemeler**', '**Malzeme:**', 'Malzemeler:',
-      '## Malzemeler:', '## Malzemeler', '## Malzeme:',
-    ];
+  static List<String> _extractIngredients(List<String> lines, {required bool isEnglish}) {
+    final markers = isEnglish
+        ? [
+            '**Ingredients:**', '**Ingredients**', '**Ingredient:**', 'Ingredients:',
+            '## Ingredients:', '## Ingredients', '## Ingredient:',
+          ]
+        : [
+            '**Malzemeler:**', '**Malzemeler**', '**Malzeme:**', 'Malzemeler:',
+            '## Malzemeler:', '## Malzemeler', '## Malzeme:',
+          ];
     int start = -1;
     for (int i = 0; i < lines.length; i++) {
       final lower = lines[i].toLowerCase();
@@ -169,12 +265,18 @@ class RecipeParser {
     return out;
   }
 
-  static List<String> _extractInstructions(List<String> lines) {
-    const markers = [
-      '**Yapılış Adımları:**', '**Yapılış adımları:**',
-      '**Yapılış:**', '**Yapılışı:**', '**Yapılış**', 'Yapılış:', '**Hazırlanış:**',
-      '## Yapılışı:', '## Yapılış:', '## Yapılış', '## Hazırlanış:',
-    ];
+  static List<String> _extractInstructions(List<String> lines, {required bool isEnglish}) {
+    final markers = isEnglish
+        ? [
+            '**Steps:**', '**Steps**', '**Instructions:**', '**Instructions**',
+            'Steps:', 'Instructions:',
+            '## Steps:', '## Steps', '## Instructions:', '## Instructions',
+          ]
+        : [
+            '**Yapılış Adımları:**', '**Yapılış adımları:**',
+            '**Yapılış:**', '**Yapılışı:**', '**Yapılış**', 'Yapılış:', '**Hazırlanış:**',
+            '## Yapılışı:', '## Yapılış:', '## Yapılış', '## Hazırlanış:',
+          ];
     int start = -1;
     for (int i = 0; i < lines.length; i++) {
       final lower = lines[i].toLowerCase();

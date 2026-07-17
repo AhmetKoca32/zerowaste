@@ -31,6 +31,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'No recipes yet. Add ingredients and create a recipe!';
 
   @override
+  String get homeComingSoonTitle => 'Coming Soon';
+
+  @override
+  String get homeComingSoonSubtitle =>
+      'Zero-waste recipes are on the way. You can still create your own with EcoChef!';
+
+  @override
   String get homeCreateRecipe => 'Create Recipe';
 
   @override
@@ -365,6 +372,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String pointsPostSent(String category) {
     return '⏳ Your $category post has been submitted for review!';
   }
+
+  @override
+  String get pointsPhotoUploading => 'Uploading photo…';
+
+  @override
+  String get pointsPhotoUploadError =>
+      'Could not upload the photo. Please try again.';
 
   @override
   String get pointsLevelUpTitle => 'Congratulations! 🎉';

@@ -32,6 +32,14 @@
   "@homeEmpty": {
     "description": "Tarif listesi boşken gösterilen mesaj"
   },
+  "homeComingSoonTitle": "Çok Yakında",
+  "@homeComingSoonTitle": {
+    "description": "Tarifler sekmesi — yakında başlığı"
+  },
+  "homeComingSoonSubtitle": "Atıksız mutfak tarifleri hazırlanıyor. EcoChef ile kendi tarifini oluşturmaya devam edebilirsin!",
+  "@homeComingSoonSubtitle": {
+    "description": "Tarifler sekmesi — yakında alt metni"
+  },
   "homeCreateRecipe": "Tarif Oluştur",
   "@homeCreateRecipe": {
     "description": "Tarif oluşturma butonu"
@@ -458,6 +466,14 @@
   "@pointsPostSent": {
     "description": "Gönderi gönderildi bildirimi",
     "placeholders": { "category": { "type": "String" } }
+  },
+  "pointsPhotoUploading": "Fotoğraf yükleniyor…",
+  "@pointsPhotoUploading": {
+    "description": "Gönderi fotoğrafı Storage'a yüklenirken"
+  },
+  "pointsPhotoUploadError": "Fotoğraf yüklenemedi. Lütfen tekrar deneyin.",
+  "@pointsPhotoUploadError": {
+    "description": "Storage yükleme hatası"
   },
   "pointsLevelUpTitle": "Tebrikler! 🎉",
   "@pointsLevelUpTitle": {

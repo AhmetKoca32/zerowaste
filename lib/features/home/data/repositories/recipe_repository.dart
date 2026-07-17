@@ -44,17 +44,15 @@ class RecipeRepository {
           .orderBy('title')
           .get();
 
-      // Firestore boşsa veya hata olursa yerel tarifleri kullan
       if (snapshot.docs.isEmpty) {
-        return _loadFromAsset();
+        return [];
       }
 
       return snapshot.docs
           .map((doc) => Recipe.fromFirestore(doc))
           .toList();
     } catch (e) {
-      // Fallback to local if Firestore fails
-      return _loadFromAsset();
+      return [];
     }
   }
 

@@ -1,11 +1,15 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:zerowaste/l10n/app_localizations.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/providers/core_providers.dart';
+import '../../../../core/services/post_image_storage_service.dart';
 import '../../../../core/shell/main_tab_shell.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../data/models/leaderboard_doc.dart';
 import '../../data/models/post_entry.dart';
 import '../../data/repositories/points_repository.dart';
@@ -169,14 +173,17 @@ class _PointsPageState extends ConsumerState<PointsPage> with TickerProviderStat
   bool _startHeroAnimation = false;
   bool _showPointsAddedOverlay = false;
 
+  /// Bumps when a new hero-card animation should start (forces widget rebuild).
+  int _heroAnimationNonce = 0;
+
   /// Deletion detection
   bool _showAccountDeleted = false;
 
   /// Daily missions
   List<bool> _missionCompleted = [false, false, false];
 
-  /// Tracks whether this is the first load (no animation) vs a revisit.
-  bool _initialLoadDone = false;
+  /// True while a post photo is uploading to Firebase Storage.
+  bool _isUploadingPost = false;
 
   late PointsRepository _repo;
 
@@ -220,11 +227,17 @@ class _PointsPageState extends ConsumerState<PointsPage> with TickerProviderStat
     );
   }
 
+  Future<void> _persistKnownPoints(int total) async {
+    if (_nickname == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('last_known_points_$_nickname', total);
+  }
+
   /// Fetch posts from Firestore once.
   /// Compares current total with last-known points in SharedPreferences.
-  /// If points increased since last visit, triggers hero card animation.
-  /// Called on init and every time the user returns to this tab.
-  Future<void> _loadPosts() async {
+  /// Animates only when [allowAnimation] is true and points increased since
+  /// the last persisted value (i.e. user is viewing the Points tab).
+  Future<void> _loadPosts({bool allowAnimation = false}) async {
     if (_nickname == null) {
       setState(() => _isLoading = false);
       return;
@@ -258,14 +271,17 @@ class _PointsPageState extends ConsumerState<PointsPage> with TickerProviderStat
         return;
       }
 
-      // Always save for next-visit comparison
-      await prefs.setInt('last_known_points_$_nickname', total);
-
-      // Determine if level-up happened since last visit
-      final isLevelUp =
-          _initialLoadDone &&
+      final pointsIncreased = total > previousPoints;
+      final shouldAnimate = allowAnimation && pointsIncreased;
+      final isLevelUp = shouldAnimate &&
           previousPoints > 0 &&
           _getLevelName(previousPoints) != _getLevelName(total);
+
+      // Persist immediately when there is nothing to animate.
+      // When points increased but tab is not visible yet, defer until animation completes.
+      if (!pointsIncreased) {
+        await _persistKnownPoints(total);
+      }
 
       if (mounted) {
         setState(() {
@@ -274,12 +290,15 @@ class _PointsPageState extends ConsumerState<PointsPage> with TickerProviderStat
           _isLoading = false;
           _previousPoints = previousPoints;
           _isLevelUp = isLevelUp;
-          _journeyDone = !isLevelUp;
+          _journeyDone = !shouldAnimate || !isLevelUp;
           _showPointsAddedOverlay = isLevelUp;
-          _startHeroAnimation = !isLevelUp;
+          if (shouldAnimate && !isLevelUp) {
+            _heroAnimationNonce++;
+            _startHeroAnimation = true;
+          } else {
+            _startHeroAnimation = false;
+          }
         });
-
-        _initialLoadDone = true;
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
@@ -303,7 +322,8 @@ class _PointsPageState extends ConsumerState<PointsPage> with TickerProviderStat
       _leaderboardOptIn = savedOptIn ?? false;
       _nicknameLoaded = true;
     });
-    _loadPosts();
+    final onPointsTab = ref.read(tabIndexProvider) == 3;
+    _loadPosts(allowAnimation: onPointsTab);
   }
 
   void _showAccountDeletedDialog() {
@@ -798,42 +818,86 @@ class _PointsPageState extends ConsumerState<PointsPage> with TickerProviderStat
     );
 
     if (image != null) {
-      _addNewPost(cat, localImagePath: image.path);
+      final bytes = await image.readAsBytes();
+      if (!mounted) return;
+      await _addNewPost(cat, imageBytes: bytes);
     }
   }
 
-  void _addNewPost(_PostCategory cat, {String? localImagePath}) {
+  Future<void> _addNewPost(_PostCategory cat, {required Uint8List imageBytes}) async {
     final l10n = AppLocalizations.of(context)!;
-    final post = PostEntry(
-      nickname: _nickname ?? l10n.pointsAnonymous,
-      category: cat.label,
-      points: cat.points,
-      localImagePath: localImagePath,
-      imageColor: cat.color.value,
-      status: PostStatus.pending,
-      leaderboardOptIn: _leaderboardOptIn,
-    );
+    if (_isUploadingPost) return;
 
-    // Save to Firestore
-    _repo.submitPost(post);
+    setState(() => _isUploadingPost = true);
 
-    // Optimistic local update
-    setState(() {
-      _posts.insert(0, post);
-    });
+    try {
+      await ref.read(anonymousAuthServiceProvider).ensureSignedIn();
 
-    // Complete matching daily mission if applicable
-    _checkAndCompleteMission(cat);
+      final postId = _repo.newPostId();
+      final imageUrl = await ref.read(postImageStorageServiceProvider).uploadPostImage(
+        bytes: imageBytes,
+        postId: postId,
+      );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(l10n.pointsPostSent(_localizedCategoryLabel(context, cat.label))),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFFFFA726),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+      final post = PostEntry(
+        id: postId,
+        nickname: _nickname ?? l10n.pointsAnonymous,
+        category: cat.label,
+        points: cat.points,
+        imageUrl: imageUrl,
+        imageColor: cat.color.value,
+        status: PostStatus.pending,
+        leaderboardOptIn: _leaderboardOptIn,
+      );
+
+      await _repo.submitPost(post, id: postId);
+
+      if (!mounted) return;
+
+      setState(() {
+        _posts.insert(0, post);
+      });
+
+      _checkAndCompleteMission(cat);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.pointsPostSent(_localizedCategoryLabel(context, cat.label))),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFFFFA726),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } on PostImageStorageException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.pointsPhotoUploadError),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red.shade700,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+        debugPrint('Post image upload failed: ${e.message}');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.pointsPhotoUploadError),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red.shade700,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+        debugPrint('Post submit failed: $e');
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingPost = false);
+    }
   }
 
   Widget _buildPointsAddedOverlay() {
@@ -892,12 +956,11 @@ class _PointsPageState extends ConsumerState<PointsPage> with TickerProviderStat
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () async {
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.setInt('last_known_points_$_nickname', _totalPoints);
+                        onPressed: () {
                           if (mounted) {
                             setState(() {
                               _showPointsAddedOverlay = false;
+                              _heroAnimationNonce++;
                               _startHeroAnimation = true;
                             });
                           }
@@ -938,7 +1001,7 @@ class _PointsPageState extends ConsumerState<PointsPage> with TickerProviderStat
     // ── Tab switch listener: reload posts when user returns to this tab ──
     ref.listen<int>(tabIndexProvider, (int? prev, int next) {
       if (prev != null && prev != next && next == 3 && mounted) {
-        _loadPosts();
+        _loadPosts(allowAnimation: true);
         _loadMissions();
       }
     });
@@ -956,12 +1019,14 @@ class _PointsPageState extends ConsumerState<PointsPage> with TickerProviderStat
                   children: [
                     // ── Gamification Hero Card ──
                     PointsHeroCard(
-                      key: ValueKey('hero_$_totalPoints'),
+                      key: ValueKey('hero_${_totalPoints}_$_heroAnimationNonce'),
                       totalPoints: _totalPoints,
                       previousPoints: _previousPoints,
                       startAnimation: _startHeroAnimation,
                       nickname: _nickname,
-                      onJourneyComplete: () {
+                      onAnimationComplete: () => _persistKnownPoints(_totalPoints),
+                      onJourneyComplete: () async {
+                        await _persistKnownPoints(_totalPoints);
                         if (mounted) {
                           setState(() => _journeyDone = true);
                         }
@@ -1011,10 +1076,10 @@ class _PointsPageState extends ConsumerState<PointsPage> with TickerProviderStat
     final bottomPad = widget.inTabs ? 140.0 : 24.0;
 
     final fab = AnimatedOpacity(
-      opacity: _showContent ? 1.0 : 0.0,
+      opacity: _showContent && !_isUploadingPost ? 1.0 : 0.0,
       duration: const Duration(milliseconds: 600),
       child: IgnorePointer(
-        ignoring: !_showContent,
+        ignoring: !_showContent || _isUploadingPost,
         child: Align(
           alignment: Alignment.bottomRight,
           child: Padding(
@@ -1059,6 +1124,7 @@ class _PointsPageState extends ConsumerState<PointsPage> with TickerProviderStat
         safeBody,
         fab,
         if (_showPointsAddedOverlay) _buildPointsAddedOverlay(),
+        if (_isUploadingPost) _buildUploadOverlay(),
       ]);
     }
 
@@ -1068,7 +1134,42 @@ class _PointsPageState extends ConsumerState<PointsPage> with TickerProviderStat
         safeBody,
         fab,
         if (_showPointsAddedOverlay) _buildPointsAddedOverlay(),
+        if (_isUploadingPost) _buildUploadOverlay(),
       ]),
+    );
+  }
+
+  Widget _buildUploadOverlay() {
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      color: Colors.black.withOpacity(0.35),
+      child: Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 40),
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(color: AppColors.brandOrange),
+              const SizedBox(height: 16),
+              Text(
+                l10n.pointsPhotoUploading,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFamily: 'Manrope',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.ink,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

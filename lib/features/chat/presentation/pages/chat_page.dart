@@ -175,7 +175,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
     final localeCode = ref.read(localeProvider).languageCode;
     setState(() => _chatStarted = true);
     _controller.text = suggestion.localized(localeCode);
-    await _sendMessage(aiTextOverride: suggestion.text);
+    await _sendMessage(aiTextOverride: suggestion.localized(localeCode));
   }
 
   /// End the current chat session and go back to welcome.

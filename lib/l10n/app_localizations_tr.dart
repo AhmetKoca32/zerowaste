@@ -31,6 +31,13 @@ class AppLocalizationsTr extends AppLocalizations {
       'Henüz tarif yok. Malzeme ekleyip bir tarif oluşturun!';
 
   @override
+  String get homeComingSoonTitle => 'Çok Yakında';
+
+  @override
+  String get homeComingSoonSubtitle =>
+      'Atıksız mutfak tarifleri hazırlanıyor. EcoChef ile kendi tarifini oluşturmaya devam edebilirsin!';
+
+  @override
   String get homeCreateRecipe => 'Tarif Oluştur';
 
   @override
@@ -365,6 +372,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String pointsPostSent(String category) {
     return '⏳ $category gönderin incelemeye gönderildi!';
   }
+
+  @override
+  String get pointsPhotoUploading => 'Fotoğraf yükleniyor…';
+
+  @override
+  String get pointsPhotoUploadError =>
+      'Fotoğraf yüklenemedi. Lütfen tekrar deneyin.';
 
   @override
   String get pointsLevelUpTitle => 'Tebrikler! 🎉';

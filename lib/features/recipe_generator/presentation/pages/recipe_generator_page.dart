@@ -127,11 +127,15 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
           if (value != null && value.isNotEmpty && context.mounted) {
             final isError =
                 value.contains('Lütfen') ||
+                value.contains('Please add at least one') ||
                 value.contains('Invalid') ||
                 value.contains('timed out') ||
                 value.contains('API') ||
                 value.contains('timeout');
-            final recipe = isError ? null : RecipeParser.parse(value);
+            final locale = ref.read(localeProvider);
+            final recipe = isError
+                ? null
+                : RecipeParser.parse(value, languageCode: locale.languageCode);
             if (recipe != null) {
               ref.read(generatedRecipesProvider.notifier).add(recipe);
               ref.read(ingredientListProvider.notifier).clear();
