@@ -18,8 +18,19 @@ Blaze planındayız; ücretli sınıra düşmemek için prod’a çıkmadan önc
 
 Amaç: Uygulama canlıdayken Blaze’in ücretsiz kotasını **olabildiğince zorlamadan** çalışsın.
 
+### 1b. Mobil ↔ Admin paneli senkron / bağımsızlık kontrolü
+Mobil uygulama ile admin paneli (ayrı web repo) aynı Firestore’u paylaşır ama **birbirinden bağımsız hareket edebiliyor**; prod öncesi bu uçlar gözden geçirilecek:
+
+- Opt-out / soft-delete / nickname sıfırlama mobilde olurken admin’de eski kullanıcı/gönderi görünümü
+- Onay / ret / bonus / kesinti admin’de; mobilde overlay, puan, leaderboard gecikmesi veya kaçırma
+- `imageUrl` / Storage: mobilde upload var, admin’de gösterim eksik veya tersi
+- Tarif CRUD yalnızca admin; mobilde Coming Soon vs dolu liste tutarsızlığı
+- Status alanları (`pending` / `approved` / `rejected` / `deleted`) iki tarafta aynı sözleşmeyle okunuyor mu
+
+Amaç: İki istemci “kendi başına” kalmasın; paylaşılan veri modeli ve akışlar prod’da tutarlı olsun.
+
 ### 2. App Store’a gönderme
-Firebase prod planı netleştikten / uygulanmaya başlandıktan **hemen sonra** App Store Connect’e yükleme (metadata, ekran görüntüleri, privacy, build). Play Store bu maddenin peşi sıra veya aynı sprint’te ayrı not edilebilir.
+Firebase prod planı + mobil↔admin tutarlılık kontrolleri netleştikten **hemen sonra** App Store Connect’e yükleme (metadata, ekran görüntüleri, privacy, build). Play Store bu maddenin peşi sıra veya aynı sprint’te ayrı not edilebilir.
 
 ---
 
@@ -71,7 +82,7 @@ Firebase prod planı netleştikten / uygulanmaya başlandıktan **hemen sonra** 
 
 | Tarih | Karar | Gerekçe |
 |-------|-------|---------|
-| 2 Ağustos | Sonraki sprint: Blaze free-tier korumalı prod planı → sonra App Store | Canlıda sürpriz fatura yok; store’a kotası düşünülmüş build ile çıkılsın |
+| 2 Ağustos | Sonraki sprint: Blaze kota planı + mobil↔admin sync kontrolü → App Store | Sürpriz fatura yok; iki istemci bağımsız kalmasın; store’a hazır build |
 | 2 Ağustos | Ana ekran adı “Zerowaste Kitchen”; in-app TR “Atıksız Mutfak” | Store/home etiketi EN marka; uygulama içi lokalizasyon ayrı |
 | 2 Ağustos | Chat history local 24h + API 20 balon | Memory + maliyet dengesi |
 | 17 Temmuz | Firebase Blaze + Anonymous Auth + putData | Storage upload |

@@ -77,7 +77,8 @@
 ### 🔴 Prod / Yayın (sıradaki ana hat)
 - [ ] **Firebase Blaze prod planı:** ücretsiz kotayı aşmamak için okuma/yazma/Storage isteklerini envanterle; cache & az-fetch senaryosu
 - [ ] Blaze bütçe uyarısı + hedef limitler netleştir
-- [ ] **App Store’a gönderme** (Blaze planı sonrası hemen)
+- [ ] **Mobil ↔ admin paneli bağımsızlık / senkron kontrolü** (opt-out, soft-delete, onay/ret, imageUrl, tarif listesi, status sözleşmesi)
+- [ ] **App Store’a gönderme** (Blaze planı + sync kontrolü sonrası hemen)
 
 ### 🟡 Yüksek Öncelik (paralel / store öncesi)
 - [ ] Gönderi fotoğrafı E2E test
