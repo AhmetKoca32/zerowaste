@@ -430,6 +430,10 @@
   "@pointsNicknameValidationEmpty": {
     "description": "Boş nickname uyarısı"
   },
+  "pointsNicknameUnavailable": "Bu takma ad kullanılamaz. Lütfen başka bir ad seç.",
+  "@pointsNicknameUnavailable": {
+    "description": "Silinmiş / engellenmiş takma ad uyarısı"
+  },
   "pointsLeaderboardOptIn": "Sıralamada (leaderboard) takma adımın görüntülenmesine izin veriyorum.",
   "@pointsLeaderboardOptIn": {
     "description": "Leaderboard izin etiketi"
@@ -554,6 +558,47 @@
   "@pointsStatusApproved": {
     "description": "Gönderi durumu - onaylandı"
   },
+  "pointsStatusRejected": "Reddedildi",
+  "@pointsStatusRejected": {
+    "description": "Gönderi durumu - reddedildi"
+  },
+  "pointsTeamNoteTitle": "EcoChef Ekibi Notu",
+  "@pointsTeamNoteTitle": {
+    "description": "Gönderi detayında ekip notu başlığı"
+  },
+  "pointsPenaltyNoteTitle": "Kesinti Notu",
+  "@pointsPenaltyNoteTitle": {
+    "description": "Kesinti kartı / detay not başlığı"
+  },
+  "pointsPenaltyFallback": "Puan Kesintisi",
+  "@pointsPenaltyFallback": {
+    "description": "Kesinti notu yoksa varsayılan metin"
+  },
+  "pointsBonusFallback": "Bonus Puan",
+  "@pointsBonusFallback": {
+    "description": "Bonus notu yoksa varsayılan metin"
+  },
+  "pointsRejectedTitle": "Gönderin reddedildi",
+  "@pointsRejectedTitle": {
+    "description": "Red overlay başlığı"
+  },
+  "pointsRejectedDesc": "Gönderin incelendi ve onaylanmadı. Puan eklenmedi.",
+  "@pointsRejectedDesc": {
+    "description": "Red overlay açıklaması"
+  },
+  "pointsRejectedReason": "Sebep: {reason}",
+  "@pointsRejectedReason": {
+    "description": "Red sebebi",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "pointsRejectedOk": "Tamam",
+  "@pointsRejectedOk": {
+    "description": "Red overlay kapat butonu"
+  },
   "pointsEarned": "Kazanılan Puan:",
   "@pointsEarned": {
     "description": "Kazanılan puan etiketi"
@@ -599,13 +644,22 @@
   "@accountDeletedTitle": {
     "description": "Hesap silinme dialog başlığı"
   },
-  "accountDeletedMessage": "Tüm gönderileriniz ve puanlarınız admin tarafından silinmiş. Detaylı bilgi için bizimle iletişime geçebilirsiniz.",
+  "accountDeletedMessage": "Yarışma hesabınız admin tarafından silindi. Takma adınız ve yerel puan bilginiz temizlenecek; yeni bir takma adla tekrar başlayabilirsiniz.",
   "@accountDeletedMessage": {
     "description": "Hesap silinme dialog mesajı"
   },
-  "accountDeletedOk": "Tamam",
+  "accountDeletedReason": "Sebep: {reason}",
+  "@accountDeletedReason": {
+    "description": "Admin silme sebebi",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "accountDeletedOk": "Yeniden başla",
   "@accountDeletedOk": {
-    "description": "Hesap silinme dialog kapat butonu"
+    "description": "Hesap silinme dialog kapat / yeniden başla butonu"
   },
 
   "optOutTitle": "Yarışmadan Çık",

@@ -65,6 +65,13 @@ service cloud.firestore {
       allow write: if true;
     }
 
+    // Soft-delete / ban status for contest nicknames.
+    // Written only by Admin SDK (Cloud Functions); clients may read.
+    match /user_profiles/{nickname} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     match /admins/{userId} {
       allow get: if request.auth != null
         && (request.auth.uid == userId || isSuperAdmin());

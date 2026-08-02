@@ -124,10 +124,16 @@ Style: short, helpful, encouraging, friendly. Stay on zero-waste cooking and kit
     Duration(milliseconds: 1500),
   ];
 
+  /// How many prior+current bubbles to send to the model (user + assistant).
+  static const int mascotHistoryLimit = 20;
+
+  /// Soft-cap long EcoChef replies in history to keep token use bounded.
+  static const int _maxHistoryAssistantChars = 1200;
+
   /// Sends a chat request to DeepSeek and returns the assistant message content.
   Future<String> _chat({
     required String systemPrompt,
-    required String userContent,
+    required List<Map<String, String>> conversation,
   }) async {
     if (_apiKey.isEmpty) {
       throw DeepSeekAuthException('DEEPSEEK_API_KEY is not set.');
@@ -143,7 +149,7 @@ Style: short, helpful, encouraging, friendly. Stay on zero-waste cooking and kit
       try {
         return await _postOnce(
           systemPrompt: systemPrompt,
-          userContent: userContent,
+          conversation: conversation,
         );
       } on DeepSeekTimeoutException catch (e) {
         lastError = e;
@@ -164,7 +170,7 @@ Style: short, helpful, encouraging, friendly. Stay on zero-waste cooking and kit
   /// One round-trip; never retries. Wrapped by [_chat] for the retry loop.
   Future<String> _postOnce({
     required String systemPrompt,
-    required String userContent,
+    required List<Map<String, String>> conversation,
   }) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
@@ -173,7 +179,7 @@ Style: short, helpful, encouraging, friendly. Stay on zero-waste cooking and kit
           'model': AppConstants.deepSeekModel,
           'messages': <Map<String, String>>[
             <String, String>{'role': 'system', 'content': systemPrompt},
-            <String, String>{'role': 'user', 'content': userContent},
+            ...conversation,
           ],
           'max_tokens': 1024,
         },
@@ -272,25 +278,66 @@ $userContent''';
 
     return _chat(
       systemPrompt: _recipeSystemPrompt(languageCode),
-      userContent: userContent,
+      conversation: [
+        <String, String>{'role': 'user', 'content': userContent},
+      ],
     );
   }
 
   /// Chat with the Atıksız mascot (friendly, eco-conscious, zero-waste expert).
-  Future<String> chatWithMascot(String message) async {
+  ///
+  /// [priorTurns] is the conversation **before** [message] (oldest → newest).
+  /// The last [mascotHistoryLimit] bubbles (prior + current) are sent to the model.
+  Future<String> chatWithMascot(
+    String message, {
+    List<({String text, bool isUser})> priorTurns = const [],
+  }) async {
     final trimmed = message.trim();
     if (trimmed.isEmpty) {
       return 'Ask me anything about zero-waste cooking and kitchen tips! / Sıfır atık mutfak ve ipuçları hakkında ne olursa olsun sorabilirsin!';
     }
 
     final languageRule = _languageRuleForMessage(trimmed);
-    final userContent = '''
+    final latestUserContent = '''
 [LANGUAGE RULE: $languageRule]
 
 User message:
 $trimmed''';
 
-    return _chat(systemPrompt: _mascotSystemPrompt, userContent: userContent);
+    final turns = <({String text, bool isUser})>[
+      ...priorTurns,
+      (text: trimmed, isUser: true),
+    ];
+    final window = turns.length > mascotHistoryLimit
+        ? turns.sublist(turns.length - mascotHistoryLimit)
+        : turns;
+
+    final conversation = <Map<String, String>>[];
+    for (var i = 0; i < window.length; i++) {
+      final turn = window[i];
+      final isLast = i == window.length - 1;
+      if (turn.isUser) {
+        conversation.add({
+          'role': 'user',
+          'content': isLast ? latestUserContent : turn.text,
+        });
+      } else {
+        conversation.add({
+          'role': 'assistant',
+          'content': _truncateHistoryText(turn.text),
+        });
+      }
+    }
+
+    return _chat(
+      systemPrompt: _mascotSystemPrompt,
+      conversation: conversation,
+    );
+  }
+
+  static String _truncateHistoryText(String text) {
+    if (text.length <= _maxHistoryAssistantChars) return text;
+    return '${text.substring(0, _maxHistoryAssistantChars)}…';
   }
 
   /// Returns an explicit reply-language instruction derived from the user's text.

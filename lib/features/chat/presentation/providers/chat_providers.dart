@@ -1,7 +1,11 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../data/chat_message_entry.dart';
+import '../../data/chat_session_storage.dart';
 import '../data/chat_suggestion_pool.dart';
+
+export '../../data/chat_message_entry.dart';
 
 part 'chat_providers.g.dart';
 
@@ -13,7 +17,8 @@ part 'chat_providers.g.dart';
 class DailyMessageCount extends _$DailyMessageCount {
   static const _kCountKey = 'daily_message_count';
   static const _kDateKey = 'daily_message_date';
-  static const _kMaxMessages = 20;
+  static const maxMessages = 20;
+  static const _kMaxMessages = maxMessages;
 
   @override
   Future<int> build() async {
@@ -67,23 +72,49 @@ class DailyMessageCount extends _$DailyMessageCount {
   }
 }
 
-/// Placeholder: will hold chat messages and AI mascot conversation state.
-@riverpod
+/// EcoChef conversation. Hydrated from [ChatSessionStorage] (24h TTL).
+@Riverpod(keepAlive: true)
 class ChatMessages extends _$ChatMessages {
   @override
-  List<ChatMessageEntry> build() => const [];
+  List<ChatMessageEntry> build() {
+    _hydrate();
+    return const [];
+  }
 
-  void add(ChatMessageEntry entry) => state = [...state, entry];
-  void clear() => state = [];
-}
+  Future<void> _hydrate() async {
+    final loaded = await ChatSessionStorage.load();
+    // Don't clobber messages the user already sent before hydrate finished.
+    if (state.isEmpty && loaded.isNotEmpty) {
+      state = loaded;
+    }
+  }
 
-class ChatMessageEntry {
-  const ChatMessageEntry({
-    required this.text,
-    required this.isUser,
-  });
-  final String text;
-  final bool isUser;
+  Future<void> add(ChatMessageEntry entry) async {
+    final next = [...state, entry];
+    final trimmed = next.length > ChatSessionStorage.maxMessages
+        ? next.sublist(next.length - ChatSessionStorage.maxMessages)
+        : next;
+    state = trimmed;
+    await ChatSessionStorage.save(state);
+  }
+
+  Future<void> clear() async {
+    state = const [];
+    await ChatSessionStorage.clear();
+  }
+
+  /// Clears memory when the on-disk session is gone/expired (e.g. after 24h).
+  /// Restores from disk if memory was empty but a valid session still exists.
+  Future<void> purgeIfExpired() async {
+    final hadSession = await ChatSessionStorage.hasStoredSession();
+    final loaded = await ChatSessionStorage.load();
+    if (loaded.isEmpty) {
+      // Only wipe memory if disk had a session that just expired/corrupt.
+      if (hadSession && state.isNotEmpty) state = const [];
+    } else if (state.isEmpty) {
+      state = loaded;
+    }
+  }
 }
 
 // ── Daily suggestion rotation ───────────────────────────────────────

@@ -96,7 +96,7 @@ final savedRecipesProvider =
     );
 
 typedef _$SavedRecipes = AutoDisposeAsyncNotifier<List<SavedRecipe>>;
-String _$generatedRecipeHash() => r'f297a6a09cc1d172617396cfcde8d4de19e6df04';
+String _$generatedRecipeHash() => r'0aa6a57c787f966a48b86154ae51b6540b9da2f8';
 
 /// Async state for the generated recipe text (loading / data / error).
 ///

@@ -1,6 +1,6 @@
 # Progress: Atıksız Mutfak
 
-**Son Güncelleme:** Temmuz 2026 (17 Temmuz)
+**Son Güncelleme:** Ağustos 2026 (2 Ağustos)
 
 ---
 
@@ -12,89 +12,75 @@
 - Firebase Blaze planı
 
 ### Splash Screen
-- 5 saniyelik staggered animasyon, AB/EU logoları
+- ~5s staggered animasyon; AB/EU + partner logoları (HRYO, Our Common Future, Academy Culture, Ortak Geleceğimiz)
 
 ### Tarif Listesi (Home)
 - Firestore-only (`RecipeRepository`, boşsa `[]`)
-- **RecipesComingSoon** placeholder (animasyonlu)
+- **RecipesComingSoon** placeholder
 - Malzeme filtreleme + arama
-- `RecipeDetailSheet`: bullet ingredients, numaralı instructions
+- `RecipeDetailSheet`
 
 ### AI Tarif Üretimi (DeepSeek)
 - Malzeme + mutfak stili, EcoChef loading overlay
-- **Locale bazlı dil** (TR/EN app toggle)
-- `RecipeParser` TR + EN format desteği
+- Locale bazlı dil (TR/EN)
 - Kaydedilen tarifler (max 5)
 
-### AI Sohbet (EcoChef)
-- 20 mesaj/gün, 34 öneri havuzu
-- **Kullanıcı mesaj dilinde yanıt** (EN/TR algılama + sert prompt)
-- Typewriter, Markdown, 5 dk auto-clear
+### AI Sohbet (EcoChef) — güncel
+- 20 user mesaj/gün (`DailyMessageCount.maxMessages`)
+- Kullanıcı mesaj dilinde yanıt
+- Typewriter (yalnız yeni cevap, bir kez)
+- Markdown bubbles
+- **Lokal session:** SharedPreferences, 24h TTL, max 50 balon disk
+- **API memory:** son 20 balon priorTurns; assistant history truncate ~1200
+- Floating input; liste navbar/input altında görünür
+- Floating EcoChef app bar + doğru üst inset
+- Soft-delete/opt-out chat session temizler
 
 ### Puan Sistemi (Gamification)
-- PointsHeroCard: progress + level-up journey
-- 5 seviye, leaderboard top 3, nickname, günlük görevler
-- Opt-out, admin bonus/kesinti (TR/EN notlar)
-- **Puan animasyonu düzeltildi**: tab geçişinde, sadece puan arttığında, önceki puandan başlar
+- PointsHeroCard, seviyeler, leaderboard, nickname, günlük görevler
+- Opt-out, soft-delete dialog, reject overlay, approve overlay
+- Puan animasyonu: tab görünür + artışta
 
 ### Gönderi Fotoğrafı (Firebase Storage)
-- ✅ Anonymous Auth (startup + upload öncesi)
-- ✅ `PostImageStorageService` — `posts/{postId}/photo.jpg`, max 2 MB, `putData(bytes)`
-- ✅ `storage.rules` deployed
-- ✅ `PostEntry.imageUrl` + `PostImageThumbnail` (CachedNetworkImage)
-- ✅ Upload overlay + hata snackbar + timeout (90s upload, 20s auth)
-- ⏳ Kullanıcı testi devam ediyor (upload takılma bildirimi → bytes fix uygulandı)
+- Anonymous Auth + `putData(bytes)` + rules
+- ⏳ End-to-end kullanıcı doğrulaması
 
-### Admin Paneli (Ayrı Web Projesi)
-- ✅ Mobil admin kodu tamamen kaldırıldı
-- ✅ Tarif formu veri yapısı kararı (dinamik malzeme/adım listesi)
-- ⏳ Tarif CRUD + gönderi `imageUrl` gösterimi bekliyor
+### Admin Paneli (Ayrı Web)
+- Mobil admin kaldırıldı
+- ⏳ Tarif CRUD + `imageUrl` gösterimi
 
 ---
 
-## Bilinen Sorunlar (Çözülmüş)
+## Bilinen Sorunlar (Çözülmüş — son oturum)
 
-- [x] Puan animasyonu arka planda tüketilmesi / her açılışta 0'dan sayma
-- [x] Chat İngilizce yazınca Türkçe cevap vermesi
-- [x] Create sayfasında locale'e göre tarif dili
-- [x] Tarif listesi mock JSON fallback
-- [x] Gönderi fotoğrafları sadece local path'te
-- [x] Ticker dispose, chat keyboard, günlük görev mock, hesap silindi yanlış pozitif
+- [x] Chat mesajı floating app bar altında kesilmesi
+- [x] Input–navbar arası opak katman
+- [x] Chat geçmişinin sadece memory’de kaybolması (24h local persist)
+- [x] Typewriter scroll’da tekrar oynama
+- [x] Model’in önceki cevapları bilmemesi (20 balon history)
+- [x] 5 dk arka plan chat silme (kaldırıldı → 24h TTL)
 
 ---
 
 ## 🔴 Bilinen Sorunlar (Devam Eden)
 
 ### 1. Gönderi Fotoğrafı Upload Testi (YÜKSEK)
-- Blaze + Anonymous Auth + rules deploy tamam
-- "Fotoğraf yükleniyor" ekranında takılma bildirildi → bytes + timeout fix uygulandı, yeniden test gerekli
-- Admin panel upload'u etkilemez
-
-### 2. Admin Panel — Gönderi Fotoğrafı Gösterimi (YÜKSEK)
-- Ayrı web projesinde `posts.imageUrl` → `Image.network` entegrasyonu yapılmalı
-
+### 2. Admin Panel — Gönderi Fotoğrafı (YÜKSEK)
 ### 3. Admin Panel Tarif CRUD (YÜKSEK)
-- `AdminRecipeForm` + `DynamicStringListField`
-- Firestore `recipes` boş → mobilde Coming Soon
-
 ### 4. Mobil Çıkış → Admin Senkronizasyonu (YÜKSEK)
-- Opt-out/silme admin panelde yansımıyor
-
 ### 5. Progress Bar Hizalama (DÜŞÜK)
-- HeroCard gradient arc / background ring örtüşmesi
 
 ---
 
 ## Yapılacaklar
 
 ### 🟡 Yüksek Öncelik
-- [ ] Gönderi fotoğrafı upload end-to-end test (mobil → Storage → Firestore → admin)
-- [ ] Admin panel: `imageUrl` ile gönderi fotoğrafı gösterimi
-- [ ] Admin panel: tarif CRUD (`DynamicStringListField`)
-- [ ] İlk tariflerin admin panelden eklenmesi
-- [ ] Mobil opt-out/silme → admin panel senkronizasyonu
+- [ ] Gönderi fotoğrafı E2E test
+- [ ] Admin: `imageUrl` gösterimi
+- [ ] Admin: tarif CRUD
+- [ ] İlk tariflerin eklenmesi
+- [ ] Opt-out/silme → admin sync
 
 ### 🟢 Düşük Öncelik
-- [ ] Progress bar hizalama testi
-- [ ] Günlük chat limit reset kontrolü
-- [ ] RecipeSyncService main()'e ekleme
+- [ ] Progress bar hizalama
+- [ ] RecipeSyncService → main

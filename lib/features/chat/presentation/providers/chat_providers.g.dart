@@ -27,14 +27,14 @@ final dailyMessageCountProvider =
     );
 
 typedef _$DailyMessageCount = AsyncNotifier<int>;
-String _$chatMessagesHash() => r'1c6cf6214dd261cdeead3a64c2f1273e1a66861a';
+String _$chatMessagesHash() => r'6d00475786b8f0938225439732d98930f75867af';
 
-/// Placeholder: will hold chat messages and AI mascot conversation state.
+/// EcoChef conversation. Hydrated from [ChatSessionStorage] (24h TTL).
 ///
 /// Copied from [ChatMessages].
 @ProviderFor(ChatMessages)
 final chatMessagesProvider =
-    AutoDisposeNotifierProvider<ChatMessages, List<ChatMessageEntry>>.internal(
+    NotifierProvider<ChatMessages, List<ChatMessageEntry>>.internal(
       ChatMessages.new,
       name: r'chatMessagesProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -44,7 +44,7 @@ final chatMessagesProvider =
       allTransitiveDependencies: null,
     );
 
-typedef _$ChatMessages = AutoDisposeNotifier<List<ChatMessageEntry>>;
+typedef _$ChatMessages = Notifier<List<ChatMessageEntry>>;
 String _$dailyChatSuggestionsHash() =>
     r'2aa9f8c8ad6968d49120ac465a64d94863c0ba21';
 

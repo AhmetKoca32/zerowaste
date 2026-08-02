@@ -115,6 +115,7 @@
   "pointsNicknameHint": "e.g. EcoChef Fan",
   "pointsNicknameWarning": "⚠️ You cannot change this name later. Choose carefully!",
   "pointsNicknameValidationEmpty": "Please enter a nickname",
+  "pointsNicknameUnavailable": "This nickname is unavailable. Please choose another.",
   "pointsLeaderboardOptIn": "I allow my nickname to be displayed on the leaderboard.",
   "pointsPrivacyDisclaimer": "This information is only shown within the app's leaderboard and is not shared with third parties.",
   "pointsSave": "Save",
@@ -144,6 +145,22 @@
   "pointsAddPost": "Add Post",
   "pointsStatusPending": "Pending Review",
   "pointsStatusApproved": "Approved",
+  "pointsStatusRejected": "Rejected",
+  "pointsTeamNoteTitle": "EcoChef Team Note",
+  "pointsPenaltyNoteTitle": "Penalty Note",
+  "pointsPenaltyFallback": "Point Deduction",
+  "pointsBonusFallback": "Bonus Points",
+  "pointsRejectedTitle": "Your post was rejected",
+  "pointsRejectedDesc": "Your post was reviewed and not approved. No points were added.",
+  "pointsRejectedReason": "Reason: {reason}",
+  "@pointsRejectedReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "pointsRejectedOk": "OK",
   "pointsEarned": "Points Earned:",
   "pointsDailyMissions": "Daily Missions",
 
@@ -180,8 +197,16 @@
   "cuisineAsian": "Asian cuisine",
 
   "accountDeletedTitle": "Account Status",
-  "accountDeletedMessage": "All your posts and points have been removed by the admin. Please contact us for more information.",
-  "accountDeletedOk": "OK",
+  "accountDeletedMessage": "Your contest account was removed by an admin. Your nickname and local points data will be cleared so you can start over with a new nickname.",
+  "accountDeletedReason": "Reason: {reason}",
+  "@accountDeletedReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "accountDeletedOk": "Start over",
 
   "optOutTitle": "Leave Contest",
   "optOutMessage": "If you leave the contest, all your points and your leaderboard rank will be lost. You can rejoin later with a new nickname.\n\nAre you sure you want to continue?",

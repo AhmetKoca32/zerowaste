@@ -278,7 +278,7 @@ class _PostCard extends StatelessWidget {
   String _statusLabel(BuildContext context) => switch (post.status) {
         PostStatus.pending => AppLocalizations.of(context)!.pointsStatusPending,
         PostStatus.approved => AppLocalizations.of(context)!.pointsStatusApproved,
-        PostStatus.rejected => 'Reddedildi',
+        PostStatus.rejected => AppLocalizations.of(context)!.pointsStatusRejected,
       };
 
   @override
@@ -650,12 +650,28 @@ class _PostCard extends StatelessWidget {
   }
 
   Widget _buildAdminNoteBox(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final localeCode = Localizations.localeOf(context).languageCode;
+    final note = post.localizedAdminNote(localeCode);
+    if (note == null || note.isEmpty) return const SizedBox.shrink();
+
     final isPenalty = post.isAdminPenalty;
-    final accentColor = isPenalty ? const Color(0xFFD32F2F) : const Color(0xFFE8A817);
-    final bgColor = isPenalty ? const Color(0xFFD32F2F).withOpacity(0.08) : const Color(0xFFFFC107).withOpacity(0.08);
-    final borderColor = isPenalty ? const Color(0xFFD32F2F).withOpacity(0.3) : const Color(0xFFFFC107).withOpacity(0.3);
-    final icon = isPenalty ? Icons.warning_amber_rounded : Icons.stars_rounded;
-    final title = isPenalty ? 'Kesinti Notu' : 'EcoChef Ekibi Notu';
+    final isRejected = post.status == PostStatus.rejected;
+    final accentColor = isPenalty || isRejected
+        ? const Color(0xFFD32F2F)
+        : const Color(0xFFE8A817);
+    final bgColor = (isPenalty || isRejected)
+        ? const Color(0xFFD32F2F).withOpacity(0.08)
+        : const Color(0xFFFFC107).withOpacity(0.08);
+    final borderColor = (isPenalty || isRejected)
+        ? const Color(0xFFD32F2F).withOpacity(0.3)
+        : const Color(0xFFFFC107).withOpacity(0.3);
+    final icon = isPenalty || isRejected
+        ? Icons.warning_amber_rounded
+        : Icons.stars_rounded;
+    final title = isPenalty
+        ? l10n.pointsPenaltyNoteTitle
+        : l10n.pointsTeamNoteTitle;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -684,7 +700,7 @@ class _PostCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            post.localizedAdminNote(Localizations.localeOf(context).languageCode)!,
+            note,
             style: const TextStyle(
               fontFamily: 'Manrope',
               fontSize: 14,
@@ -889,7 +905,8 @@ class _PostCard extends StatelessWidget {
                     const SizedBox(width: 5),
                     Expanded(
                       child: Text(
-                        post.localizedAdminNote(Localizations.localeOf(context).languageCode) ?? 'Puan Kesintisi',
+                        post.localizedAdminNote(Localizations.localeOf(context).languageCode) ??
+                            AppLocalizations.of(context)!.pointsPenaltyFallback,
                         style: const TextStyle(
                           fontFamily: 'Manrope',
                           fontSize: 11,
@@ -1061,7 +1078,8 @@ class _PostCard extends StatelessWidget {
                     const SizedBox(width: 5),
                     Expanded(
                       child: Text(
-                        post.localizedAdminNote(Localizations.localeOf(context).languageCode) ?? 'Bonus Puan',
+                        post.localizedAdminNote(Localizations.localeOf(context).languageCode) ??
+                            AppLocalizations.of(context)!.pointsBonusFallback,
                         style: const TextStyle(
                           fontFamily: 'Manrope',
                           fontSize: 11,

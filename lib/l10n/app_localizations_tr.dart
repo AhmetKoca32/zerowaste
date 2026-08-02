@@ -343,6 +343,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pointsNicknameValidationEmpty => 'Lütfen bir takma ad girin';
 
   @override
+  String get pointsNicknameUnavailable =>
+      'Bu takma ad kullanılamaz. Lütfen başka bir ad seç.';
+
+  @override
   String get pointsLeaderboardOptIn =>
       'Sıralamada (leaderboard) takma adımın görüntülenmesine izin veriyorum.';
 
@@ -441,6 +445,36 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get pointsStatusApproved => 'Onaylandı';
+
+  @override
+  String get pointsStatusRejected => 'Reddedildi';
+
+  @override
+  String get pointsTeamNoteTitle => 'EcoChef Ekibi Notu';
+
+  @override
+  String get pointsPenaltyNoteTitle => 'Kesinti Notu';
+
+  @override
+  String get pointsPenaltyFallback => 'Puan Kesintisi';
+
+  @override
+  String get pointsBonusFallback => 'Bonus Puan';
+
+  @override
+  String get pointsRejectedTitle => 'Gönderin reddedildi';
+
+  @override
+  String get pointsRejectedDesc =>
+      'Gönderin incelendi ve onaylanmadı. Puan eklenmedi.';
+
+  @override
+  String pointsRejectedReason(String reason) {
+    return 'Sebep: $reason';
+  }
+
+  @override
+  String get pointsRejectedOk => 'Tamam';
 
   @override
   String get pointsEarned => 'Kazanılan Puan:';
@@ -543,10 +577,15 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get accountDeletedMessage =>
-      'Tüm gönderileriniz ve puanlarınız admin tarafından silinmiş. Detaylı bilgi için bizimle iletişime geçebilirsiniz.';
+      'Yarışma hesabınız admin tarafından silindi. Takma adınız ve yerel puan bilginiz temizlenecek; yeni bir takma adla tekrar başlayabilirsiniz.';
 
   @override
-  String get accountDeletedOk => 'Tamam';
+  String accountDeletedReason(String reason) {
+    return 'Sebep: $reason';
+  }
+
+  @override
+  String get accountDeletedOk => 'Yeniden başla';
 
   @override
   String get optOutTitle => 'Yarışmadan Çık';

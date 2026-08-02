@@ -343,6 +343,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pointsNicknameValidationEmpty => 'Please enter a nickname';
 
   @override
+  String get pointsNicknameUnavailable =>
+      'This nickname is unavailable. Please choose another.';
+
+  @override
   String get pointsLeaderboardOptIn =>
       'I allow my nickname to be displayed on the leaderboard.';
 
@@ -441,6 +445,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pointsStatusApproved => 'Approved';
+
+  @override
+  String get pointsStatusRejected => 'Rejected';
+
+  @override
+  String get pointsTeamNoteTitle => 'EcoChef Team Note';
+
+  @override
+  String get pointsPenaltyNoteTitle => 'Penalty Note';
+
+  @override
+  String get pointsPenaltyFallback => 'Point Deduction';
+
+  @override
+  String get pointsBonusFallback => 'Bonus Points';
+
+  @override
+  String get pointsRejectedTitle => 'Your post was rejected';
+
+  @override
+  String get pointsRejectedDesc =>
+      'Your post was reviewed and not approved. No points were added.';
+
+  @override
+  String pointsRejectedReason(String reason) {
+    return 'Reason: $reason';
+  }
+
+  @override
+  String get pointsRejectedOk => 'OK';
 
   @override
   String get pointsEarned => 'Points Earned:';
@@ -543,10 +577,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountDeletedMessage =>
-      'All your posts and points have been removed by the admin. Please contact us for more information.';
+      'Your contest account was removed by an admin. Your nickname and local points data will be cleared so you can start over with a new nickname.';
 
   @override
-  String get accountDeletedOk => 'OK';
+  String accountDeletedReason(String reason) {
+    return 'Reason: $reason';
+  }
+
+  @override
+  String get accountDeletedOk => 'Start over';
 
   @override
   String get optOutTitle => 'Leave Contest';

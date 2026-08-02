@@ -692,6 +692,12 @@ abstract class AppLocalizations {
   /// **'Lütfen bir takma ad girin'**
   String get pointsNicknameValidationEmpty;
 
+  /// Silinmiş / engellenmiş takma ad uyarısı
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu takma ad kullanılamaz. Lütfen başka bir ad seç.'**
+  String get pointsNicknameUnavailable;
+
   /// Leaderboard izin etiketi
   ///
   /// In tr, this message translates to:
@@ -865,6 +871,60 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Onaylandı'**
   String get pointsStatusApproved;
+
+  /// Gönderi durumu - reddedildi
+  ///
+  /// In tr, this message translates to:
+  /// **'Reddedildi'**
+  String get pointsStatusRejected;
+
+  /// Gönderi detayında ekip notu başlığı
+  ///
+  /// In tr, this message translates to:
+  /// **'EcoChef Ekibi Notu'**
+  String get pointsTeamNoteTitle;
+
+  /// Kesinti kartı / detay not başlığı
+  ///
+  /// In tr, this message translates to:
+  /// **'Kesinti Notu'**
+  String get pointsPenaltyNoteTitle;
+
+  /// Kesinti notu yoksa varsayılan metin
+  ///
+  /// In tr, this message translates to:
+  /// **'Puan Kesintisi'**
+  String get pointsPenaltyFallback;
+
+  /// Bonus notu yoksa varsayılan metin
+  ///
+  /// In tr, this message translates to:
+  /// **'Bonus Puan'**
+  String get pointsBonusFallback;
+
+  /// Red overlay başlığı
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderin reddedildi'**
+  String get pointsRejectedTitle;
+
+  /// Red overlay açıklaması
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderin incelendi ve onaylanmadı. Puan eklenmedi.'**
+  String get pointsRejectedDesc;
+
+  /// Red sebebi
+  ///
+  /// In tr, this message translates to:
+  /// **'Sebep: {reason}'**
+  String pointsRejectedReason(String reason);
+
+  /// Red overlay kapat butonu
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamam'**
+  String get pointsRejectedOk;
 
   /// Kazanılan puan etiketi
   ///
@@ -1067,13 +1127,19 @@ abstract class AppLocalizations {
   /// Hesap silinme dialog mesajı
   ///
   /// In tr, this message translates to:
-  /// **'Tüm gönderileriniz ve puanlarınız admin tarafından silinmiş. Detaylı bilgi için bizimle iletişime geçebilirsiniz.'**
+  /// **'Yarışma hesabınız admin tarafından silindi. Takma adınız ve yerel puan bilginiz temizlenecek; yeni bir takma adla tekrar başlayabilirsiniz.'**
   String get accountDeletedMessage;
 
-  /// Hesap silinme dialog kapat butonu
+  /// Admin silme sebebi
   ///
   /// In tr, this message translates to:
-  /// **'Tamam'**
+  /// **'Sebep: {reason}'**
+  String accountDeletedReason(String reason);
+
+  /// Hesap silinme dialog kapat / yeniden başla butonu
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeniden başla'**
   String get accountDeletedOk;
 
   /// Opt-out dialog başlığı

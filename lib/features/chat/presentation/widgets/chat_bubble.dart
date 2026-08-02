@@ -31,7 +31,7 @@ class ChatBubble extends StatefulWidget {
 }
 
 class _ChatBubbleState extends State<ChatBubble>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -40,6 +40,9 @@ class _ChatBubbleState extends State<ChatBubble>
   Timer? _typewriterTimer;
   int _visibleChars = 0;
   bool _typewriterDone = false;
+
+  @override
+  bool get wantKeepAlive => widget.typewriter && !_typewriterDone;
 
   @override
   void initState() {
@@ -105,6 +108,7 @@ class _ChatBubbleState extends State<ChatBubble>
           _visibleChars = totalGraphemes;
           _typewriterDone = true;
           timer.cancel();
+          updateKeepAlive();
           widget.onTypewriterComplete?.call();
         }
       });
@@ -130,6 +134,7 @@ class _ChatBubbleState extends State<ChatBubble>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final isUser = widget.entry.isUser;
 
     return FadeTransition(

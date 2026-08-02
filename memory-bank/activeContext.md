@@ -1,50 +1,35 @@
 # Active Context: Atıksız Mutfak
 
-**Son Güncelleme:** Temmuz 2026 (17 Temmuz)  
-**Aktif Çalışma:** Admin paneli (ayrı web projesi) tarif formu + gönderi fotoğrafı gösterimi; mobil upload stabilizasyonu test ediliyor.
+**Son Güncelleme:** Ağustos 2026 (2 Ağustos)  
+**Aktif Çalışma:** EcoChef chat UX + lokal session + konuşma hafızası tamam; kullanıcı “şimdilik her şey tamam” dedi. Sıradaki odak admin paneli / upload testleri.
 
 ---
 
-## Son Yapılan Değişiklikler
+## Son Yapılan Değişiklikler (Ağustos 2026)
 
-### 1. Puan Animasyonu Düzeltildi
-- **`_loadPosts(allowAnimation:)`**: Animasyon yalnızca Puan sekmesine geçildiğinde ve `total > previousPoints` iken tetiklenir
-- **Erken prefs kaydı kaldırıldı**: Puan arttığında SharedPreferences, animasyon bitene kadar güncellenmez (`onAnimationComplete` / `onJourneyComplete`)
-- **Arka plan yüklemesi**: Uygulama başka sekmedeyken veri çekilir ama animasyon oynatılmaz
-- **`_heroAnimationNonce`**: Her animasyonda widget yeniden oluşturulur
-- **`PointsHeroCard._startNormalAnimation`**: Artık `previousPoints`'tan başlar (0 veya level.min değil)
+### 1. EcoChef Chat — Layout
+- **Üst padding:** `reverse: true` ListView’da floating EcoChef pill için `MediaQuery.padding.top + 64` (mesaj app bar altına girmesin)
+- **Alt katman kaldırıldı:** Input `Column`+`SafeArea` yerine Stack’te floating; liste full-bleed → input ile navbar arası şeffaf, sohbet görünür (`extendBody: true` ile uyumlu)
 
-### 2. Tarif Listesi — Firestore-Only + Coming Soon
-- **`RecipeRepository`**: Firestore boşsa/hata verirse `[]` döner (local JSON fallback kaldırıldı)
-- **`RecipesComingSoon`**: Boş listede animasyonlu placeholder (denizati float + pulsing dots)
-- **`home_providers`**: AI üretilen tarifler ana sayfadan ayrıldı (sadece Firestore admin tarifleri)
+### 2. EcoChef Chat — Lokal Session
+- **`ChatSessionStorage`** (`SharedPreferences`, key `ecochef_chat_session`): JSON `{ updatedAt, messages }`
+- **TTL 24 saat**, soft cap **50** balon (disk)
+- **`ChatMessages` keepAlive** + hydrate / save / clear
+- Eski **5 dk arka plan auto-clear kaldırıldı**; resume’da `purgeIfExpired`
+- Soft-delete / opt-out → `chatMessagesProvider.clear()`
 
-### 3. AI Dil Desteği
-- **Chat (EcoChef)**: Kullanıcının yazdığı dilde yanıt (EN in → EN out, TR in → TR out)
-  - İngilizce system prompt + `[LANGUAGE RULE]` etiketi
-  - Basit dil algılama (`_detectMessageLanguage`)
-  - Welcome öneri chip'leri `localized(localeCode)` ile gönderilir
-- **Tarif Üretici (Oluştur)**: **Uygulama locale'ine** göre (TR/EN toggle)
-  - Ayrı TR/EN system prompt ve format (`Başlık` vs `Title`)
-  - `RecipeParser` İngilizce header desteği
-  - Malzemeler Türkçe olsa bile EN modda tarif adı İngilizce olmalı
+### 3. EcoChef Chat — Typewriter
+- Typewriter yalnız **yeni gelen** EcoChef cevabında bir kez (`_typewriterForLength`)
+- Scroll ile ListView rebuild → tekrar oynatmaz; `AutomaticKeepAlive` animasyon sırasında
 
-### 4. Gönderi Fotoğrafı — Firebase Storage + Anonymous Auth
-- **Firebase Blaze planına geçildi** (Storage kullanımı için)
-- **`AnonymousAuthService`**: Startup + upload öncesi anonim oturum (20 sn timeout)
-- **`PostImageStorageService`**: `putData(bytes)` ile upload (iOS temp path sorunu giderildi), 90 sn timeout
-- **`storage.rules`**: Deploy edildi (`firebase deploy --only storage`)
-- **`PostEntry.imageUrl`**: Firestore'da Storage download URL
-- **`PostImageThumbnail`**: CachedNetworkImage
-- Upload overlay: "Fotoğraf yükleniyor…" + hata snackbar
+### 4. EcoChef Chat — API Konuşma Hafızası
+- **`chatWithMascot(..., priorTurns:)`** → son **20 balon** (user+assistant) DeepSeek’e gider
+- Dil kuralı yalnız **son** user mesajında
+- History’deki uzun assistant metinleri ~**1200** karakterde truncate
+- Günlük gönderim limiti hâlâ **20 user mesaj/gün** (`DailyMessageCount.maxMessages`)
 
-### 5. Admin Paneli (Ayrı Web Projesi — Devam Ediyor)
-- Tarif formu tasarım kararı netleştirildi (`DynamicStringListField`, `string[]` malzeme/adım)
-- **Gönderi fotoğrafı**: Admin panelde henüz `imageUrl` gösterimi yapılmadı (ayrı repo)
-- Mobil upload admin panelden bağımsız çalışır
-
-### 6. iOS SceneDelegate
-- **`ios/Runner/SceneDelegate.swift`**: iOS scene lifecycle desteği
+### 5. Splash / Branding (önceki oturum notu)
+- Partner logoları + Ortak Geleceğimiz; splash ~5s; launcher `App_Logo.png`
 
 ---
 
@@ -52,28 +37,24 @@
 
 ### 🟡 YÜKSEK
 
-- [ ] **Gönderi fotoğrafı upload testi**: Blaze + Anonymous Auth + storage rules deploy edildi; kullanıcıda "yükleniyor" ekranında takılma bildirildi → bytes upload + timeout eklendi, tekrar test gerekli
-- [ ] **Admin panel gönderi fotoğrafı**: Ayrı web projesinde `imageUrl` ile `Image.network` gösterimi yapılmalı
-- [ ] **Admin panel tarif CRUD**: `DynamicStringListField` + `AdminRecipeForm` implementasyonu
-- [ ] **Mobil çıkış/silme → admin panel senkronizasyonu**: Opt-out/silme admin panelde yansımıyor
+- [ ] **Gönderi fotoğrafı upload testi**: bytes + timeout fix sonrası yeniden doğrulama
+- [ ] **Admin panel gönderi fotoğrafı**: `imageUrl` gösterimi (ayrı repo)
+- [ ] **Admin panel tarif CRUD**: `DynamicStringListField` + form
+- [ ] **Mobil çıkış/silme → admin senkronizasyonu**
 
 ### 🟢 DÜŞÜK
 
-- [ ] Progress bar hizalama (`_GradientArcPainter` / `_BackgroundRingPainter`)
-- [ ] Günlük chat limit reset mekanizması kontrolü
+- [ ] Progress bar hizalama
 - [ ] RecipeSyncService main()'de çağrılmadı
-- [ ] Firestore `recipes` koleksiyonuna admin panelden ilk tariflerin eklenmesi
+- [ ] Firestore `recipes` ilk içerik (admin)
 
 ---
 
 ## Firebase Yapılandırması
 
-- [x] Firebase **Blaze** planı (kart bağlı, düşük trafikte ~$0)
-- [x] `posts`, `leaderboard/current`, `admins/{uid}` koleksiyonları
-- [x] Firebase Authentication: Email/Password + **Anonymous** (enabled)
-- [x] Firestore rules + Storage rules (`storage.rules` deployed)
-- [x] Firestore index'leri
-- [ ] Admin panelden `recipes` koleksiyonuna tarif ekleme
+- [x] Firebase **Blaze**, Anonymous Auth, Storage rules
+- [x] `posts`, `leaderboard/current`, `admins`, `user_profiles` (soft-delete okuma)
+- [ ] Admin panelden `recipes` doldurma
 
 ---
 
@@ -81,11 +62,10 @@
 
 | Tarih | Karar | Gerekçe |
 |-------|-------|---------|
-| 17 Temmuz | Firebase Blaze planına geçiş | Spark Storage 20KB/gün upload limiti pratikte kullanılamazdı |
-| 17 Temmuz | Anonymous Auth (startup + upload) | Storage rules `request.auth != null`; nickname-only kullanıcıdan login istemiyoruz |
-| 17 Temmuz | `putData(bytes)` ile upload | iOS geçici dosya yolu upload sırasında silinebiliyordu |
-| 17 Temmuz | Chat: kullanıcı mesaj dili; Create: app locale | Chat serbest metin; Create AppBar TR/EN toggle ile kontrol edilir |
-| 17 Temmuz | Puan animasyonu sadece tab visible + puan arttıysa | Arka planda animasyon tüketimi ve gereksiz 0→X sayımı önlendi |
-| 17 Temmuz | Tarif listesi JSON fallback kaldırıldı | Admin panel tek kaynak; boşken Coming Soon |
-| 17 Temmuz | Admin tarif formu dinamik liste | Mobil `ingredients[]` / `instructions[]` render uyumu |
-| 18 Mayıs | Tab-switch listener (stream değil) | Firestore okuma kotası tasarrufu |
+| 2 Ağustos | Chat history: SharedPreferences + 24h TTL (Firestore yok) | Günlük 20 mesaj; cihaz-lokal; KVKK/maliyet |
+| 2 Ağustos | API context: son 20 balon + assistant truncate 1200 | “Sonuncusunu yapalım” için memory; token kontrollü |
+| 2 Ağustos | Chat input floating / liste full-bleed | Input–navbar arası opak Scaffold boşluğu kalksın |
+| 2 Ağustos | Typewriter yalnız fresh reply | Scroll recycle typewriter’ı yeniden başlatmasın |
+| 17 Temmuz | Firebase Blaze + Anonymous Auth + putData | Storage upload |
+| 17 Temmuz | Chat dil = user mesaj; Create = app locale | Serbest metin vs TR/EN toggle |
+| 17 Temmuz | Tarif listesi Firestore-only + Coming Soon | Admin tek kaynak |

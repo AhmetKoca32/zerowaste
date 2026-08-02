@@ -17,6 +17,7 @@ class PointsRepository {
   static const String _postsCollection = 'posts';
   static const String _leaderboardDoc = 'leaderboard';
   static const String _leaderboardId = 'current';
+  static const String _userProfilesCollection = 'user_profiles';
 
   /// Generate a new post document ID before Storage upload.
   String newPostId() => _firestore.collection(_postsCollection).doc().id;
@@ -159,6 +160,14 @@ class PointsRepository {
     await _recalculateLeaderboard();
   }
 
+  /// Soft-delete / contest profile for a nickname (`user_profiles/{nickname}`).
+  Future<UserProfileStatus?> getUserProfileStatus(String nickname) async {
+    final doc =
+        await _firestore.collection(_userProfilesCollection).doc(nickname).get();
+    if (!doc.exists) return null;
+    return UserProfileStatus.fromFirestore(doc);
+  }
+
   /// Set all posts of a user to opt-out and recalculate leaderboard.
   /// Used when a user voluntarily leaves the contest.
   Future<void> optOutUser(String nickname) async {
@@ -225,6 +234,57 @@ class PointsRepository {
       // Leaderboard recalculation failed silently (non-critical)
       print('Leaderboard recalculation error: $e');
     }
+  }
+}
+
+/// Contest user profile status from `user_profiles/{nickname}`.
+class UserProfileStatus {
+  const UserProfileStatus({
+    required this.nickname,
+    required this.status,
+    this.reason,
+    this.reasonEn,
+  });
+
+  final String nickname;
+  final String status;
+  final String? reason;
+  final String? reasonEn;
+
+  bool get isDeleted => status == 'deleted' || status == 'banned';
+
+  /// Locale-aware delete/ban reason (TR/EN with fallback).
+  String? localizedReason(String localeCode) {
+    final tr = reason?.trim();
+    final en = reasonEn?.trim();
+    final trEmpty = tr == null || tr.isEmpty;
+    final enEmpty = en == null || en.isEmpty;
+    if (localeCode == 'en') {
+      if (!enEmpty) return en;
+      if (!trEmpty) return tr;
+      return null;
+    }
+    if (!trEmpty) return tr;
+    if (!enEmpty) return en;
+    return null;
+  }
+
+  factory UserProfileStatus.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+    String? pick(List<String> keys) {
+      for (final key in keys) {
+        final value = data[key];
+        if (value is String && value.trim().isNotEmpty) return value.trim();
+      }
+      return null;
+    }
+
+    return UserProfileStatus(
+      nickname: data['nickname'] as String? ?? doc.id,
+      status: (data['status'] as String? ?? 'active').toLowerCase(),
+      reason: pick(const ['reason', 'reasonTr', 'adminNote', 'adminNoteTr']),
+      reasonEn: pick(const ['reasonEn', 'adminNoteEn']),
+    );
   }
 }
 

@@ -38,6 +38,15 @@ dev_dependencies:
   freezed: ^2.5.7
   json_serializable: ^6.8.0
   riverpod_generator: ^2.6.3
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/images/icons/App_Logo.png
+  adaptive_icon_background: "#ED6826"
+  adaptive_icon_foreground: assets/images/icons/App_Logo.png
+  remove_alpha_ios: true
 
 flutter:
   uses-material-design: true

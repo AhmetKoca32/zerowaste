@@ -49,8 +49,18 @@ class PostEntry {
   /// Returns the admin note appropriate for the given locale.
   /// Falls back to the other language if the primary is missing.
   String? localizedAdminNote(String localeCode) {
-    if (localeCode == 'en') return adminNoteEn ?? adminNote;
-    return adminNote ?? adminNoteEn;
+    final tr = adminNote?.trim();
+    final en = adminNoteEn?.trim();
+    final trEmpty = tr == null || tr.isEmpty;
+    final enEmpty = en == null || en.isEmpty;
+    if (localeCode == 'en') {
+      if (!enEmpty) return en;
+      if (!trEmpty) return tr;
+      return null;
+    }
+    if (!trEmpty) return tr;
+    if (!enEmpty) return en;
+    return null;
   }
 
   PostEntry copyWith({
@@ -99,11 +109,34 @@ class PostEntry {
       status: _parseStatus(data['status'] as String?),
       isAdminBonus: data['isAdminBonus'] as bool? ?? false,
       isAdminPenalty: data['isAdminPenalty'] as bool? ?? false,
-      adminNote: data['adminNote'] as String?,
-      adminNoteEn: data['adminNoteEn'] as String?,
+      adminNote: _parseLocalizedString(data, const [
+        'adminNote',
+        'adminNoteTr',
+        'reason',
+        'reasonTr',
+        'note',
+        'noteTr',
+      ]),
+      adminNoteEn: _parseLocalizedString(data, const [
+        'adminNoteEn',
+        'reasonEn',
+        'noteEn',
+      ]),
       leaderboardOptIn: data['leaderboardOptIn'] as bool? ?? false,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
+  }
+
+  /// First non-empty string among [keys] in [data].
+  static String? _parseLocalizedString(
+    Map<String, dynamic> data,
+    List<String> keys,
+  ) {
+    for (final key in keys) {
+      final value = data[key];
+      if (value is String && value.trim().isNotEmpty) return value.trim();
+    }
+    return null;
   }
 
   /// Reads `imageUrl` first, then legacy `imagePath` if it looks like a URL.

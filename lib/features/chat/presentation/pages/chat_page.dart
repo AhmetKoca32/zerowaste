@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -34,9 +32,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
   bool _isSending = false;
   bool _chatStarted = false;
 
-  /// Background auto-clear timer (5 minutes).
-  Timer? _backgroundTimer;
-  static const _backgroundTimeout = Duration(minutes: 5);
+  /// Set to `messages.length` when a fresh EcoChef reply arrives; cleared when done.
+  /// Null means no typewriter (e.g. hydrated history / already finished).
+  int? _typewriterForLength;
 
   @override
   bool get wantKeepAlive => true; // Keep state alive across tab switches
@@ -50,7 +48,6 @@ class _ChatPageState extends ConsumerState<ChatPage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _backgroundTimer?.cancel();
     _focusNode.dispose();
     _controller.dispose();
     _scrollController.dispose();
@@ -59,21 +56,17 @@ class _ChatPageState extends ConsumerState<ChatPage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    final hasMessages = ref.read(chatMessagesProvider).isNotEmpty;
-
-    if (state == AppLifecycleState.paused && hasMessages) {
-      // Uygulama arka plana gitti — 5 dakika sonra sohbeti temizle
-      _backgroundTimer?.cancel();
-      _backgroundTimer = Timer(_backgroundTimeout, () {
-        if (mounted) {
-          ref.read(chatMessagesProvider.notifier).clear();
-          setState(() => _chatStarted = false);
+    if (state == AppLifecycleState.resumed) {
+      // Drop session if 24h TTL elapsed while app was backgrounded.
+      ref.read(chatMessagesProvider.notifier).purgeIfExpired().then((_) {
+        if (!mounted) return;
+        if (ref.read(chatMessagesProvider).isEmpty && _chatStarted) {
+          setState(() {
+            _chatStarted = false;
+            _typewriterForLength = null;
+          });
         }
       });
-    } else if (state == AppLifecycleState.resumed) {
-      // Kullanıcı geri döndü — timer'ı iptal et
-      _backgroundTimer?.cancel();
-      _backgroundTimer = null;
     }
   }
 
@@ -100,7 +93,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
     if (text.isEmpty || _isSending) return;
 
     final sentCount = ref.read(dailyMessageCountProvider).valueOrNull ?? 0;
-    if (sentCount >= 20) {
+    if (sentCount >= DailyMessageCount.maxMessages) {
       ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(l10n.chatDailyLimit),
@@ -115,9 +108,15 @@ class _ChatPageState extends ConsumerState<ChatPage>
     _controller.clear();
 
     final notifier = ref.read(chatMessagesProvider.notifier);
-    notifier.add(ChatMessageEntry(text: text, isUser: true));
+    // Snapshot before adding the new user bubble — sent as model memory.
+    final priorTurns = ref
+        .read(chatMessagesProvider)
+        .map((e) => (text: e.text, isUser: e.isUser))
+        .toList(growable: false);
+
+    await notifier.add(ChatMessageEntry(text: text, isUser: true));
     await ref.read(dailyMessageCountProvider.notifier).increment();
-    
+
     _scrollToBottom();
 
     setState(() => _isSending = true);
@@ -126,7 +125,10 @@ class _ChatPageState extends ConsumerState<ChatPage>
     String? userFacingError;
     try {
       final deepSeek = ref.read(deepSeekServiceProvider);
-      reply = await deepSeek.chatWithMascot(aiTextOverride ?? text);
+      reply = await deepSeek.chatWithMascot(
+        aiTextOverride ?? text,
+        priorTurns: priorTurns,
+      );
     } on DeepSeekConnectionException {
       userFacingError = l10n.chatConnectionError;
     } on DeepSeekTimeoutException {
@@ -142,15 +144,21 @@ class _ChatPageState extends ConsumerState<ChatPage>
     if (!mounted) return;
 
     if (reply != null) {
-      notifier.add(ChatMessageEntry(text: reply, isUser: false));
+      await notifier.add(ChatMessageEntry(text: reply, isUser: false));
+      if (!mounted) return;
+      setState(() {
+        _isSending = false;
+        _typewriterForLength = ref.read(chatMessagesProvider).length;
+      });
     } else {
       // The send already cost the user a daily-quota slot; refund it so the
       // failed attempt doesn't burn one of their 20 messages.
       await ref.read(dailyMessageCountProvider.notifier).refund();
+      if (!mounted) return;
+      setState(() => _isSending = false);
       _showErrorSnack(userFacingError!);
     }
 
-    setState(() => _isSending = false);
     _scrollToBottom();
   }
 
@@ -181,7 +189,10 @@ class _ChatPageState extends ConsumerState<ChatPage>
   /// End the current chat session and go back to welcome.
   void _endChat() {
     ref.read(chatMessagesProvider.notifier).clear();
-    setState(() => _chatStarted = false);
+    setState(() {
+      _chatStarted = false;
+      _typewriterForLength = null;
+    });
   }
 
   @override
@@ -291,13 +302,24 @@ class _ChatPageState extends ConsumerState<ChatPage>
       ),
     );
 
-    // Message list
+    final mq = MediaQuery.of(context);
+    // Explicit padding replaces MediaQuery auto-padding; include safe area +
+    // floating EcoChef pill (margin 8 + ~40 height + gap).
+    final topInset = mq.padding.top + 64;
+    // extendBody: padding.bottom already clears the floating navbar.
+    final aboveNav = widget.inTabs ? mq.padding.bottom : mq.viewPadding.bottom;
+    final keyboard = mq.viewInsets.bottom;
+    final inputBottom = keyboard > 0 ? keyboard : aboveNav;
+    const inputBarHeight = 72.0;
+    final listBottomInset = inputBottom + inputBarHeight;
+
+    // Message list (full-bleed so chat shows through under input / navbar)
     final messagesList = messages.isEmpty && !_isSending
         ? const EcoChefChatEmpty()
         : ListView.builder(
             controller: _scrollController,
             reverse: true,
-            padding: const EdgeInsets.fromLTRB(16, 72, 16, 16),
+            padding: EdgeInsets.fromLTRB(16, topInset, 16, listBottomInset),
             itemCount: messages.length + (_isSending ? 1 : 0),
             itemBuilder: (context, index) {
               if (_isSending && index == 0) {
@@ -306,35 +328,34 @@ class _ChatPageState extends ConsumerState<ChatPage>
               final actualIndex = _isSending ? index - 1 : index;
               final message = messages.reversed.toList()[actualIndex];
 
-              // Typewriter effect only for the newest EcoChef message
+              // Typewriter only for a freshly arrived EcoChef reply (once).
               final isNewestEcoChef = actualIndex == 0 && !message.isUser;
+              final runTypewriter = isNewestEcoChef &&
+                  _typewriterForLength == messages.length;
+              final messageIndex = messages.length - 1 - actualIndex;
 
               return ChatBubble(
+                key: ValueKey('msg-$messageIndex'),
                 entry: message,
-                typewriter: isNewestEcoChef,
-                onTypewriterComplete: isNewestEcoChef ? _scrollToBottom : null,
+                typewriter: runTypewriter,
+                onTypewriterComplete: runTypewriter
+                    ? () {
+                        setState(() => _typewriterForLength = null);
+                        _scrollToBottom();
+                      }
+                    : null,
               );
             },
           );
 
     final chatUI = Stack(
       children: [
-        // Column tum alani kaplasin
-        Positioned.fill(
-          child: Column(
-            children: [
-              Expanded(child: messagesList),
-              SafeArea(
-                top: false,
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    bottom: 0,
-                  ),
-                  child: inputBar,
-                ),
-              ),
-            ],
-          ),
+        Positioned.fill(child: messagesList),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: inputBottom,
+          child: inputBar,
         ),
         // Üst başlık: EcoChef — sadece mesaj varken göster
         if (messages.isNotEmpty || _isSending)
@@ -415,6 +436,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
                         onSelected: (value) {
                           if (value == 'clear') {
                             ref.read(chatMessagesProvider.notifier).clear();
+                            setState(() => _typewriterForLength = null);
                           }
                         },
                         itemBuilder: (context) => [
