@@ -74,7 +74,12 @@
 
 ## Yapılacaklar
 
-### 🟡 Yüksek Öncelik
+### 🔴 Prod / Yayın (sıradaki ana hat)
+- [ ] **Firebase Blaze prod planı:** ücretsiz kotayı aşmamak için okuma/yazma/Storage isteklerini envanterle; cache & az-fetch senaryosu
+- [ ] Blaze bütçe uyarısı + hedef limitler netleştir
+- [ ] **App Store’a gönderme** (Blaze planı sonrası hemen)
+
+### 🟡 Yüksek Öncelik (paralel / store öncesi)
 - [ ] Gönderi fotoğrafı E2E test
 - [ ] Admin: `imageUrl` gösterimi
 - [ ] Admin: tarif CRUD

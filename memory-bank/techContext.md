@@ -1,6 +1,6 @@
 # Tech Context: Atıksız Mutfak
 
-**Son Güncelleme:** Temmuz 2026 (17 Temmuz)
+**Son Güncelleme:** Ağustos 2026 (2 Ağustos)
 
 ---
 
@@ -21,12 +21,15 @@
 ### Network & API
 - **dio:** ^5.7.0 (HTTP client, redacted log interceptor)
 - **flutter_dotenv:** ^5.2.1 (environment variables)
+- **DeepSeek** chat completions (OpenAI-compatible)
+  - Recipe: single-turn
+  - EcoChef: multi-turn — last **20** bubbles; assistant history truncate ~**1200** chars
 
 ### Firebase
 - **firebase_core:** ^3.8.1
 - **firebase_auth:** ^5.3.3 (anonim oturum + admin web paneli)
 - **firebase_storage:** ^12.3.6 (gönderi fotoğrafları)
-- **cloud_firestore:** ^5.5.2 (tarif, post, leaderboard)
+- **cloud_firestore:** ^5.5.2 (tarif, post, leaderboard, user_profiles)
 - **Firebase Blaze Plan (Kullandıkça Öde):** Spark'tan yükseltildi (Temmuz 2026)
   - Storage: 5 GB depolama, günde 1 GB upload (ücretsiz kota içinde)
   - Düşük trafikli uygulama için aylık maliyet çoğunlukla $0
@@ -34,6 +37,8 @@
 
 ### Data & Storage
 - **shared_preferences:** ^2.3.3
+  - Günlük sayaçlar, öneriler, missions, nickname
+  - **EcoChef session:** `ecochef_chat_session` (JSON, 24h TTL, max 50 bubbles) — cloud chat store yok
 - **path_provider:** ^2.1.4
 - **cached_network_image:** ^3.4.1 (gönderi fotoğrafı thumbnail)
 
@@ -65,17 +70,21 @@ zerowaste/
 │   │   ├── providers/          # core_providers (DeepSeek, Auth, Storage)
 │   │   ├── router/             # AppRouter (GoRouter)
 │   │   ├── services/
-│   │   │   ├── deep_seek_service.dart
+│   │   │   ├── deep_seek_service.dart   # mascotHistoryLimit = 20
 │   │   │   ├── anonymous_auth_service.dart
 │   │   │   └── post_image_storage_service.dart
-│   │   ├── shell/              # MainTabShell, CustomBottomNav
+│   │   ├── shell/              # MainTabShell (extendBody: true), CustomBottomNav
 │   │   ├── theme/
 │   │   └── widgets/
 │   │
 │   ├── features/
 │   │   ├── home/               # Tarif listesi + RecipesComingSoon
 │   │   ├── recipe_generator/   # AI tarif üretimi
-│   │   ├── chat/               # EcoChef sohbet
+│   │   ├── chat/
+│   │   │   ├── data/
+│   │   │   │   ├── chat_message_entry.dart
+│   │   │   │   └── chat_session_storage.dart
+│   │   │   └── presentation/
 │   │   ├── splash/
 │   │   └── points/             # Puan sistemi + gönderi upload
 │   │
@@ -92,15 +101,35 @@ zerowaste/
 
 ---
 
+## EcoChef Limitleri (referans)
+
+| Limit | Değer | Nerede |
+|-------|-------|--------|
+| Günlük user mesaj | 20 | `DailyMessageCount.maxMessages` |
+| API context balon | 20 | `DeepSeekService.mascotHistoryLimit` |
+| Disk session balon | 50 | `ChatSessionStorage.maxMessages` |
+| Session TTL | 24h | `ChatSessionStorage.ttl` |
+| History assistant truncate | ~1200 chars | `_maxHistoryAssistantChars` |
+
+---
+
 ## Önemli Dosya Listesi
 
 ### Core Services
 | Dosya | Açıklama |
 |-------|----------|
-| `lib/core/services/deep_seek_service.dart` | DeepSeek API; chat (mesaj dili) + recipe (app locale) |
+| `lib/core/services/deep_seek_service.dart` | DeepSeek API; EcoChef multi-turn history + recipe single-turn |
 | `lib/core/services/anonymous_auth_service.dart` | Anonim Auth; 20 sn timeout |
 | `lib/core/services/post_image_storage_service.dart` | `putData(bytes)`, max 2 MB, 90 sn timeout |
 | `lib/core/providers/core_providers.dart` | networkService, deepSeek, anonymousAuth, postImageStorage |
+
+### Chat
+| Dosya | Açıklama |
+|-------|----------|
+| `lib/features/chat/data/chat_session_storage.dart` | SharedPreferences session, 24h TTL |
+| `lib/features/chat/data/chat_message_entry.dart` | text + isUser (+ JSON) |
+| `lib/features/chat/presentation/providers/chat_providers.dart` | DailyMessageCount, ChatMessages, suggestions |
+| `lib/features/chat/presentation/pages/chat_page.dart` | Stack layout, typewriter gate, priorTurns |
 
 ### Home / Recipes
 | Dosya | Açıklama |
@@ -115,7 +144,7 @@ zerowaste/
 |-------|----------|
 | `lib/features/points/data/models/post_entry.dart` | imageUrl, localPreviewPath, çift dilli adminNote |
 | `lib/features/points/data/repositories/points_repository.dart` | submitPost, approvePost, leaderboard, optOutUser |
-| `lib/features/points/presentation/pages/points_page.dart` | Storage upload → Firestore submit akışı |
+| `lib/features/points/presentation/pages/points_page.dart` | Storage upload → Firestore; clears chat on soft-delete/opt-out |
 | `lib/features/points/presentation/widgets/post_image_thumbnail.dart` | CachedNetworkImage + local preview |
 
 ---
@@ -162,6 +191,13 @@ zerowaste/
   role: string? ("admin")
 ```
 
+### `user_profiles/{nickname}` (soft-delete)
+```
+  status: "deleted"
+  reason / reasonEn?: string
+```
+Client read-only; yazma admin.
+
 ---
 
 ## Firebase Storage Yapısı
@@ -178,48 +214,18 @@ image_picker → readAsBytes() → anonymousAuth.ensureSignedIn() (20s timeout)
   → PostImageStorageService.uploadPostImage(bytes, postId) (90s timeout)
   → download URL → PostEntry.imageUrl → Firestore submitPost()
 ```
-**Not:** Admin web paneli upload akışına dahil değildir; sadece Firestore'daki `imageUrl`'i okur.
 
 ---
 
-## Firestore Index'leri
-1. `posts`: `status` (Asc) + `createdAt` (Desc)
-2. `posts`: `nickname` (Asc) + `createdAt` (Desc)
-3. `posts`: `status` (Asc) + `leaderboardOptIn` (Asc)
+## Ortam Değişkenleri
+
+`.env` / `--dart-define`:
+- `DEEPSEEK_API_KEY`
 
 ---
 
-## SharedPreferences Anahtarları
+## Geliştirme Notları
 
-| Anahtar | Kullanım |
-|---------|----------|
-| `leaderboard_nickname` | Kullanıcının takma adı |
-| `leaderboard_opt_in` | Leaderboard katılım izni |
-| `last_known_points_{nickname}` | Son bilinen puan (animasyon tespiti) |
-| `missions_date` | Günlük görev sıfırlama tarihi |
-| `missions_completed` | Tamamlanan görevler |
-
----
-
-## Development Setup
-
-```bash
-flutter pub get
-# .env: DEEPSEEK_API_KEY=your_key
-dart run build_runner build --delete-conflicting-outputs
-flutter run
-```
-
----
-
-## Gelecek Teknik Planlar
-
-### Admin Panel (Ayrı Web Projesi)
-- `DynamicStringListField` widget: malzeme/adım dinamik liste input
-- `AdminRecipeForm`: mobil Recipe şemasıyla uyumlu CRUD
-- Route'lar: `/admin/recipes/new`, `/admin/recipes/:id`
-
-### Firebase Blaze Kota Yönetimi
-- Blaze'e geçildi (Temmuz 2026); düşük trafikte $0 beklenir
-- Bütçe uyarısı ($5–10) önerilir
-- Stream yerine tek seferlik `get()` ile Firestore okuma minimize edildi
+- `MainTabShell.extendBody: true` — floating navbar; chat/points bottom padding ile içerik altına uzar
+- Chat cloud’a yazılmaz; sadece cihaz SharedPreferences
+- Admin paneli ayrı Flutter web repo

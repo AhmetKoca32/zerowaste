@@ -1,6 +1,6 @@
 # System Patterns: Atıksız Mutfak
 
-**Son Güncelleme:** Temmuz 2026 (17 Temmuz)
+**Son Güncelleme:** Ağustos 2026 (2 Ağustos)
 
 ---
 
@@ -16,21 +16,23 @@
 ```
 lib/
 ├── core/
-│   ├── theme/              # AppColors, AppTheme, AppTextStyle
-│   ├── shell/              # MainTabShell, CustomBottomNav, tabIndexProvider
+│   ├── theme/
+│   ├── shell/              # MainTabShell (extendBody), CustomBottomNav
 │   ├── services/           # DeepSeek, AnonymousAuth, PostImageStorage
-│   ├── network/            # NetworkService (Dio)
-│   ├── router/             # AppRouter (GoRouter)
+│   ├── network/
+│   ├── router/
 │   ├── constants/
-│   ├── providers/          # core_providers, localeProvider
+│   ├── providers/
 │   └── widgets/
 │
 └── features/
-    ├── home/               # Tarif listesi + RecipesComingSoon
-    ├── recipe_generator/   # AI tarif üretimi (DeepSeek)
-    ├── chat/               # EcoChef AI sohbet
+    ├── home/
+    ├── recipe_generator/
+    ├── chat/
+    │   ├── data/           # ChatMessageEntry, ChatSessionStorage
+    │   └── presentation/
     ├── splash/
-    └── points/             # Gamification + gönderi upload
+    └── points/
 ```
 
 ---
@@ -39,134 +41,99 @@ lib/
 
 ### Riverpod Kullanımı
 
-#### Provider Tipleri
-1. **Provider:** Singleton servisler (NetworkService, DeepSeekService, AnonymousAuthService, PostImageStorageService)
-2. **FutureProvider (keepAlive: true):** `recipeList`, RecentIngredients, DailyChatSuggestions
-3. **StateProvider:** `dailyMessageCountProvider`, `tabIndexProvider`
-4. **StateNotifierProvider:** ChatMessages
+1. **Provider:** NetworkService, DeepSeekService, AnonymousAuthService, PostImageStorageService
+2. **AsyncNotifier (keepAlive):** DailyMessageCount, DailyChatSuggestions, recipeList
+3. **Notifier (keepAlive):** ChatMessages — hydrate/save via ChatSessionStorage
+4. **StateProvider:** tabIndexProvider (0=Tarifler, 1=Oluştur, 2=Chat, 3=Puan)
 
-#### Önemli Providerlar
 ```dart
-// core_providers.dart
-final anonymousAuthServiceProvider = Provider<AnonymousAuthService>(...);
-final postImageStorageServiceProvider = Provider<PostImageStorageService>(...);
-
-// home_providers.dart
-@Riverpod(keepAlive: true)
-Future<List<Recipe>> recipeList(RecipeListRef ref) async { ... }
-
-// tabIndexProvider: 0=Tarifler, 1=Oluştur, 2=Chat, 3=Puan
+DailyMessageCount.maxMessages // 20 user messages / day
+chatMessagesProvider          // keepAlive + SharedPreferences session
 ```
 
 ---
 
 ## Tasarım & Animasyon Pattern'leri
 
-### 1. PointsHeroCard Animation Pattern
-- **Normal**: Counter + progress bar (0→X veya previous→current)
-- **Level-up Journey**: Multi-level geçiş + celebration overlay
-- Ticker sızıntı koruması: `_activeProgressController` pattern
+### 1. PointsHeroCard Animation
+- Normal: previous→current; level-up journey; ticker leak guard
 
-### 2. Points Page Data Refresh & Animation Pattern
-- Tab değişiminde `_loadPosts(allowAnimation: true)` — sadece Puan sekmesine geçildiğinde
-- `total > previousPoints` ise animasyon; değilse statik gösterim
-- SharedPreferences güncellemesi animasyon bitince (`onAnimationComplete`)
-- `_heroAnimationNonce` ile widget yeniden oluşturma
-- Arka planda mount olan TabBarView'da animasyon oynatılmaz
+### 2. Points Page Refresh
+- Tab visible + puan artışı → animasyon; soft-delete / reject / approve overlays
 
-### 3. RecipesComingSoon Empty State Pattern
-- `RecipeRepository._loadFromFirestore()` boş veya hata → `[]`
-- `HomePage`: `recipes.isEmpty` → `RecipesComingSoon` widget
-- Admin panelden tarif eklenene kadar placeholder gösterilir
+### 3. RecipesComingSoon
+- Firestore boş/hata → `[]` → Coming Soon
 
-### 4. Post Image Upload Pattern
+### 4. Post Image Upload
 ```
-Startup: main() → anonymousAuthService.ensureSignedIn() (20s timeout)
-Submit:  image_picker → readAsBytes()
-         → ensureSignedIn() (retry)
-         → postId = repo.newPostId()
-         → PostImageStorageService.uploadPostImage(bytes, postId) (90s timeout)
-         → PostEntry(imageUrl: url) → PointsRepository.submitPost(id: postId)
-Display: PostImageThumbnail → CachedNetworkImage(imageUrl)
+anon auth → putData(bytes) → PostEntry(imageUrl) → Firestore
 ```
-**Admin panel upload'a dahil değil** — sadece Firestore `imageUrl` okur.
 
-### 5. AI Language Patterns
-- **Chat**: Kullanıcı mesaj dilinde yanıt (`_detectMessageLanguage` + `[LANGUAGE RULE]` tag)
-- **Recipe Generator**: App `localeProvider` dilinde (`languageCode` param, ayrı TR/EN prompt)
-- Chat ≠ Create: chat serbest metin, create AppBar TR/EN toggle
+### 5. AI Language
+- **Chat:** user message language + `[LANGUAGE RULE]` on latest turn only
+- **Create:** app localeProvider
 
-### 6. Recipe Data Model ↔ Admin Form Alignment
-Mobil ve admin panel aynı Firestore şemasını paylaşır:
+### 6. EcoChef Chat Session & Layout
 ```
-title:        string          → tek satır input
-description:  string?         → multiline textarea
-ingredients:  string[]        → DynamicStringListField (bullet list mobilde)
-instructions: string[]        → DynamicStringListField + showNumbers (numaralı adım mobilde)
-image_url:    string?         → URL input (ileride upload)
+Disk: ChatSessionStorage (ecochef_chat_session)
+  TTL 24h | max 50 bubbles
+
+UI Stack:
+  ListView.builder(reverse: true)
+    topInset = safeArea.top + 64
+    bottomInset = nav clearance + input height
+  Positioned floating input
+  Floating EcoChef pill
+
+Typewriter: only fresh AI reply (_typewriterForLength == messages.length)
 ```
-**Kural:** ingredients/instructions asla tek string veya virgülle ayrılmış metin olarak kaydedilmez.
 
-### 7. Çift Dilli Admin Notları Pattern
-- `adminNote` (TR) + `adminNoteEn` (EN)
-- `localizedAdminNote(localeCode)` metodu
+### 7. EcoChef API Conversation Memory
+```
+priorTurns = messages before new user bubble
+chatWithMascot(message, priorTurns:)
+  → last mascotHistoryLimit (20) bubbles
+  → truncate assistant history ~1200 chars
+  → LANGUAGE RULE only on latest user message
+```
 
-### 8. SharedPreferences Daily Reset Pattern
-- `missions_date` + `missions_completed` ile günlük görev sıfırlama
+### 8. Recipe ↔ Admin Form
+ingredients[] / instructions[] as string arrays only
+
+### 9. Admin Notes
+adminNote + adminNoteEn → localizedAdminNote(localeCode)
+
+### 10. SharedPreferences Daily Reset
+missions_date, daily_message_date, chat_suggestions_date
 
 ---
 
 ## Data Flow Patterns
 
-### Points & Admin Entegrasyonu
+### Points & Admin
 ```
-Kullanıcı fotoğraf çeker → Nickname dialog (ilk sefer)
-  → anonymousAuth.ensureSignedIn()
-  → Storage upload (posts/{postId}/photo.jpg)
-  → PostEntry(imageUrl) → PointsRepository.submitPost()
-  → Admin web panel → getPendingPosts() → onayla/reddet
-  → Kullanıcı tab değiştirince → _loadPosts() → animasyon kararı
+foto → nickname → Storage → posts → admin onay/ret → _loadPosts
+soft-delete user_profiles → clear nick + chat session + missions
 ```
 
-### Recipe Data Flow
+### Recipes
 ```
-Admin panel → Firestore recipes/{id} (ingredients[], instructions[])
-  → RecipeRepository.getRecipes() → recipeListProvider
-  → HomePage → RecipeBlogCard → RecipeDetailSheet
-  → ingredients: bullet list, instructions: numbered steps
+Admin → Firestore recipes → RecipeRepository → HomePage
 ```
 
-### Leaderboard Mekanizması
+### EcoChef
 ```
-Admin onaylar → _recalculateLeaderboard()
-  → approved + optIn postlar → puan toplama
-  → leaderboard/current güncelleme
+ChatMessages ↔ ChatSessionStorage (24h)
+  → DeepSeek: system + last 20 turns
+```
 
-Kullanıcı opt-out → optOutUser() → leaderboardOptIn=false batch
-  → _recalculateLeaderboard()
+### Leaderboard
+```
+approve → recalculate leaderboard/current
+opt-out → leaderboardOptIn=false + recalculate
 ```
 
 ---
 
-## Admin Panel Responsive Tasarım (Ayrı Web Projesi)
-```
-LayoutBuilder → genişlik >= 600px → Row(sidebar | content)
-               → genişlik < 600px → Scaffold(drawer | body)
-```
-
-### Admin Recipe Form (Planlanan)
-```
-DynamicStringListField
-  ├── items: List<String>
-  ├── onChanged: (List<String>) → void
-  ├── addButtonText, placeholder, label
-  └── showNumbers: bool (adımlar için true)
-
-AdminRecipeForm
-  ├── title (TextField)
-  ├── description (TextField, multiline)
-  ├── image_url (TextField, optional)
-  ├── ingredients (DynamicStringListField)
-  ├── instructions (DynamicStringListField, showNumbers: true)
-  └── validation: title required, min 1 ingredient, min 1 instruction
-```
+## Admin Panel (Ayrı Web)
+LayoutBuilder ≥600 sidebar / &lt;600 drawer. Tarif formu: DynamicStringListField (planlanan).
