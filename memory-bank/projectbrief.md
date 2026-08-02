@@ -26,15 +26,17 @@ Atıksız Mutfak, kullanıcıların elindeki malzemelerle atıksız prensiplerin
 ### 2. AI Tarif Üretimi
 - DeepSeek API (OpenAI uyumlu, retry mekanizmalı)
 - Malzeme girişi + son eklenenler (SharedPreferences)
-- Mutfak stili seçimi
+- Mutfak stili seçimi (locale'e göre lokalize etiket)
+- **Uygulama locale'ine göre tarif dili** (TR/EN AppBar toggle)
 - Loading overlay (EcoChef denizati animasyonu)
-- AI çıktısını Recipe modeline dönüştürme (RecipeParser)
+- RecipeParser (TR + EN format)
 - Kaydettiğim Tarifler: max 5
 
 ### 3. AI Sohbet (EcoChef)
 - Sıfır atık mutfak yardımcısı
 - DeepSeek API ile sohbet, günlük 20 mesaj sınırı
-- Welcome ekranı + öneri havuzu (5 kategori, 34 öneri)
+- **Kullanıcının yazdığı dilde yanıt** (EN in → EN out, TR in → TR out)
+- Welcome ekranı + öneri havuzu (34 öneri, locale'e göre)
 - Typewriter + reverse typewriter animasyonu
 - Markdown destekli sohbet balonları
 - 5 dk auto-clear timer
@@ -51,10 +53,11 @@ Atıksız Mutfak, kullanıcıların elindeki malzemelerle atıksız prensiplerin
 - **Admin Kesintisi/Bonusu**: Çift dilli not (TR/EN)
 
 ### 5. Gönderi Fotoğrafları (Firebase Storage)
-- Anonim Firebase Auth ile oturum (kullanıcıdan login istenmez)
-- `posts/{postId}/photo.jpg` yoluna upload (max 2 MB)
-- Firestore'da `imageUrl` olarak download URL saklanır
-- Admin panelde fotoğraf URL üzerinden görüntülenebilir
+- **Firebase Blaze** planı (Temmuz 2026)
+- Anonim Firebase Auth (startup + upload öncesi, kullanıcıdan login istenmez)
+- `posts/{postId}/photo.jpg` upload (`putData(bytes)`, max 2 MB, timeout'lu)
+- Firestore'da `imageUrl` (Storage download URL)
+- Admin panel (ayrı repo): `imageUrl` ile fotoğraf gösterimi (yapılacak)
 
 ### 6. Admin Paneli (Ayrı Web Projesi)
 - Mobil uygulamadan tamamen ayrılmış
@@ -96,15 +99,14 @@ Atıksız Mutfak, kullanıcıların elindeki malzemelerle atıksız prensiplerin
 
 ## Gelecek Planlar
 
-### Admin Panel Tarif Formu
-- `DynamicStringListField` widget (malzeme + adım için ortak)
-- `AdminRecipeForm` ile Firestore CRUD
-- İlk tariflerin admin panelden eklenmesi
+### Admin Panel (Ayrı Web Projesi)
+- `DynamicStringListField` + `AdminRecipeForm` tarif CRUD
+- Gönderi onay ekranında `imageUrl` ile fotoğraf gösterimi
+- İlk tariflerin eklenmesi (mobilde Coming Soon kalkar)
 
-### Firebase Spark Plan Kotası
-- Storage 20KB/gün upload limiti izlenmeli
-- Yoğun kullanımda Blaze geçişi değerlendirilecek
-- Stream yerine tek seferlik `get()` ile okuma minimize edildi
+### Firebase Blaze Kota Yönetimi
+- Blaze'e geçildi; düşük trafikte $0
+- Bütçe uyarısı ($5–10) aktif tutulmalı
 
 ### Admin ↔ Mobil Senkronizasyon
 - Kullanıcı opt-out/silme durumunun admin panele yansıması

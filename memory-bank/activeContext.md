@@ -1,83 +1,79 @@
 # Active Context: Atıksız Mutfak
 
 **Son Güncelleme:** Temmuz 2026 (17 Temmuz)  
-**Aktif Çalışma:** Admin paneli (ayrı web projesi) tarif formu tasarımı; mobilde gönderi fotoğrafı yükleme (Firebase Storage) tamamlandı.
+**Aktif Çalışma:** Admin paneli (ayrı web projesi) tarif formu + gönderi fotoğrafı gösterimi; mobil upload stabilizasyonu test ediliyor.
 
 ---
 
 ## Son Yapılan Değişiklikler
 
-### 1. Gönderi Fotoğrafı — Firebase Storage Entegrasyonu
-- **`AnonymousAuthService`**: Uygulama açılışında anonim Firebase Auth oturumu (`main.dart`)
-- **`PostImageStorageService`**: Fotoğrafları `posts/{postId}/photo.jpg` yoluna yükler (max 2 MB, JPEG)
-- **`storage.rules`**: Auth zorunlu, 2 MB limit, sadece `image/*` content type
-- **`PostEntry`**: `imageUrl` (Storage download URL) + `localPreviewPath` (optimistic preview, persist edilmez)
-- **`PostImageThumbnail`**: `CachedNetworkImage` ile remote URL veya local preview gösterimi
-- **`points_page.dart`**: Gönderi akışı önce Storage'a upload → sonra Firestore'a `imageUrl` ile kayıt
-- **`firebase.json`**: Storage rules eklendi
-- **`pubspec.yaml`**: `firebase_storage`, `cached_network_image` eklendi
+### 1. Puan Animasyonu Düzeltildi
+- **`_loadPosts(allowAnimation:)`**: Animasyon yalnızca Puan sekmesine geçildiğinde ve `total > previousPoints` iken tetiklenir
+- **Erken prefs kaydı kaldırıldı**: Puan arttığında SharedPreferences, animasyon bitene kadar güncellenmez (`onAnimationComplete` / `onJourneyComplete`)
+- **Arka plan yüklemesi**: Uygulama başka sekmedeyken veri çekilir ama animasyon oynatılmaz
+- **`_heroAnimationNonce`**: Her animasyonda widget yeniden oluşturulur
+- **`PointsHeroCard._startNormalAnimation`**: Artık `previousPoints`'tan başlar (0 veya level.min değil)
 
 ### 2. Tarif Listesi — Firestore-Only + Coming Soon
-- **`RecipeRepository`**: Firestore boşsa veya hata verirse artık local JSON fallback yok → `[]` döner
-- **`RecipesComingSoon`**: Tarif listesi boşken animasyonlu placeholder gösterilir
-- Admin panelden tarif eklenene kadar mobilde "yakında" ekranı görünür
-- Yerel `assets/data/recipes.json` hâlâ mevcut ama runtime'da kullanılmıyor (`useFirestore: true`)
+- **`RecipeRepository`**: Firestore boşsa/hata verirse `[]` döner (local JSON fallback kaldırıldı)
+- **`RecipesComingSoon`**: Boş listede animasyonlu placeholder (denizati float + pulsing dots)
+- **`home_providers`**: AI üretilen tarifler ana sayfadan ayrıldı (sadece Firestore admin tarifleri)
 
-### 3. Admin Paneli Tarif Formu Tasarım Kararı (Ayrı Web Projesi)
-Admin paneli mobil uygulamadan ayrı bir Flutter Web projesi olarak geliştiriliyor. Tarif ekleme/düzenleme formu mobil uygulamadaki görünümle birebir uyumlu olmalı:
+### 3. AI Dil Desteği
+- **Chat (EcoChef)**: Kullanıcının yazdığı dilde yanıt (EN in → EN out, TR in → TR out)
+  - İngilizce system prompt + `[LANGUAGE RULE]` etiketi
+  - Basit dil algılama (`_detectMessageLanguage`)
+  - Welcome öneri chip'leri `localized(localeCode)` ile gönderilir
+- **Tarif Üretici (Oluştur)**: **Uygulama locale'ine** göre (TR/EN toggle)
+  - Ayrı TR/EN system prompt ve format (`Başlık` vs `Title`)
+  - `RecipeParser` İngilizce header desteği
+  - Malzemeler Türkçe olsa bile EN modda tarif adı İngilizce olmalı
 
-| Alan | Admin input | Firestore tipi | Mobil görünüm |
-|------|-------------|----------------|---------------|
-| `title` | Tek satır TextField (zorunlu) | `string` | Başlık |
-| `description` | Multiline textarea (opsiyonel) | `string?` | Tek paragraf |
-| `ingredients` | Dinamik liste (ekle/sil) | `string[]` | Bullet list (madde madde) |
-| `instructions` | Dinamik liste (ekle/sil, numaralı) | `string[]` | Numaralı adımlar (1, 2, 3…) |
-| `image_url` | URL input (opsiyonel) | `string?` | Kapak fotoğrafı |
+### 4. Gönderi Fotoğrafı — Firebase Storage + Anonymous Auth
+- **Firebase Blaze planına geçildi** (Storage kullanımı için)
+- **`AnonymousAuthService`**: Startup + upload öncesi anonim oturum (20 sn timeout)
+- **`PostImageStorageService`**: `putData(bytes)` ile upload (iOS temp path sorunu giderildi), 90 sn timeout
+- **`storage.rules`**: Deploy edildi (`firebase deploy --only storage`)
+- **`PostEntry.imageUrl`**: Firestore'da Storage download URL
+- **`PostImageThumbnail`**: CachedNetworkImage
+- Upload overlay: "Fotoğraf yükleniyor…" + hata snackbar
 
-**Önemli kurallar:**
-- Malzemeler ve adımlar tek textarea'ya virgülle/newline ile yazılmamalı
-- Her malzeme/adım ayrı input satırı → Firestore'da `string[]` olarak kaydedilmeli
-- Dizi sırası = mobildeki adım numarası
-- Boş satırlar kayıt öncesi filtrelenmeli
-- `DynamicStringListField` widget'ı hem malzemeler hem adımlar için yeniden kullanılabilir
+### 5. Admin Paneli (Ayrı Web Projesi — Devam Ediyor)
+- Tarif formu tasarım kararı netleştirildi (`DynamicStringListField`, `string[]` malzeme/adım)
+- **Gönderi fotoğrafı**: Admin panelde henüz `imageUrl` gösterimi yapılmadı (ayrı repo)
+- Mobil upload admin panelden bağımsız çalışır
 
-### 4. iOS SceneDelegate
-- **`ios/Runner/SceneDelegate.swift`**: iOS scene lifecycle desteği eklendi
+### 6. iOS SceneDelegate
+- **`ios/Runner/SceneDelegate.swift`**: iOS scene lifecycle desteği
 
 ---
 
 ## Bilinen Sorunlar (Öncelik Sırasına Göre)
 
-### 🔴 KRİTİK
-
-- [ ] **Puan Sayfası Animasyon Sorunu**: HeroCard counter her sayfa açılışında 0'dan sayıyor. Değişiklik olmasa bile. Beklenen: sadece puan arttığında önceki puandan başlayıp yeni puana animasyon; değişiklik yoksa statik gösterim.
-- [ ] **Progress Bar Hizalama**: `_GradientArcPainter` ile `_BackgroundRingPainter` arasında hizalama sorunu olabilir.
-
 ### 🟡 YÜKSEK
 
-- [ ] **Admin paneli tarif CRUD**: Ayrı web projesinde `DynamicStringListField` + `AdminRecipeForm` implementasyonu
-- [ ] **Mobil çıkış/silme → admin panel senkronizasyonu**: Opt-out veya silme admin panelde yansımıyor; Firestore listener veya refresh gerekli
-- [ ] **Firebase Spark plan kotası**: Storage upload limitleri (20KB/gün) test edilmeli; yoğun kullanımda Blaze geçişi gerekebilir
-- [ ] **Firebase Spark Plan Kısıtlamalarını Aşma Planı**: Testler bittikten sonra kapsamlı kota stratejisi
+- [ ] **Gönderi fotoğrafı upload testi**: Blaze + Anonymous Auth + storage rules deploy edildi; kullanıcıda "yükleniyor" ekranında takılma bildirildi → bytes upload + timeout eklendi, tekrar test gerekli
+- [ ] **Admin panel gönderi fotoğrafı**: Ayrı web projesinde `imageUrl` ile `Image.network` gösterimi yapılmalı
+- [ ] **Admin panel tarif CRUD**: `DynamicStringListField` + `AdminRecipeForm` implementasyonu
+- [ ] **Mobil çıkış/silme → admin panel senkronizasyonu**: Opt-out/silme admin panelde yansımıyor
 
 ### 🟢 DÜŞÜK
 
+- [ ] Progress bar hizalama (`_GradientArcPainter` / `_BackgroundRingPainter`)
 - [ ] Günlük chat limit reset mekanizması kontrolü
 - [ ] RecipeSyncService main()'de çağrılmadı
-- [ ] Firestore `recipes` koleksiyonuna ilk tariflerin admin panelden eklenmesi
+- [ ] Firestore `recipes` koleksiyonuna admin panelden ilk tariflerin eklenmesi
 
 ---
 
 ## Firebase Yapılandırması
 
-- [x] `posts` koleksiyonu
-- [x] `leaderboard/current` dokümanı
-- [x] `admins/{uid}` dokümanı
-- [x] Firebase Authentication (Email/Password + Anonymous)
-- [x] Firestore rules (`recipes` admin-only write)
-- [x] Storage rules (`posts/{postId}/{fileName}`)
+- [x] Firebase **Blaze** planı (kart bağlı, düşük trafikte ~$0)
+- [x] `posts`, `leaderboard/current`, `admins/{uid}` koleksiyonları
+- [x] Firebase Authentication: Email/Password + **Anonymous** (enabled)
+- [x] Firestore rules + Storage rules (`storage.rules` deployed)
 - [x] Firestore index'leri
-- [ ] `recipes` koleksiyonuna admin panelden tarif ekleme (devam ediyor)
+- [ ] Admin panelden `recipes` koleksiyonuna tarif ekleme
 
 ---
 
@@ -85,10 +81,11 @@ Admin paneli mobil uygulamadan ayrı bir Flutter Web projesi olarak geliştirili
 
 | Tarih | Karar | Gerekçe |
 |-------|-------|---------|
-| 17 Temmuz | Admin tarif formu: malzeme/adım dinamik liste | Mobil uygulama `ingredients` ve `instructions` alanlarını `string[]` olarak madde madde / numaralı adım şeklinde render ediyor; tek textarea uyumsuz olur |
-| 17 Temmuz | Tarif listesi local JSON fallback kaldırıldı | Admin panelden yönetilen tek kaynak Firestore; boşken RecipesComingSoon göster |
-| 17 Temmuz | Gönderi fotoğrafları Firebase Storage'a | Google Drive yerine Firebase ekosistemi içinde çözüm; anonim auth ile nickname-only kullanıcılar upload yapabilir |
-| 17 Temmuz | Anonim Firebase Auth startup'ta | Storage rules `request.auth != null` gerektiriyor; kullanıcıdan ayrı login istemiyoruz |
-| 18 Mayıs | Puan animasyonu tab geçişinde tetiklensin | Küçük progress animasyonu UX için önemli |
-| 18 Mayıs | Realtime stream yerine tab-switch listener | Firestore okuma kotası tasarrufu |
-| 18 Mayıs | `firestore.rules` leaderboard write herkese açık | Mobil opt-out'u engellememek için |
+| 17 Temmuz | Firebase Blaze planına geçiş | Spark Storage 20KB/gün upload limiti pratikte kullanılamazdı |
+| 17 Temmuz | Anonymous Auth (startup + upload) | Storage rules `request.auth != null`; nickname-only kullanıcıdan login istemiyoruz |
+| 17 Temmuz | `putData(bytes)` ile upload | iOS geçici dosya yolu upload sırasında silinebiliyordu |
+| 17 Temmuz | Chat: kullanıcı mesaj dili; Create: app locale | Chat serbest metin; Create AppBar TR/EN toggle ile kontrol edilir |
+| 17 Temmuz | Puan animasyonu sadece tab visible + puan arttıysa | Arka planda animasyon tüketimi ve gereksiz 0→X sayımı önlendi |
+| 17 Temmuz | Tarif listesi JSON fallback kaldırıldı | Admin panel tek kaynak; boşken Coming Soon |
+| 17 Temmuz | Admin tarif formu dinamik liste | Mobil `ingredients[]` / `instructions[]` render uyumu |
+| 18 Mayıs | Tab-switch listener (stream değil) | Firestore okuma kotası tasarrufu |

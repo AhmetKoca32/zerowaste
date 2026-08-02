@@ -27,9 +27,10 @@
 - **firebase_auth:** ^5.3.3 (anonim oturum + admin web paneli)
 - **firebase_storage:** ^12.3.6 (gönderi fotoğrafları)
 - **cloud_firestore:** ^5.5.2 (tarif, post, leaderboard)
-- **Firebase Spark (Ücretsiz) Plan:** 1GB depolama, 10K yazma/gün, 50K okuma/gün
-  - Storage: 5GB depolama, **20KB yükleme/gün** (yoğun kullanımda yetersiz)
-  - Hosting: 10GB depolama, 100MB/gün bant genişliği
+- **Firebase Blaze Plan (Kullandıkça Öde):** Spark'tan yükseltildi (Temmuz 2026)
+  - Storage: 5 GB depolama, günde 1 GB upload (ücretsiz kota içinde)
+  - Düşük trafikli uygulama için aylık maliyet çoğunlukla $0
+  - Bütçe uyarısı önerilir ($5–10)
 
 ### Data & Storage
 - **shared_preferences:** ^2.3.3
@@ -96,8 +97,9 @@ zerowaste/
 ### Core Services
 | Dosya | Açıklama |
 |-------|----------|
-| `lib/core/services/anonymous_auth_service.dart` | Anonim Firebase Auth; Storage upload için oturum |
-| `lib/core/services/post_image_storage_service.dart` | `posts/{postId}/photo.jpg` upload, max 2 MB |
+| `lib/core/services/deep_seek_service.dart` | DeepSeek API; chat (mesaj dili) + recipe (app locale) |
+| `lib/core/services/anonymous_auth_service.dart` | Anonim Auth; 20 sn timeout |
+| `lib/core/services/post_image_storage_service.dart` | `putData(bytes)`, max 2 MB, 90 sn timeout |
 | `lib/core/providers/core_providers.dart` | networkService, deepSeek, anonymousAuth, postImageStorage |
 
 ### Home / Recipes
@@ -171,10 +173,12 @@ zerowaste/
 
 ### Upload Akışı
 ```
-image_picker → bytes oku → anonymousAuth.ensureSignedIn()
-  → PostImageStorageService.uploadPostImage(postId)
+image_picker → readAsBytes() → anonymousAuth.ensureSignedIn() (20s timeout)
+  → postId = repo.newPostId()
+  → PostImageStorageService.uploadPostImage(bytes, postId) (90s timeout)
   → download URL → PostEntry.imageUrl → Firestore submitPost()
 ```
+**Not:** Admin web paneli upload akışına dahil değildir; sadece Firestore'daki `imageUrl`'i okur.
 
 ---
 
@@ -215,6 +219,7 @@ flutter run
 - `AdminRecipeForm`: mobil Recipe şemasıyla uyumlu CRUD
 - Route'lar: `/admin/recipes/new`, `/admin/recipes/:id`
 
-### Firebase Spark Kota Yönetimi
-- Storage 20KB/gün upload limiti izlenmeli
-- Yoğun kullanımda Blaze geçişi veya görsel sıkıştırma stratejisi
+### Firebase Blaze Kota Yönetimi
+- Blaze'e geçildi (Temmuz 2026); düşük trafikte $0 beklenir
+- Bütçe uyarısı ($5–10) önerilir
+- Stream yerine tek seferlik `get()` ile Firestore okuma minimize edildi

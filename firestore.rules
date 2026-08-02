@@ -3,35 +3,72 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Tarifler: herkes okuyabilir (mobil uygulama), sadece admin yazabilir
+    function adminPath() {
+      return /databases/$(database)/documents/admins/$(request.auth.uid);
+    }
+
+    function isActiveAdmin() {
+      return request.auth != null
+        && exists(adminPath())
+        && get(adminPath()).data.get('disabled', false) != true;
+    }
+
+    function adminRole() {
+      return get(adminPath()).data.keys().hasAny(['role'])
+        && get(adminPath()).data.role is string
+        && get(adminPath()).data.role != ''
+          ? get(adminPath()).data.role.lower()
+          : 'owner';
+    }
+
+    function isSuperAdmin() {
+      return isActiveAdmin()
+        && (adminRole() == 'superadmin' || adminRole() == 'super_admin');
+    }
+
+    function canManageRecipes() {
+      return isActiveAdmin()
+        && (
+          adminRole() == 'superadmin'
+          || adminRole() == 'super_admin'
+          || adminRole() == 'owner'
+          || adminRole() == 'editor'
+        );
+    }
+
+    function canModerate() {
+      return isActiveAdmin()
+        && (
+          adminRole() == 'superadmin'
+          || adminRole() == 'super_admin'
+          || adminRole() == 'owner'
+          || adminRole() == 'moderator'
+        );
+    }
+
     match /recipes/{recipeId} {
       allow read: if true;
-      allow create, update, delete: if request.auth != null
-        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow create, update, delete: if canManageRecipes();
     }
 
-    // Gonderiler: giris yapmamis kullanici yazabilir (firebase auth optional)
-    // Admin onay/red yapabilir
-    // Mobil kullanici kendi opt-out islemi icin sadece leaderboardOptIn alanini guncelleyebilir
     match /posts/{postId} {
-      allow create: if true;  // herkes gonderi olusturabilir
-      allow read: if true;    // herkes okuyabilir
-      allow update: if (request.auth != null
-        && exists(/databases/$(database)/documents/admins/$(request.auth.uid)))
-        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['leaderboardOptIn']);
-      allow delete: if request.auth != null
-        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow create: if true;
+      allow read: if true;
+      allow update: if canModerate()
+        || request.resource.data.diff(resource.data)
+             .affectedKeys().hasOnly(['leaderboardOptIn']);
+      allow delete: if isSuperAdmin();
     }
 
-    // Leaderboard: herkes okuyabilir ve yazabilir (veri posts koleksiyonundan hesaplanir)
     match /leaderboard/{docId} {
       allow read: if true;
       allow write: if true;
     }
 
-    // Admin listesi: giriş yapmış kullanıcı sadece kendi kaydını okuyabilir (admin mi kontrolü)
     match /admins/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
+      allow get: if request.auth != null
+        && (request.auth.uid == userId || isSuperAdmin());
+      allow list: if isSuperAdmin();
       allow write: if false;
     }
   }

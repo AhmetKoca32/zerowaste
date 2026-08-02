@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 /// Splash screen with a narrative sequence:
 /// 1. AB logo appears big at center → holds → shrinks & moves to bottom-left
 /// 2. UA logo appears big at center → holds → shrinks & moves to bottom-right
-/// 3. EU funded logo slides down from above
-/// 4. Atıksız Mutfak logo appears higher up at center and stays
+/// 3. EU funded + partner logos fade/slide in
+/// 4. Developer credit + Atıksız Mutfak logo appear and stay
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
 
@@ -23,6 +23,8 @@ class _SplashPageState extends State<SplashPage>
   late final Animation<double> _abProgress;
   late final Animation<double> _uaProgress;
   late final Animation<double> _euProgress;
+  late final Animation<double> _partnersProgress;
+  late final Animation<double> _developerFade;
   late final Animation<double> _atiksizFade;
   late final Animation<Offset> _atiksizSlide;
 
@@ -53,7 +55,19 @@ class _SplashPageState extends State<SplashPage>
       curve: Interval(_t(3100), _t(3900), curve: Curves.easeOutCubic),
     );
 
-    // Act 4: Atıksız appears (3600–4800ms)
+    // Act 3b: Partner row fades in with EU (3200–4000ms)
+    _partnersProgress = CurvedAnimation(
+      parent: _controller,
+      curve: Interval(_t(3200), _t(4000), curve: Curves.easeOutCubic),
+    );
+
+    // Act 4a: Developer credit (slightly before brand)
+    _developerFade = CurvedAnimation(
+      parent: _controller,
+      curve: Interval(_t(3400), _t(4200), curve: Curves.easeOutCubic),
+    );
+
+    // Act 4b: Atıksız appears (3600–4800ms)
     _atiksizFade = CurvedAnimation(
       parent: _controller,
       curve: Interval(_t(3600), _t(4800), curve: Curves.easeOutCubic),
@@ -88,30 +102,60 @@ class _SplashPageState extends State<SplashPage>
       body: Stack(
         children: [
           // ─────────────────────────────────────────
-          // Layer 1: Atıksız Mutfak (higher center)
+          // Layer 0: Developer credit (top)
           // ─────────────────────────────────────────
           Align(
-            alignment: const Alignment(0, -0.3),
+            alignment: Alignment.topCenter,
             child: FadeTransition(
-              opacity: _atiksizFade,
-              child: SlideTransition(
-                position: _atiksizSlide,
-                child: Image.asset(
-                  'assets/images/icons/atıksız_mutfak_logo_1tr.png',
-                  height: 180,
-                  fit: BoxFit.contain,
+              opacity: _developerFade,
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Image.asset(
+                    'assets/images/icons/og yatay.png',
+                    height: 54,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
             ),
           ),
 
           // ─────────────────────────────────────────
-          // Layer 2: EU funded icon — slides down from above
+          // Layer 1: Atıksız Mutfak (higher center)
+          // ─────────────────────────────────────────
+          Align(
+            alignment: const Alignment(0, -0.30),
+            child: FadeTransition(
+              opacity: _atiksizFade,
+              child: SlideTransition(
+                position: _atiksizSlide,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Image.asset(
+                    'assets/images/icons/atıksız_mutfak_logo_1tr.png',
+                    width: double.infinity,
+                    height: 140,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ─────────────────────────────────────────
+          // Layer 2: Partner logos (between brand & EU)
+          // ─────────────────────────────────────────
+          _AnimatedPartnerRow(listenable: _partnersProgress),
+
+          // ─────────────────────────────────────────
+          // Layer 3: EU funded icon — slides down
           // ─────────────────────────────────────────
           _AnimatedEuLogo(listenable: _euProgress),
 
           // ─────────────────────────────────────────
-          // Layer 3: AB logo — hero → final
+          // Layer 4: AB logo — hero → final
           // ─────────────────────────────────────────
           AnimatedBuilder(
             animation: _abProgress,
@@ -119,12 +163,9 @@ class _SplashPageState extends State<SplashPage>
               final t = _abProgress.value;
               if (t <= 0) return const SizedBox.shrink();
 
-              // Fade in during first 300ms (300/1600 ≈ 0.19)
               const fadeEnd = 0.19;
               final opacity = t < fadeEnd ? t / fadeEnd : 1.0;
 
-              // Hold big at center for 1100ms, then shrink over 500ms
-              // 1100/1600 ≈ 0.69
               const holdEnd = 0.69;
               double scale;
               Alignment align;
@@ -136,7 +177,7 @@ class _SplashPageState extends State<SplashPage>
                 scale = 1.0 + 2.3 * (1.0 - shrinkT);
                 align = Alignment.lerp(
                   Alignment.center,
-                  const Alignment(-0.25, 0.8),
+                  const Alignment(-0.25, 0.85),
                   shrinkT,
                 )!;
               }
@@ -156,7 +197,7 @@ class _SplashPageState extends State<SplashPage>
           ),
 
           // ─────────────────────────────────────────
-          // Layer 4: UA logo — hero → final
+          // Layer 5: UA logo — hero → final
           // ─────────────────────────────────────────
           AnimatedBuilder(
             animation: _uaProgress,
@@ -164,12 +205,9 @@ class _SplashPageState extends State<SplashPage>
               final t = _uaProgress.value;
               if (t <= 0) return const SizedBox.shrink();
 
-              // Fade in during first 300ms (300/1600 ≈ 0.19)
               const fadeEnd = 0.19;
               final opacity = t < fadeEnd ? t / fadeEnd : 1.0;
 
-              // Hold big at center for 800ms, then shrink over 500ms
-              // (300ms fade + 800ms hold = 1100ms) → 1100/1600 ≈ 0.69
               const holdEnd = 0.69;
               double scale;
               Alignment align;
@@ -181,7 +219,7 @@ class _SplashPageState extends State<SplashPage>
                 scale = 1.0 + 2.3 * (1.0 - shrinkT);
                 align = Alignment.lerp(
                   Alignment.center,
-                  const Alignment(0.25, 0.8),
+                  const Alignment(0.25, 0.85),
                   shrinkT,
                 )!;
               }
@@ -205,6 +243,85 @@ class _SplashPageState extends State<SplashPage>
   }
 }
 
+/// Partner logos fade + slight scale in as a single row (no extra hero acts).
+class _AnimatedPartnerRow extends AnimatedWidget {
+  const _AnimatedPartnerRow({required super.listenable});
+
+  Animation<double> get progress => listenable as Animation<double>;
+
+  static const _logos = [
+    'assets/images/icons/hryo.png',
+    'assets/images/icons/our-common-future-logo-dark-bg__1_-removebg-preview.png',
+    'assets/images/icons/academy_culture.png',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final t = progress.value;
+    if (t <= 0) return const SizedBox.shrink();
+
+    final opacity = t < 0.35 ? t / 0.35 : 1.0;
+    final scale = 0.92 + (0.08 * t);
+
+    return Align(
+      alignment: const Alignment(0, 0.45),
+      child: Opacity(
+        opacity: opacity,
+        child: Transform.scale(
+          scale: scale,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 28),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                for (var i = 0; i < _logos.length; i++)
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: _StaggeredPartnerLogo(
+                        assetPath: _logos[i],
+                        progress: t,
+                        // ~80ms stagger feel without extending total duration
+                        delay: i * 0.12,
+                        // Left + middle larger than Academy Culture
+                        height: i == 0 ? 64 : (i == 1 ? 64 : 44),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StaggeredPartnerLogo extends StatelessWidget {
+  const _StaggeredPartnerLogo({
+    required this.assetPath,
+    required this.progress,
+    required this.delay,
+    required this.height,
+  });
+
+  final String assetPath;
+  final double progress;
+  final double delay;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final localT = ((progress - delay) / (1.0 - delay)).clamp(0.0, 1.0);
+    final opacity = localT < 0.4 ? localT / 0.4 : 1.0;
+
+    return Opacity(
+      opacity: opacity,
+      child: Image.asset(assetPath, height: height, fit: BoxFit.contain),
+    );
+  }
+}
+
 /// EU funded icon that slides down from above to its final position.
 class _AnimatedEuLogo extends AnimatedWidget {
   const _AnimatedEuLogo({required super.listenable});
@@ -224,10 +341,10 @@ class _AnimatedEuLogo extends AnimatedWidget {
       child: Opacity(
         opacity: opacity,
         child: Align(
-          alignment: const Alignment(0, 0.67),
+          alignment: const Alignment(0, 0.68),
           child: Image.asset(
             'assets/images/icons/co-funded-by-eu-logo-tr.png',
-            height: 48,
+            height: 44,
           ),
         ),
       ),

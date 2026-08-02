@@ -26,13 +26,14 @@ Atıksız Mutfak, AI teknolojisini kullanarak kullanıcıların elindeki malzeme
 
 ### 2. AI Tarif Üretimi (Oluştur)
 - Malzeme girişi + mutfak stili seçimi
-- DeepSeek API ile AI tarif üretimi
+- DeepSeek API; **uygulama locale'ine göre** (TR/EN toggle) tarif üretimi
 - Loading: "EcoChef pişiriyor" animasyonu
 - Üretilen tarifi kaydetme
 
 ### 3. AI Sohbet (Chat/EcoChef)
 - Welcome → Active Chat akışı
 - Günlük 5 öneri, 20 mesaj limiti
+- **Kullanıcının yazdığı dilde yanıt** (EN/TR)
 - Markdown render, typewriter efekti
 
 ### 4. Puan Sistemi (Gamification)
@@ -69,8 +70,8 @@ Atıksız Mutfak, AI teknolojisini kullanarak kullanıcıların elindeki malzeme
 
 ### Önemli UX Detayları
 - Tarif listesi boşken Coming Soon ekranı (admin tarif ekleyene kadar)
-- Gönderi fotoğrafları Firebase Storage'da; admin panelde URL ile görülebilir
-- Gamification: tab geçişinde progress animasyonu
+- Gönderi fotoğrafları Firebase Storage'da (`imageUrl`); admin panelde gösterim ayrı repoda yapılacak
+- Puan animasyonu: tab geçişinde, sadece puan arttığında
 - KVKK/GDPR: nickname ve leaderboard opt-in açık rıza ile
 - Admin notları kullanıcının diline göre gösterilir (TR/EN)
 

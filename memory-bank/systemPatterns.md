@@ -67,10 +67,12 @@ Future<List<Recipe>> recipeList(RecipeListRef ref) async { ... }
 - **Level-up Journey**: Multi-level geçiş + celebration overlay
 - Ticker sızıntı koruması: `_activeProgressController` pattern
 
-### 2. Points Page Data Refresh Pattern
-- Tab değişiminde `tabIndexProvider` listener → `_loadPosts()`
-- SharedPreferences karşılaştırması ile animasyon kararı
-- `key: ValueKey('hero_$_totalPoints')` ile widget yeniden oluşturma
+### 2. Points Page Data Refresh & Animation Pattern
+- Tab değişiminde `_loadPosts(allowAnimation: true)` — sadece Puan sekmesine geçildiğinde
+- `total > previousPoints` ise animasyon; değilse statik gösterim
+- SharedPreferences güncellemesi animasyon bitince (`onAnimationComplete`)
+- `_heroAnimationNonce` ile widget yeniden oluşturma
+- Arka planda mount olan TabBarView'da animasyon oynatılmaz
 
 ### 3. RecipesComingSoon Empty State Pattern
 - `RecipeRepository._loadFromFirestore()` boş veya hata → `[]`
@@ -79,16 +81,22 @@ Future<List<Recipe>> recipeList(RecipeListRef ref) async { ... }
 
 ### 4. Post Image Upload Pattern
 ```
-Startup: main() → anonymousAuthService.ensureSignedIn()
-Submit:  image_picker → bytes → ensureSignedIn() (retry)
+Startup: main() → anonymousAuthService.ensureSignedIn() (20s timeout)
+Submit:  image_picker → readAsBytes()
+         → ensureSignedIn() (retry)
          → postId = repo.newPostId()
-         → PostImageStorageService.uploadPostImage(bytes, postId)
-         → PostEntry(imageUrl: url) → PointsRepository.submitPost()
-Display: PostImageThumbnail(imageUrl, localPreviewPath)
-         → CachedNetworkImage (remote) veya Image.file (local preview)
+         → PostImageStorageService.uploadPostImage(bytes, postId) (90s timeout)
+         → PostEntry(imageUrl: url) → PointsRepository.submitPost(id: postId)
+Display: PostImageThumbnail → CachedNetworkImage(imageUrl)
 ```
+**Admin panel upload'a dahil değil** — sadece Firestore `imageUrl` okur.
 
-### 5. Recipe Data Model ↔ Admin Form Alignment
+### 5. AI Language Patterns
+- **Chat**: Kullanıcı mesaj dilinde yanıt (`_detectMessageLanguage` + `[LANGUAGE RULE]` tag)
+- **Recipe Generator**: App `localeProvider` dilinde (`languageCode` param, ayrı TR/EN prompt)
+- Chat ≠ Create: chat serbest metin, create AppBar TR/EN toggle
+
+### 6. Recipe Data Model ↔ Admin Form Alignment
 Mobil ve admin panel aynı Firestore şemasını paylaşır:
 ```
 title:        string          → tek satır input
@@ -99,11 +107,11 @@ image_url:    string?         → URL input (ileride upload)
 ```
 **Kural:** ingredients/instructions asla tek string veya virgülle ayrılmış metin olarak kaydedilmez.
 
-### 6. Çift Dilli Admin Notları Pattern
+### 7. Çift Dilli Admin Notları Pattern
 - `adminNote` (TR) + `adminNoteEn` (EN)
 - `localizedAdminNote(localeCode)` metodu
 
-### 7. SharedPreferences Daily Reset Pattern
+### 8. SharedPreferences Daily Reset Pattern
 - `missions_date` + `missions_completed` ile günlük görev sıfırlama
 
 ---

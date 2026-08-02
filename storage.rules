@@ -2,6 +2,25 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
+    function adminPath() {
+      return firestore.get(/databases/(default)/documents/admins/$(request.auth.uid));
+    }
+
+    function isActiveAdmin() {
+      return request.auth != null
+        && firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid))
+        && adminPath().data.get('disabled', false) != true;
+    }
+
+    function adminRole() {
+      return adminPath().data.get('role', 'owner');
+    }
+
+    function canManageRecipes() {
+      return isActiveAdmin()
+        && (adminRole() == 'owner' || adminRole() == 'editor');
+    }
+
     // Post photos uploaded by mobile users (anonymous auth required).
     match /posts/{postId}/{fileName} {
       allow read: if true;
@@ -9,6 +28,15 @@ service firebase.storage {
                    && request.resource.size < 2 * 1024 * 1024
                    && request.resource.contentType.matches('image/.*');
       allow delete: if request.auth != null;
+    }
+
+    // Recipe covers: owner/editor only
+    match /recipes/{recipeId}/{fileName} {
+      allow read: if true;
+      allow write: if canManageRecipes()
+                   && request.resource.size < 2 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+      allow delete: if canManageRecipes();
     }
   }
 }
