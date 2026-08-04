@@ -1,6 +1,6 @@
 # System Patterns: Atıksız Mutfak
 
-**Son Güncelleme:** Ağustos 2026 (2 Ağustos)
+**Son Güncelleme:** Ağustos 2026 (4 Ağustos)
 
 ---
 
@@ -56,10 +56,15 @@ chatMessagesProvider          // keepAlive + SharedPreferences session
 ## Tasarım & Animasyon Pattern'leri
 
 ### 1. PointsHeroCard Animation
-- Normal: previous→current; level-up journey; ticker leak guard
+- Seviyeler: `points_levels.dart` (7 rol, artan gap: 0/50/150/300/500/800/1200)
+- Normal: previous→current ring + counter (aynı seviye içinde up/down)
+- Level-up/down: hero içi yatay stepper (`level_up_stepper.dart`); roller L→R düşük→yüksek; up fill / down drain
+- `last_known_points` yalnızca diyalog/animasyon bitince persist
 
 ### 2. Points Page Refresh
-- Tab visible + puan artışı → animasyon; soft-delete / reject / approve overlays
+- Tab visible + puan artışı/azalışı → overlay sonra hero animasyonu
+- Azalış: “Puanların güncellendi”; bekleyen red (puan aynı): “Gönderin reddedildi”
+- Soft reload açık reject overlay’ini kapatmaz
 
 ### 3. RecipesComingSoon
 - Firestore boş/hata → `[]` → Coming Soon
@@ -112,13 +117,16 @@ missions_date, daily_message_date, chat_suggestions_date
 
 ### Points & Admin
 ```
-foto → nickname → Storage → posts → admin onay/ret → _loadPosts
-soft-delete user_profiles → clear nick + chat session + missions
+foto → nickname claim → Storage → posts + pendingCount
+admin onay → user_stats.totalPoints += + LB incremental
+Puan tab → user_stats (1) + posts limit 12
+leaveContest / deleteAppUser → wipeContestNickname (stats+posts+LB sil)
+  → mobil: local session clear (stats yoksa auto-reclaim yok)
 ```
 
 ### Recipes
 ```
-Admin → Firestore recipes → RecipeRepository → HomePage
+Admin → Firestore recipes (TR+EN) → RecipeRepository (isBilingualComplete) → locale resolve → HomePage
 ```
 
 ### EcoChef
@@ -129,8 +137,8 @@ ChatMessages ↔ ChatSessionStorage (24h)
 
 ### Leaderboard
 ```
-approve → recalculate leaderboard/current
-opt-out → leaderboardOptIn=false + recalculate
+approve/bonus/deduct (admin) → incremental entries patch
+wipe (leaveContest / deleteAppUser) → remove nickname from entries
 ```
 
 ---

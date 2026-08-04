@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../network/network_service.dart';
 import '../services/anonymous_auth_service.dart';
 import '../services/deep_seek_service.dart';
+import '../services/leave_contest_service.dart';
 import '../services/post_image_storage_service.dart';
 
 /// Global [NetworkService] (Dio) for API calls.
@@ -22,4 +23,8 @@ final anonymousAuthServiceProvider = Provider<AnonymousAuthService>((ref) {
 
 final postImageStorageServiceProvider = Provider<PostImageStorageService>((ref) {
   return PostImageStorageService();
+});
+
+final leaveContestServiceProvider = Provider<LeaveContestService>((ref) {
+  return LeaveContestService();
 });

@@ -6,7 +6,7 @@ part of 'chat_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$dailyMessageCountHash() => r'e3ee2b7e092327796264a91bf981f8c008e080f5';
+String _$dailyMessageCountHash() => r'e470869b96ef156ea09b9a0d2c32c66ebca3a1e3';
 
 /// Tracks the number of messages sent by the user today (limit is 20).
 ///
@@ -27,7 +27,7 @@ final dailyMessageCountProvider =
     );
 
 typedef _$DailyMessageCount = AsyncNotifier<int>;
-String _$chatMessagesHash() => r'6d00475786b8f0938225439732d98930f75867af';
+String _$chatMessagesHash() => r'18931c4956f85d5ef176c08612527fe763e43eec';
 
 /// EcoChef conversation. Hydrated from [ChatSessionStorage] (24h TTL).
 ///

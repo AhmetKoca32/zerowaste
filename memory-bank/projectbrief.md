@@ -1,10 +1,10 @@
 # Project Brief: Atıksız Mutfak (ZeroWaste)
 
-**Proje Adı:** Atıksız Mutfak  
-**Versiyon:** 0.4.0  
+**Proje Adı:** Atıksız Mutfak / Zerowaste Kitchen  
+**Versiyon:** 0.1.0 (pubspec; store hedefi 1.0.0)  
 **Oluşturulma Tarihi:** Şubat 2025  
-**Son Güncelleme:** Temmuz 2026 (17 Temmuz)  
-**Durum:** Aktif Geliştirme (Admin panel web projesi + mobil iyileştirmeler)
+**Son Güncelleme:** Ağustos 2026 (4 Ağustos)  
+**Durum:** Feature-complete → **App Store hazırlık** (checklist: `memory-bank/app-store-checklist.md`)
 
 ---
 
@@ -17,11 +17,10 @@ Atıksız Mutfak, kullanıcıların elindeki malzemelerle atıksız prensiplerin
 ## Temel Gereksinimler
 
 ### 1. Tarif Yönetimi
-- Firestore `recipes` koleksiyonundan tarifler yükleniyor (keepAlive: true)
-- Firestore boşsa **RecipesComingSoon** placeholder gösterilir (local JSON fallback kaldırıldı)
-- Admin paneli (ayrı web projesi) üzerinden tarif ekleme/düzenleme/silme
-- Tarif şeması: `title`, `description?`, `image_url?`, `ingredients[]`, `instructions[]`
-- Admin formu mobil görünümle uyumlu: malzeme/adım dinamik liste input
+- Firestore `recipes` (keepAlive); boşsa Coming Soon
+- **TR+EN zorunlu:** `title`/`titleEn`, `description`/`descriptionEn`, `ingredients`/`ingredientsEn`, `instructions`/`instructionsEn`, `image_url?`
+- Mobil yalnızca `isBilingualComplete`; UI locale ile gösterir
+- Admin (ayrı web): her iki dil dolmadan kaydet yok
 
 ### 2. AI Tarif Üretimi
 - DeepSeek API (OpenAI uyumlu, retry mekanizmalı)
@@ -99,15 +98,13 @@ Atıksız Mutfak, kullanıcıların elindeki malzemelerle atıksız prensiplerin
 
 ## Gelecek Planlar
 
-### Admin Panel (Ayrı Web Projesi)
-- `DynamicStringListField` + `AdminRecipeForm` tarif CRUD
-- Gönderi onay ekranında `imageUrl` ile fotoğraf gösterimi
-- İlk tariflerin eklenmesi (mobilde Coming Soon kalkar)
+### App Store (sıradaki)
+- Checklist: `memory-bank/app-store-checklist.md`
+- Bundle ID production, Privacy Policy, TestFlight, Submit
+- Yayın öncesi yeterli bilingual tarif içeriği
 
-### Firebase Blaze Kota Yönetimi
-- Blaze'e geçildi; düşük trafikte $0
-- Bütçe uyarısı ($5–10) aktif tutulmalı
-
-### Admin ↔ Mobil Senkronizasyon
-- Kullanıcı opt-out/silme durumunun admin panele yansıması
-- Firestore listener veya manuel refresh
+### Opsiyonel / düşük
+- Admin gönderi `imageUrl` UI
+- Google Play
+- Blaze bütçe uyarısı doğrulama
+- Progress bar hizalama

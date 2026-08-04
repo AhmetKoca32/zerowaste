@@ -1,80 +1,71 @@
 # Active Context: Atıksız Mutfak
 
-**Son Güncelleme:** Ağustos 2026 (2 Ağustos)  
-**Aktif Çalışma:** EcoChef chat / branding turu kapandı. Sıradaki odak **prod öncesi Firebase Blaze kotası planı**, hemen ardından **App Store gönderimi**.
+**Son Güncelleme:** Ağustos 2026 (4 Ağustos)  
+**Aktif Çalışma:** App Store hazırlık. Checklist: [`app-store-checklist.md`](app-store-checklist.md)
 
 ---
 
-## Sıradaki Yol Haritası (öncelik sırası)
+## Sıradaki Yol Haritası
 
-### 1. Prod — Firebase Blaze / ücretsiz kota koruması
-Blaze planındayız; ücretli sınıra düşmemek için prod’a çıkmadan önce **az okuma/yazma/istek** odaklı bir kullanım senaryosu kurgulanacak:
+### 1. App Store (ana hat)
+- Checklist: [`app-store-checklist.md`](app-store-checklist.md)
+- **Bloke edici:** Bundle ID `com.example.zerowaste` → production ID
+- Version bump (`0.1.0` → örn. `1.0.0`), Privacy Policy URL, screenshots, App Privacy formu
+- TestFlight smoke → Submit for Review
+- Blaze Usage / bütçe uyarısı
 
-- Firestore / Storage / Auth isteklerini envanterle (hangi ekranda ne kadar read/write)
-- Gereksiz realtime dinleyicileri, tekrarlı fetch’leri, tab-switch’te aşırı yenilemeyi azalt
-- Cache / local-first (SharedPreferences, in-memory keepAlive) ile cloud’a gitmeyi minimize et
-- Bütçe uyarısı + Blaze free tier limitlerine göre hedef kotanın altında kalacak mimari kararlar
-- DeepSeek ayrı faturalı; Firebase tarafı odak (kotayı aşmama)
+### 2. Store öncesi içerik
+- [ ] 3–5 bilingual tarif Firestore’da (Coming Soon kalmasın)
 
-Amaç: Uygulama canlıdayken Blaze’in ücretsiz kotasını **olabildiğince zorlamadan** çalışsın.
-
-### 1b. Mobil ↔ Admin paneli senkron / bağımsızlık kontrolü
-Mobil uygulama ile admin paneli (ayrı web repo) aynı Firestore’u paylaşır ama **birbirinden bağımsız hareket edebiliyor**; prod öncesi bu uçlar gözden geçirilecek:
-
-- Opt-out / soft-delete / nickname sıfırlama mobilde olurken admin’de eski kullanıcı/gönderi görünümü
-- Onay / ret / bonus / kesinti admin’de; mobilde overlay, puan, leaderboard gecikmesi veya kaçırma
-- `imageUrl` / Storage: mobilde upload var, admin’de gösterim eksik veya tersi
-- Tarif CRUD yalnızca admin; mobilde Coming Soon vs dolu liste tutarsızlığı
-- Status alanları (`pending` / `approved` / `rejected` / `deleted`) iki tarafta aynı sözleşmeyle okunuyor mu
-
-Amaç: İki istemci “kendi başına” kalmasın; paylaşılan veri modeli ve akışlar prod’da tutarlı olsun.
-
-### 2. App Store’a gönderme
-Firebase prod planı + mobil↔admin tutarlılık kontrolleri netleştikten **hemen sonra** App Store Connect’e yükleme (metadata, ekran görüntüleri, privacy, build). Play Store bu maddenin peşi sıra veya aynı sprint’te ayrı not edilebilir.
+### 3. Düşük / sonra
+- Admin post `imageUrl` gösterimi
+- Progress bar hizalama
+- Google Play (iOS sonrası)
 
 ---
 
-## Son Yapılan Değişiklikler (Ağustos 2026)
+## Sözleşmeler (özet)
 
-### 1. EcoChef Chat — Layout
-- **Üst padding:** `reverse: true` ListView’da floating EcoChef pill için `MediaQuery.padding.top + 64`
-- **Alt katman kaldırıldı:** Input floating Stack; liste full-bleed (`extendBody: true`)
+### recipes (TR/EN)
+```
+title / titleEn | description / descriptionEn
+ingredients[] / ingredientsEn[] | instructions[] / instructionsEn[]
+image_url?
+```
+Mobil: `isBilingualComplete` + `localized*`. Admin: TR+EN zorunlu kaydet. **Yapıldı.**
 
-### 2. EcoChef Chat — Lokal Session
-- **`ChatSessionStorage`**: 24h TTL, max 50 balon; 5 dk auto-clear kaldırıldı
-- Soft-delete / opt-out → chat clear
+### Plan B / yarışma
+- `user_stats` + incremental LB; ban/opt-out = wipe (`leaveContest` / `deleteAppUser`)
+- claimedByUid uniqueness; rules admin deploy (mobil yeniden deploy etme)
+- **E2E yapıldı.**
 
-### 3. EcoChef Chat — Typewriter / API Memory
-- Typewriter yalnız fresh reply; API son **20** balon + assistant truncate ~1200
-
-### 4. Branding
-- Launcher display name: **Zerowaste Kitchen** (iOS `CFBundleDisplayName`, Android `android:label`)
-- Splash partner logoları; launcher `App_Logo.png`
-- In-app TR adı hâlâ **Atıksız Mutfak** (`l10n.appName`) — ana ekran ikon etiketi ayrı
+### Puan UI
+- 7 rol (0/50/150/300/500/800/1200); hero stepper up/down; puan silindi diyaloğu
 
 ---
 
-## Bilinen Sorunlar (Öncelik Sırasına Göre)
+## Son Yapılan (4 Ağustos)
 
-### 🟡 YÜKSEK (prod / store öncesi de bakılabilir)
+- [x] Plan B mobil + admin; leaveContest wipe; claimedByUid
+- [x] Puan roller, level stepper, puan silindi / red diyalogları, leaderboard rol
+- [x] Tarif TR/EN mobil + admin CRUD
+- [x] Plan B E2E (+ foto / wipe / bilingual)
+- [x] App Store checklist dokümanı
 
-- [ ] **Gönderi fotoğrafı upload testi**
-- [ ] **Admin panel gönderi fotoğrafı / tarif CRUD**
-- [ ] **Mobil çıkış/silme → admin senkronizasyonu**
+---
 
-### 🟢 DÜŞÜK
+## Bilinen Sorunlar / açık işler
 
+### Yüksek (store)
+- [ ] Bundle ID production’a çevir
+- [ ] Privacy Policy sayfası
+- [ ] App Store Connect listing + screenshots + submit
+- [ ] Bilingual tarif içeriği (yeterli adet)
+
+### Düşük
 - [ ] Progress bar hizalama
-- [ ] RecipeSyncService main()'de çağrılmadı
-- [ ] Firestore `recipes` ilk içerik (admin)
-
----
-
-## Firebase Yapılandırması
-
-- [x] Firebase **Blaze**, Anonymous Auth, Storage rules
-- [ ] **Prod kota / az-istek senaryosu** (sıradaki ana iş)
-- [ ] Admin panelden `recipes` doldurma
+- [ ] Dashboard totalUsers post-aggregate (admin)
+- [ ] Admin post imageUrl UI
 
 ---
 
@@ -82,7 +73,8 @@ Firebase prod planı + mobil↔admin tutarlılık kontrolleri netleştikten **he
 
 | Tarih | Karar | Gerekçe |
 |-------|-------|---------|
-| 2 Ağustos | Sonraki sprint: Blaze kota planı + mobil↔admin sync kontrolü → App Store | Sürpriz fatura yok; iki istemci bağımsız kalmasın; store’a hazır build |
-| 2 Ağustos | Ana ekran adı “Zerowaste Kitchen”; in-app TR “Atıksız Mutfak” | Store/home etiketi EN marka; uygulama içi lokalizasyon ayrı |
-| 2 Ağustos | Chat history local 24h + API 20 balon | Memory + maliyet dengesi |
-| 17 Temmuz | Firebase Blaze + Anonymous Auth + putData | Storage upload |
+| 4 Ağustos | App Store checklist; bundle `com.example.*` bloke | Store kabul etmez |
+| 4 Ağustos | recipes zorunlu TR+EN | Dil toggle uyumu |
+| 4 Ağustos | Level stepper hero içi; puan düşüşü ayrı diyalog | UX |
+| 4 Ağustos | Ban = wipe; Plan B user_stats | Kota + tutarlılık |
+| 2 Ağustos | Zerowaste Kitchen / Atıksız Mutfak | Store vs l10n |

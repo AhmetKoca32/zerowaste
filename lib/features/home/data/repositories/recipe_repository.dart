@@ -50,6 +50,7 @@ class RecipeRepository {
 
       return snapshot.docs
           .map((doc) => Recipe.fromFirestore(doc))
+          .where((r) => r.isBilingualComplete)
           .toList();
     } catch (e) {
       return [];

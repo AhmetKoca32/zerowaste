@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/providers/locale_provider.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/empty_placeholder.dart';
@@ -26,17 +27,24 @@ class _HomePageState extends ConsumerState<HomePage> {
   String _searchQuery = '';
   Set<String> _selectedIngredients = {};
 
-  int _matchCount(Recipe recipe) {
+  int _matchCount(Recipe recipe, String languageCode) {
     if (_selectedIngredients.isEmpty) return 0;
-    return recipe.ingredients
-        .where((i) => _selectedIngredients.contains(i))
-        .length;
+    final localized = recipe.localizedIngredients(languageCode);
+    return localized.where(_selectedIngredients.contains).length;
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final languageCode = ref.watch(localeProvider).languageCode;
     final recipesAsync = ref.watch(recipeListProvider);
+
+    ref.listen<Locale>(localeProvider, (prev, next) {
+      if (prev?.languageCode != next.languageCode &&
+          _selectedIngredients.isNotEmpty) {
+        setState(() => _selectedIngredients = {});
+      }
+    });
 
     final body = recipesAsync.when(
       data: (recipes) {
@@ -45,23 +53,19 @@ class _HomePageState extends ConsumerState<HomePage> {
         }
 
         final allIngredients = recipes
-            .expand((r) => r.ingredients)
+            .expand((r) => r.localizedIngredients(languageCode))
             .toSet()
             .toList()
           ..sort();
 
         var filtered = _searchQuery.isEmpty
             ? recipes.toList()
-            : recipes.where((r) {
-                final q = _searchQuery.toLowerCase();
-                return r.title.toLowerCase().contains(q) ||
-                    r.ingredients.any((i) => i.toLowerCase().contains(q));
-              }).toList();
+            : recipes.where((r) => r.matchesQuery(_searchQuery)).toList();
 
         if (_selectedIngredients.isNotEmpty) {
           filtered.sort((a, b) {
-            final aMatch = _matchCount(a);
-            final bMatch = _matchCount(b);
+            final aMatch = _matchCount(a, languageCode);
+            final bMatch = _matchCount(b, languageCode);
             return bMatch.compareTo(aMatch);
           });
         }
@@ -85,7 +89,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               borderRadius: BorderRadius.circular(20),
               child: RecipeBlogCard(
                 recipe: recipe,
-                matchCount: _matchCount(recipe),
+                matchCount: _matchCount(recipe, languageCode),
                 totalSelected: _selectedIngredients.length,
               ),
             );

@@ -1,6 +1,6 @@
 # Progress: Atıksız Mutfak
 
-**Son Güncelleme:** Ağustos 2026 (2 Ağustos)
+**Son Güncelleme:** Ağustos 2026 (4 Ağustos)
 
 ---
 
@@ -9,84 +9,64 @@
 ### Core Infrastructure
 - Flutter Clean Architecture, Riverpod, GoRouter
 - Manrope font, turuncu marka paleti, TR/EN lokalizasyon
-- Firebase Blaze planı
+- Firebase Blaze (`zerowaste-46d54`)
+- **Plan B:** `user_stats` + incremental leaderboard; mobil bounded reads
 
 ### Splash Screen
-- ~5s staggered animasyon; AB/EU + partner logoları (HRYO, Our Common Future, Academy Culture, Ortak Geleceğimiz)
+- ~5s staggered animasyon; AB/EU + partner logoları
 
 ### Tarif Listesi (Home)
-- Firestore-only (`RecipeRepository`, boşsa `[]`)
-- **RecipesComingSoon** placeholder
-- Malzeme filtreleme + arama
-- `RecipeDetailSheet`
+- Firestore-only; boşsa Coming Soon
+- **TR+EN curated** (`isBilingualComplete`); UI `localized*`
+- Malzeme filtre + arama (iki dil); `RecipeDetailSheet`
+- Admin TR+EN zorunlu CRUD (ayrı web)
 
 ### AI Tarif Üretimi (DeepSeek)
-- Malzeme + mutfak stili, EcoChef loading overlay
-- Locale bazlı dil (TR/EN)
-- Kaydedilen tarifler (max 5)
+- Malzeme + mutfak stili; locale dili; kaydet max 5
 
-### AI Sohbet (EcoChef) — güncel
-- 20 user mesaj/gün (`DailyMessageCount.maxMessages`)
-- Kullanıcı mesaj dilinde yanıt
-- Typewriter (yalnız yeni cevap, bir kez)
-- Markdown bubbles
-- **Lokal session:** SharedPreferences, 24h TTL, max 50 balon disk
-- **API memory:** son 20 balon priorTurns; assistant history truncate ~1200
-- Floating input; liste navbar/input altında görünür
-- Floating EcoChef app bar + doğru üst inset
-- Soft-delete/opt-out chat session temizler
+### AI Sohbet (EcoChef)
+- 20 mesaj/gün; kullanıcı dilinde yanıt; typewriter; markdown
+- Lokal session 24h TTL; API history 20 balon
+- Floating input + EcoChef app bar
 
 ### Puan Sistemi (Gamification)
-- PointsHeroCard, seviyeler, leaderboard, nickname, günlük görevler
-- Opt-out, soft-delete dialog, reject overlay, approve overlay
-- Puan animasyonu: tab görünür + artışta
+- 7 seviye; `points_levels.dart`; hero ℹ️ sheet; leaderboard + rol
+- Level-up/down stepper; puan silindi / red / approve overlay
+- Plan B: `user_stats.totalPoints`; posts limit 12
+- leaveContest wipe; nickname opt-in zorunlu; nick hero’da post sonrası
 
-### Gönderi Fotoğrafı (Firebase Storage)
-- Anonymous Auth + `putData(bytes)` + rules
-- ⏳ End-to-end kullanıcı doğrulaması
+### Gönderi Fotoğrafı
+- Anonymous Auth + Storage `imageUrl`; E2E checklist kapsamında doğrulandı
 
-### Admin Paneli (Ayrı Web)
-- Mobil admin kaldırıldı
-- ⏳ Tarif CRUD + `imageUrl` gösterimi
-
----
-
-## Bilinen Sorunlar (Çözülmüş — son oturum)
-
-- [x] Chat mesajı floating app bar altında kesilmesi
-- [x] Input–navbar arası opak katman
-- [x] Chat geçmişinin sadece memory’de kaybolması (24h local persist)
-- [x] Typewriter scroll’da tekrar oynama
-- [x] Model’in önceki cevapları bilmemesi (20 balon history)
-- [x] 5 dk arka plan chat silme (kaldırıldı → 24h TTL)
+### Admin (ayrı web)
+- Plan B onay/red/kesinti; tarif TR+EN; wipe ban
 
 ---
 
-## 🔴 Bilinen Sorunlar (Devam Eden)
+## Bilinen Sorunlar (çözülmüş — seçilmiş)
 
-### 1. Gönderi Fotoğrafı Upload Testi (YÜKSEK)
-### 2. Admin Panel — Gönderi Fotoğrafı (YÜKSEK)
-### 3. Admin Panel Tarif CRUD (YÜKSEK)
-### 4. Mobil Çıkış → Admin Senkronizasyonu (YÜKSEK)
-### 5. Progress Bar Hizalama (DÜŞÜK)
+- [x] Chat layout / 24h persist / typewriter / history
+- [x] Plan B + wipe + claimedByUid
+- [x] Level stepper / puan düşüş diyaloğu
+- [x] Tarif TR+EN mobil + admin
+- [x] Plan B E2E
 
 ---
 
-## Yapılacaklar
+## Açık işler
 
-### 🔴 Prod / Yayın (sıradaki ana hat)
-- [ ] **Firebase Blaze prod planı:** ücretsiz kotayı aşmamak için okuma/yazma/Storage isteklerini envanterle; cache & az-fetch senaryosu
-- [ ] Blaze bütçe uyarısı + hedef limitler netleştir
-- [ ] **Mobil ↔ admin paneli bağımsızlık / senkron kontrolü** (opt-out, soft-delete, onay/ret, imageUrl, tarif listesi, status sözleşmesi)
-- [ ] **App Store’a gönderme** (Blaze planı + sync kontrolü sonrası hemen)
+### 🔴 App Store
+- [ ] Bundle ID (`com.example.zerowaste` → production)
+- [ ] Privacy Policy URL + App Privacy formu
+- [ ] Version `1.0.0`, IPA, TestFlight, Submit
+- [ ] Screenshots / listing
+- [ ] Blaze bütçe uyarısı
+- [ ] Yeterli bilingual tarif içeriği
+- Detay: [`app-store-checklist.md`](app-store-checklist.md)
 
-### 🟡 Yüksek Öncelik (paralel / store öncesi)
-- [ ] Gönderi fotoğrafı E2E test
-- [ ] Admin: `imageUrl` gösterimi
-- [ ] Admin: tarif CRUD
-- [ ] İlk tariflerin eklenmesi
-- [ ] Opt-out/silme → admin sync
-
-### 🟢 Düşük Öncelik
+### 🟢 Düşük
 - [ ] Progress bar hizalama
-- [ ] RecipeSyncService → main
+- [ ] Admin post `imageUrl` UI
+- [ ] Dashboard totalUsers aggregate (admin)
+- [ ] RecipeSyncService → main (gerekirse)
+- [ ] Google Play (iOS sonrası)

@@ -354,6 +354,11 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final recipe = widget.recipe;
+    final lang = Localizations.localeOf(context).languageCode;
+    final title = recipe.localizedTitle(lang);
+    final description = recipe.localizedDescription(lang);
+    final ingredients = recipe.localizedIngredients(lang);
+    final instructions = recipe.localizedInstructions(lang);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -384,7 +389,7 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
               children: [
                 Expanded(
                   child: Text(
-                    recipe.title,
+                    title,
                     style: const TextStyle(
                       fontFamily: 'Manrope',
                       fontSize: 20,
@@ -481,7 +486,7 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                     children: [
                       _StatItem(
                         icon: Icons.shopping_basket_outlined,
-                        value: '${recipe.ingredients.length}',
+                        value: '${ingredients.length}',
                         label: l10n.recipeDetailIngredient,
                       ),
                       Container(
@@ -491,7 +496,7 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                       ),
                       _StatItem(
                         icon: Icons.format_list_numbered,
-                        value: '${recipe.instructions.length}',
+                        value: '${instructions.length}',
                         label: l10n.recipeDetailStep,
                       ),
                     ],
@@ -499,11 +504,10 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                 ),
 
                 // Açıklama
-                if (recipe.description != null &&
-                    recipe.description!.isNotEmpty) ...[
+                if (description != null && description.isNotEmpty) ...[
                   const SizedBox(height: 20),
                   Text(
-                    recipe.description!,
+                    description,
                     style: const TextStyle(
                       fontFamily: 'Manrope',
                       fontSize: 14,
@@ -545,7 +549,7 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                           ),
                           const Spacer(),
                           Text(
-                            l10n.recipeDetailIngredientCount(recipe.ingredients.length),
+                            l10n.recipeDetailIngredientCount(ingredients.length),
                             style: const TextStyle(
                               fontFamily: 'Manrope',
                               fontSize: 12,
@@ -555,12 +559,10 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                         ],
                       ),
                       const SizedBox(height: 14),
-                      ...recipe.ingredients.asMap().entries.map((e) {
+                      ...ingredients.asMap().entries.map((e) {
                         return Padding(
                           padding: EdgeInsets.only(
-                            bottom: e.key < recipe.ingredients.length - 1
-                                ? 10
-                                : 0,
+                            bottom: e.key < ingredients.length - 1 ? 10 : 0,
                           ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -626,7 +628,7 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                           ),
                           const Spacer(),
                           Text(
-                            l10n.recipeDetailStepCount(recipe.instructions.length),
+                            l10n.recipeDetailStepCount(instructions.length),
                             style: const TextStyle(
                               fontFamily: 'Manrope',
                               fontSize: 12,
@@ -636,8 +638,8 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      ...recipe.instructions.asMap().entries.map((e) {
-                        final isLast = e.key == recipe.instructions.length - 1;
+                      ...instructions.asMap().entries.map((e) {
+                        final isLast = e.key == instructions.length - 1;
                         return Padding(
                           padding: EdgeInsets.only(bottom: isLast ? 0 : 4),
                           child: Row(

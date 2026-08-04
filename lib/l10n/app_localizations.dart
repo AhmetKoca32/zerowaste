@@ -632,11 +632,29 @@ abstract class AppLocalizations {
   /// **'Diğer'**
   String get pointsCategoryOther;
 
-  /// En yüksek seviye adı
+  /// Seviye adı (Efsane+)
   ///
   /// In tr, this message translates to:
   /// **'Efsane+'**
   String get pointsLevelLegend;
+
+  /// En yüksek seviye adı
+  ///
+  /// In tr, this message translates to:
+  /// **'İkon'**
+  String get pointsLevelIkon;
+
+  /// Seviye adı
+  ///
+  /// In tr, this message translates to:
+  /// **'Şampiyon'**
+  String get pointsLevelSampiyon;
+
+  /// Seviye adı
+  ///
+  /// In tr, this message translates to:
+  /// **'Uzman'**
+  String get pointsLevelUzman;
 
   /// Seviye adı
   ///
@@ -661,6 +679,30 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Çaylak'**
   String get pointsLevelCaylak;
+
+  /// Seviye rehberi bottom sheet başlığı
+  ///
+  /// In tr, this message translates to:
+  /// **'Seviyeler'**
+  String get pointsLevelsGuideTitle;
+
+  /// Seviye rehberi alt metni
+  ///
+  /// In tr, this message translates to:
+  /// **'Puan kazandıkça yeni rollere yükselirsin.'**
+  String get pointsLevelsGuideSubtitle;
+
+  /// Mevcut seviye rozeti
+  ///
+  /// In tr, this message translates to:
+  /// **'Şu an'**
+  String get pointsLevelsCurrentBadge;
+
+  /// Puan birimi etiketi
+  ///
+  /// In tr, this message translates to:
+  /// **'puan'**
+  String get pointsUnit;
 
   /// Nickname diyalog başlığı
   ///
@@ -692,11 +734,23 @@ abstract class AppLocalizations {
   /// **'Lütfen bir takma ad girin'**
   String get pointsNicknameValidationEmpty;
 
+  /// Leaderboard checkbox zorunlu uyarısı
+  ///
+  /// In tr, this message translates to:
+  /// **'Devam etmek için sıralama iznini onaylamalısın.'**
+  String get pointsNicknameOptInRequired;
+
   /// Silinmiş / engellenmiş takma ad uyarısı
   ///
   /// In tr, this message translates to:
   /// **'Bu takma ad kullanılamaz. Lütfen başka bir ad seç.'**
   String get pointsNicknameUnavailable;
+
+  /// Zaten sahiplenilmiş takma ad uyarısı
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu takma ad başka biri tarafından alınmış. Lütfen başka bir ad seç.'**
+  String get pointsNicknameTaken;
 
   /// Leaderboard izin etiketi
   ///
@@ -926,6 +980,18 @@ abstract class AppLocalizations {
   /// **'Tamam'**
   String get pointsRejectedOk;
 
+  /// Puan düşüşü overlay başlığı
+  ///
+  /// In tr, this message translates to:
+  /// **'Puanların güncellendi'**
+  String get pointsRemovedTitle;
+
+  /// Puan düşüşü overlay açıklaması
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesabından {removed} puan silindi. Güncel puanın: {total}.'**
+  String pointsRemovedDesc(int removed, int total);
+
   /// Kazanılan puan etiketi
   ///
   /// In tr, this message translates to:
@@ -1124,10 +1190,10 @@ abstract class AppLocalizations {
   /// **'Hesap Durumu'**
   String get accountDeletedTitle;
 
-  /// Hesap silinme dialog mesajı
+  /// Hesap silinme dialog mesajı (admin wipe)
   ///
   /// In tr, this message translates to:
-  /// **'Yarışma hesabınız admin tarafından silindi. Takma adınız ve yerel puan bilginiz temizlenecek; yeni bir takma adla tekrar başlayabilirsiniz.'**
+  /// **'Yarışma hesabınız admin tarafından silindi. Puanlarınız ve gönderileriniz kaldırıldı. Takma adınız yerel olarak temizlenecek; aynı veya yeni bir adla tekrar başlayabilirsiniz.'**
   String get accountDeletedMessage;
 
   /// Admin silme sebebi
@@ -1148,10 +1214,10 @@ abstract class AppLocalizations {
   /// **'Yarışmadan Çık'**
   String get optOutTitle;
 
-  /// Opt-out dialog mesajı
+  /// Opt-out dialog mesajı (hard wipe)
   ///
   /// In tr, this message translates to:
-  /// **'Yarışmadan çıkarsan tüm puanların ve sıralamadaki yerin kaybolur. Yeni bir takma adla tekrar katılabilirsin.\n\nDevam etmek istediğine emin misin?'**
+  /// **'Yarışmadan çıkarsan puanların, gönderilerin ve sıralamadaki yerin kalıcı olarak silinir. Aynı veya yeni bir takma adla sıfırdan tekrar katılabilirsin.\n\nDevam etmek istediğine emin misin?'**
   String get optOutMessage;
 
   /// Opt-out iptal butonu
@@ -1165,6 +1231,30 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Çık'**
   String get optOutConfirm;
+
+  /// Opt-out başarı snackbar
+  ///
+  /// In tr, this message translates to:
+  /// **'Yarışmadan çıktın. Verilerin silindi.'**
+  String get optOutSuccess;
+
+  /// Opt-out genel hata
+  ///
+  /// In tr, this message translates to:
+  /// **'Yarışmadan çıkılamadı. Lütfen tekrar dene.'**
+  String get optOutGenericError;
+
+  /// Opt-out permission-denied
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu takma ad üzerinde işlem yapamazsın.'**
+  String get optOutPermissionError;
+
+  /// Opt-out failed-precondition (banned)
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu takma ad yönetici tarafından kapatılmış. Yarışmadan çıkış kullanılamaz.'**
+  String get optOutBannedError;
 }
 
 class _AppLocalizationsDelegate

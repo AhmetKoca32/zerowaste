@@ -69,14 +69,15 @@ Atıksız Mutfak, AI teknolojisini kullanarak kullanıcıların elindeki malzeme
 - Tab değişiminde veri yenileme (points sayfası)
 
 ### Önemli UX Detayları
-- Tarif listesi boşken Coming Soon ekranı (admin tarif ekleyene kadar)
-- Gönderi fotoğrafları Firebase Storage'da (`imageUrl`); admin panelde gösterim ayrı repoda yapılacak
-- Puan animasyonu: tab geçişinde, sadece puan arttığında
-- KVKK/GDPR: nickname ve leaderboard opt-in açık rıza ile
-- Admin notları kullanıcının diline göre gösterilir (TR/EN)
+- Tarif listesi boşken Coming Soon (yayın öncesi 3–5 bilingual tarif doldurulmalı)
+- Gönderi fotoğrafları Firebase Storage (`imageUrl`)
+- Puan: artış/azalışta overlay + hero stepper; `last_known_points` animasyon sonrası
+- KVKK/GDPR: nickname + leaderboard opt-in
+- Admin notları / tarif metinleri locale’e göre (TR/EN)
 
 ### Admin ↔ Mobil Veri Tutarlılığı
 Admin panelde girilen tarif verisi mobilde birebir aynı görünmelidir:
-- Her malzeme ayrı satır → mobilde bullet list
+- Her malzeme ayrı satır → mobilde bullet list (TR veya EN locale’e göre)
 - Her adım ayrı satır → mobilde 1, 2, 3 numaralı adımlar
 - Açıklama tek metin → mobilde paragraf
+- **TR + EN zorunlu** (`title`/`titleEn`, `ingredients`/`ingredientsEn`, `instructions`/`instructionsEn`); eksik dil mobilde listelenmez

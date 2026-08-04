@@ -19,6 +19,11 @@ class RecipeBlogCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final lang = Localizations.localeOf(context).languageCode;
+    final title = recipe.localizedTitle(lang);
+    final ingredients = recipe.localizedIngredients(lang);
+    final instructions = recipe.localizedInstructions(lang);
+
     return Card(
       margin: const EdgeInsets.only(bottom: 20),
       elevation: 0,
@@ -56,7 +61,10 @@ class RecipeBlogCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          l10n.recipeCardMatchCount(matchCount ?? 0, recipe.ingredients.length),
+                          l10n.recipeCardMatchCount(
+                            matchCount ?? 0,
+                            ingredients.length,
+                          ),
                           style: TextStyle(
                             fontFamily: 'Manrope',
                             fontSize: 12,
@@ -70,7 +78,7 @@ class RecipeBlogCard extends StatelessWidget {
                     ),
                   ),
                 Text(
-                  recipe.title,
+                  title,
                   style: const TextStyle(
                     fontFamily: 'Manrope',
                     fontSize: 18,
@@ -80,7 +88,10 @@ class RecipeBlogCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  l10n.recipeCardStatSummary(recipe.ingredients.length, recipe.instructions.length),
+                  l10n.recipeCardStatSummary(
+                    ingredients.length,
+                    instructions.length,
+                  ),
                   style: const TextStyle(
                     fontFamily: 'Manrope',
                     fontSize: 13,
@@ -111,7 +122,7 @@ class RecipeBlogCard extends StatelessWidget {
                 Wrap(
                   spacing: 8,
                   runSpacing: 6,
-                  children: recipe.ingredients.map((e) {
+                  children: ingredients.map((e) {
                     return Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,

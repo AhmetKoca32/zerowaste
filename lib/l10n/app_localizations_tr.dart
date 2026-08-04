@@ -314,6 +314,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pointsLevelLegend => 'Efsane+';
 
   @override
+  String get pointsLevelIkon => 'İkon';
+
+  @override
+  String get pointsLevelSampiyon => 'Şampiyon';
+
+  @override
+  String get pointsLevelUzman => 'Uzman';
+
+  @override
   String get pointsLevelEfsane => 'Efsane';
 
   @override
@@ -324,6 +333,19 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get pointsLevelCaylak => 'Çaylak';
+
+  @override
+  String get pointsLevelsGuideTitle => 'Seviyeler';
+
+  @override
+  String get pointsLevelsGuideSubtitle =>
+      'Puan kazandıkça yeni rollere yükselirsin.';
+
+  @override
+  String get pointsLevelsCurrentBadge => 'Şu an';
+
+  @override
+  String get pointsUnit => 'puan';
 
   @override
   String get pointsNicknameDialogTitle => 'Takma Adın Nedir?';
@@ -343,8 +365,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pointsNicknameValidationEmpty => 'Lütfen bir takma ad girin';
 
   @override
+  String get pointsNicknameOptInRequired =>
+      'Devam etmek için sıralama iznini onaylamalısın.';
+
+  @override
   String get pointsNicknameUnavailable =>
       'Bu takma ad kullanılamaz. Lütfen başka bir ad seç.';
+
+  @override
+  String get pointsNicknameTaken =>
+      'Bu takma ad başka biri tarafından alınmış. Lütfen başka bir ad seç.';
 
   @override
   String get pointsLeaderboardOptIn =>
@@ -477,6 +507,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pointsRejectedOk => 'Tamam';
 
   @override
+  String get pointsRemovedTitle => 'Puanların güncellendi';
+
+  @override
+  String pointsRemovedDesc(int removed, int total) {
+    return 'Hesabından $removed puan silindi. Güncel puanın: $total.';
+  }
+
+  @override
   String get pointsEarned => 'Kazanılan Puan:';
 
   @override
@@ -577,7 +615,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get accountDeletedMessage =>
-      'Yarışma hesabınız admin tarafından silindi. Takma adınız ve yerel puan bilginiz temizlenecek; yeni bir takma adla tekrar başlayabilirsiniz.';
+      'Yarışma hesabınız admin tarafından silindi. Puanlarınız ve gönderileriniz kaldırıldı. Takma adınız yerel olarak temizlenecek; aynı veya yeni bir adla tekrar başlayabilirsiniz.';
 
   @override
   String accountDeletedReason(String reason) {
@@ -592,11 +630,24 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get optOutMessage =>
-      'Yarışmadan çıkarsan tüm puanların ve sıralamadaki yerin kaybolur. Yeni bir takma adla tekrar katılabilirsin.\n\nDevam etmek istediğine emin misin?';
+      'Yarışmadan çıkarsan puanların, gönderilerin ve sıralamadaki yerin kalıcı olarak silinir. Aynı veya yeni bir takma adla sıfırdan tekrar katılabilirsin.\n\nDevam etmek istediğine emin misin?';
 
   @override
   String get optOutCancel => 'Vazgeç';
 
   @override
   String get optOutConfirm => 'Çık';
+
+  @override
+  String get optOutSuccess => 'Yarışmadan çıktın. Verilerin silindi.';
+
+  @override
+  String get optOutGenericError => 'Yarışmadan çıkılamadı. Lütfen tekrar dene.';
+
+  @override
+  String get optOutPermissionError => 'Bu takma ad üzerinde işlem yapamazsın.';
+
+  @override
+  String get optOutBannedError =>
+      'Bu takma ad yönetici tarafından kapatılmış. Yarışmadan çıkış kullanılamaz.';
 }

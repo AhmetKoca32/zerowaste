@@ -46,6 +46,20 @@ service cloud.firestore {
         );
     }
 
+    // claimedByUid: immutable once set; empty → first claim by auth.uid only.
+    function claimedByUidOkOnUpdate() {
+      return !request.resource.data.diff(resource.data)
+          .affectedKeys()
+          .hasAny(['claimedByUid'])
+        || (
+          (!('claimedByUid' in resource.data)
+            || resource.data.claimedByUid == null
+            || resource.data.claimedByUid == '')
+          && request.auth != null
+          && request.resource.data.claimedByUid == request.auth.uid
+        );
+    }
+
     match /recipes/{recipeId} {
       allow read: if true;
       allow create, update, delete: if canManageRecipes();
@@ -62,11 +76,52 @@ service cloud.firestore {
 
     match /leaderboard/{docId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if canModerate();
     }
 
-    // Soft-delete / ban status for contest nicknames.
-    // Written only by Admin SDK (Cloud Functions); clients may read.
+    // Plan B: nickname uniqueness via claimedByUid (synced with admin deploy).
+    match /user_stats/{nickname} {
+      allow read: if true;
+
+      // Client must claim as self; canModerate may create without claim (2A upsert).
+      allow create: if canModerate() || (
+        request.auth != null
+        && request.resource.data.nickname == nickname
+        && request.resource.data.claimedByUid == request.auth.uid
+        && (
+          !('totalPoints' in request.resource.data)
+          || request.resource.data.totalPoints == 0
+        )
+        && (
+          !('status' in request.resource.data)
+          || request.resource.data.status == 'active'
+        )
+      );
+
+      allow update: if request.auth != null
+        && claimedByUidOkOnUpdate()
+        && (
+          canModerate()
+          || (
+            !request.resource.data.diff(resource.data)
+                .affectedKeys()
+                .hasAny(['totalPoints', 'status', 'reason', 'reasonEn', 'nickname'])
+            && (
+              resource.data.claimedByUid == request.auth.uid
+              || (
+                (!('claimedByUid' in resource.data)
+                  || resource.data.claimedByUid == null
+                  || resource.data.claimedByUid == '')
+                && request.resource.data.claimedByUid == request.auth.uid
+              )
+            )
+          )
+        );
+
+      allow delete: if canModerate();
+    }
+
+    // Legacy — no new writes.
     match /user_profiles/{nickname} {
       allow read: if true;
       allow write: if false;

@@ -1,6 +1,6 @@
 # Tech Context: Atıksız Mutfak
 
-**Son Güncelleme:** Ağustos 2026 (2 Ağustos)
+**Son Güncelleme:** Ağustos 2026 (4 Ağustos)
 
 ---
 
@@ -29,7 +29,7 @@
 - **firebase_core:** ^3.8.1
 - **firebase_auth:** ^5.3.3 (anonim oturum + admin web paneli)
 - **firebase_storage:** ^12.3.6 (gönderi fotoğrafları)
-- **cloud_firestore:** ^5.5.2 (tarif, post, leaderboard, user_profiles)
+- **cloud_firestore:** ^5.5.2 (tarif, post, leaderboard, user_stats)
 - **Firebase Blaze Plan (Kullandıkça Öde):** Spark'tan yükseltildi (Temmuz 2026)
   - Storage: 5 GB depolama, günde 1 GB upload (ücretsiz kota içinde)
   - Düşük trafikli uygulama için aylık maliyet çoğunlukla $0
@@ -134,7 +134,7 @@ zerowaste/
 ### Home / Recipes
 | Dosya | Açıklama |
 |-------|----------|
-| `lib/features/home/data/models/recipe.dart` | Recipe model: title, description, ingredients[], instructions[], image_url |
+| `lib/features/home/data/models/recipe.dart` | Recipe: TR+EN title/description/ingredients/instructions; locale helpers; isBilingualComplete |
 | `lib/features/home/data/repositories/recipe_repository.dart` | Firestore-only; boşsa `[]` döner |
 | `lib/features/home/presentation/widgets/recipes_coming_soon.dart` | Boş tarif listesi placeholder |
 | `lib/features/home/presentation/widgets/recipe_detail_sheet.dart` | ingredients bullet, instructions numaralı |
@@ -143,8 +143,9 @@ zerowaste/
 | Dosya | Açıklama |
 |-------|----------|
 | `lib/features/points/data/models/post_entry.dart` | imageUrl, localPreviewPath, çift dilli adminNote |
-| `lib/features/points/data/repositories/points_repository.dart` | submitPost, approvePost, leaderboard, optOutUser |
-| `lib/features/points/presentation/pages/points_page.dart` | Storage upload → Firestore; clears chat on soft-delete/opt-out |
+| `lib/features/points/data/models/user_stats.dart` | Plan B özet: totalPoints, status, optIn, pendingCount |
+| `lib/features/points/data/repositories/points_repository.dart` | submitPost, ensureUserStats, optOut (no LB write), bounded posts |
+| `lib/features/points/presentation/pages/points_page.dart` | Storage upload → Firestore; stats-based points; clears chat on soft-delete/opt-out |
 | `lib/features/points/presentation/widgets/post_image_thumbnail.dart` | CachedNetworkImage + local preview |
 
 ---
@@ -154,13 +155,20 @@ zerowaste/
 ### `recipes` koleksiyonu
 ```
 /recipes/{recipeId}
-  title: string (zorunlu)
-  description: string? (opsiyonel, tek paragraf)
+  title: string (TR, zorunlu)
+  titleEn: string (EN, zorunlu)
+  description: string? (TR)
+  descriptionEn: string? (EN)
   image_url: string? (opsiyonel)
-  ingredients: string[] (zorunlu, her eleman mobilde ayrı madde)
-  instructions: string[] (zorunlu, sıra = adım numarası)
+  ingredients: string[] (TR, zorunlu ≥1)
+  ingredientsEn: string[] (EN, zorunlu ≥1)
+  instructions: string[] (TR, zorunlu ≥1)
+  instructionsEn: string[] (EN, zorunlu ≥1)
 ```
+**Admin:** TR+EN dolmadan kaydet yok.  
+**Mobil:** `isBilingualComplete` filtre; UI `localized*(locale)` ile gösterir (EN boşsa TR fallback).  
 **Rules:** read herkese açık; write sadece `admins/{uid}` olan kullanıcılar.
+**Sıralama:** `orderBy('title')` (TR canonical).
 
 ### `posts` koleksiyonu
 ```
@@ -185,18 +193,33 @@ zerowaste/
   entries: [{nickname: string, points: int}]
   lastUpdated: timestamp
 ```
+**Rules:** read public; write only `canModerate()` (Plan B). Mobile does not write LB.
 
 ### `admins/{userId}` dokümanı
 ```
   role: string? ("admin")
 ```
 
-### `user_profiles/{nickname}` (soft-delete)
+### `user_stats/{nickname}` (Plan B)
+```
+  totalPoints: number
+  optIn: bool
+  status: "active" | "deleted" (legacy; yeni ban wipe ile doküman silinir)
+  reason / reasonEn?: string
+  pendingCount?: number
+  claimedByUid?: string  // nick sahibi Auth uid
+  updatedAt: timestamp
+```
+Client: create with claimedByUid=self; update optIn/pendingCount; claim immutable.  
+Admin/CF: totalPoints; wipe = doküman+posts sil (`wipeContestNickname`).  
+`leaveContest` / `deleteAppUser` aynı wipe (sahip vs Super Admin).
+
+### `user_profiles/{nickname}` (legacy)
 ```
   status: "deleted"
   reason / reasonEn?: string
 ```
-Client read-only; yazma admin.
+Legacy read-only; no new writes. Mobile uses `user_stats` instead.
 
 ---
 

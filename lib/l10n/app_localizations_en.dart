@@ -314,6 +314,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pointsLevelLegend => 'Legend+';
 
   @override
+  String get pointsLevelIkon => 'Icon';
+
+  @override
+  String get pointsLevelSampiyon => 'Champion';
+
+  @override
+  String get pointsLevelUzman => 'Expert';
+
+  @override
   String get pointsLevelEfsane => 'Legend';
 
   @override
@@ -324,6 +333,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pointsLevelCaylak => 'Novice';
+
+  @override
+  String get pointsLevelsGuideTitle => 'Levels';
+
+  @override
+  String get pointsLevelsGuideSubtitle => 'Earn points to unlock new roles.';
+
+  @override
+  String get pointsLevelsCurrentBadge => 'Current';
+
+  @override
+  String get pointsUnit => 'pts';
 
   @override
   String get pointsNicknameDialogTitle => 'What\'s Your Nickname?';
@@ -343,8 +364,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pointsNicknameValidationEmpty => 'Please enter a nickname';
 
   @override
+  String get pointsNicknameOptInRequired =>
+      'You must accept leaderboard consent to continue.';
+
+  @override
   String get pointsNicknameUnavailable =>
       'This nickname is unavailable. Please choose another.';
+
+  @override
+  String get pointsNicknameTaken =>
+      'This nickname is already taken. Please choose another.';
 
   @override
   String get pointsLeaderboardOptIn =>
@@ -477,6 +506,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pointsRejectedOk => 'OK';
 
   @override
+  String get pointsRemovedTitle => 'Your points were updated';
+
+  @override
+  String pointsRemovedDesc(int removed, int total) {
+    return '$removed points were removed from your account. Your new total: $total.';
+  }
+
+  @override
   String get pointsEarned => 'Points Earned:';
 
   @override
@@ -577,7 +614,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountDeletedMessage =>
-      'Your contest account was removed by an admin. Your nickname and local points data will be cleared so you can start over with a new nickname.';
+      'Your contest account was removed by an admin. Your points and posts were deleted. Your local nickname will be cleared so you can start over with the same or a new name.';
 
   @override
   String accountDeletedReason(String reason) {
@@ -592,11 +629,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get optOutMessage =>
-      'If you leave the contest, all your points and your leaderboard rank will be lost. You can rejoin later with a new nickname.\n\nAre you sure you want to continue?';
+      'If you leave the contest, your points, posts, and leaderboard rank will be permanently deleted. You can rejoin from scratch with the same or a new nickname.\n\nAre you sure you want to continue?';
 
   @override
   String get optOutCancel => 'Cancel';
 
   @override
   String get optOutConfirm => 'Leave';
+
+  @override
+  String get optOutSuccess => 'You left the contest. Your data was deleted.';
+
+  @override
+  String get optOutGenericError =>
+      'Could not leave the contest. Please try again.';
+
+  @override
+  String get optOutPermissionError =>
+      'You cannot perform this action on this nickname.';
+
+  @override
+  String get optOutBannedError =>
+      'This nickname was closed by an admin. Leave contest is not available.';
 }

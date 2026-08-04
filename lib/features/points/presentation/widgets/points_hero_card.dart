@@ -1,77 +1,18 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
 import 'package:zerowaste/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../utils/points_levels.dart';
+import 'level_up_stepper.dart';
 
-/// Gamification level definition.
-class _Level {
-  const _Level({
-    required this.name,
-    required this.emoji,
-    required this.minPoints,
-    required this.maxPoints,
-    required this.color,
-  });
-
-  final String name;
-  final String emoji;
-  final int minPoints;
-  final int maxPoints; // exclusive — next level starts here
-  final Color color;
-}
-
-const _levels = [
-  _Level(name: 'Çaylak',    emoji: '🌱', minPoints: 0,    maxPoints: 50,   color: Color(0xFFA5D6A7)),
-  _Level(name: 'Meraklı',   emoji: '🌿', minPoints: 50,   maxPoints: 150,  color: Color(0xFF66BB6A)),
-  _Level(name: 'Usta',      emoji: '🌳', minPoints: 150,  maxPoints: 300,  color: AppColors.brandOrange),
-  _Level(name: 'Efsane',    emoji: '🏆', minPoints: 300,  maxPoints: 600,  color: Color(0xFFFF6F00)),
-  _Level(name: 'Efsane+',   emoji: '💎', minPoints: 600,  maxPoints: 999999, color: Color(0xFFFFD700)),
-];
-
-String _localizedLevelName(BuildContext context, String name) {
-  final l10n = AppLocalizations.of(context)!;
-  switch (name) {
-    case 'Çaylak':
-      return l10n.pointsLevelCaylak;
-    case 'Meraklı':
-      return l10n.pointsLevelMerakli;
-    case 'Usta':
-      return l10n.pointsLevelUsta;
-    case 'Efsane':
-      return l10n.pointsLevelEfsane;
-    case 'Efsane+':
-      return l10n.pointsLevelLegend;
-    default:
-      return name;
-  }
-}
-
-_Level _levelForPoints(int points) {
-  for (final level in _levels.reversed) {
-    if (points >= level.minPoints) return level;
-  }
-  return _levels.first;
-}
-
-int _levelIndex(int points) {
-  for (int i = _levels.length - 1; i >= 0; i--) {
-    if (points >= _levels[i].minPoints) return i;
-  }
-  return 0;
-}
-
-/// Hero card with two animation modes:
+/// Hero card with three animation modes:
 ///
-/// **Normal mode** (every page open):
-///   Progress fills from 0 to current within the level.
-///   Counter counts from level.minPoints to totalPoints.
-///   Badge shows current level immediately.
-///
-/// **Level-up mode** (when [previousPoints] is set AND level changed):
-///   Full multi-level journey from previous level through each completed
-///   level with celebration overlays, ending at current progress.
+/// **Normal mode**: progress + counter within the current level (up or down).
+/// **Level-up**: horizontal stepper previous → new role, points count up.
+/// **Level-down**: reverse stepper + points count down, then settle.
 class PointsHeroCard extends StatefulWidget {
   const PointsHeroCard({
     super.key,
@@ -87,7 +28,7 @@ class PointsHeroCard extends StatefulWidget {
   final int totalPoints;
 
   /// Set this only when admin approved a post and points changed.
-  /// If the level boundary was crossed, the full journey animation plays.
+  /// If the level boundary was crossed, the stepper journey plays.
   final int? previousPoints;
   final VoidCallback? onJourneyComplete;
   final VoidCallback? onAnimationComplete;
@@ -107,61 +48,62 @@ class PointsHeroCard extends StatefulWidget {
 
 class _PointsHeroCardState extends State<PointsHeroCard>
     with TickerProviderStateMixin {
-  // Fade-in
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
-  // Track active progress controllers to prevent ticker leaks
   AnimationController? _activeProgressController;
 
-  late _Level _currentLevel;
+  late PointsLevel _currentLevel;
   late int _currentLevelIdx;
+  int _prevLevelIdx = 0;
 
-  // Display state
   int _displayLevelIdx = 0;
   double _displayProgress = 0.0;
   double _displayPoints = 0.0;
-  bool _showCelebration = false;
-  String _celebrationText = '';
-  double _celebrationOpacity = 0.0;
-  double _celebrationScale = 0.0;
 
   bool _hasLevelUp = false;
+  bool _hasLevelDown = false;
+  bool _showStepper = false;
+  bool _stepperReverse = false;
   bool _isAnimating = false;
   bool _isDisposed = false;
+
+  Completer<void>? _stepperCompleter;
 
   @override
   void initState() {
     super.initState();
 
-    _currentLevel = _levelForPoints(widget.totalPoints);
-    _currentLevelIdx = _levelIndex(widget.totalPoints);
+    _currentLevel = pointsLevelForPoints(widget.totalPoints);
+    _currentLevelIdx = pointsLevelIndex(widget.totalPoints);
 
     final prevPts = widget.previousPoints;
-    final prevIdx = prevPts != null ? _levelIndex(prevPts) : _currentLevelIdx;
-    _hasLevelUp = prevPts != null && prevIdx < _currentLevelIdx;
+    _prevLevelIdx =
+        prevPts != null ? pointsLevelIndex(prevPts) : _currentLevelIdx;
+    _hasLevelUp = prevPts != null && _prevLevelIdx < _currentLevelIdx;
+    _hasLevelDown = prevPts != null && _prevLevelIdx > _currentLevelIdx;
 
     if (widget.startAnimation) {
-      // Animated mode: start from previous points, animate up to current
       _displayPoints = (prevPts ?? _currentLevel.minPoints).toDouble();
-      _displayLevelIdx = _hasLevelUp ? 0 : (prevIdx);
+      _displayLevelIdx = _prevLevelIdx;
     } else {
-      // Static mode: show final values immediately
       _displayPoints = widget.totalPoints.toDouble();
       _displayLevelIdx = _currentLevelIdx;
-      final range = (_currentLevel.maxPoints - _currentLevel.minPoints).clamp(1, 999999);
-      _displayProgress = ((widget.totalPoints - _currentLevel.minPoints) / range).clamp(0.0, 1.0);
+      final range =
+          (_currentLevel.maxPoints - _currentLevel.minPoints).clamp(1, 999999);
+      _displayProgress =
+          ((widget.totalPoints - _currentLevel.minPoints) / range)
+              .clamp(0.0, 1.0);
     }
 
-    // Fade-in happens immediately
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
-    _fadeAnimation = CurvedAnimation(parent: _fadeController, curve: Curves.easeOut);
+    _fadeAnimation =
+        CurvedAnimation(parent: _fadeController, curve: Curves.easeOut);
     _fadeController.forward();
 
-    // Start progress animation on the next frame
     if (widget.startAnimation) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && !_isAnimating) _triggerAnimations();
@@ -174,10 +116,12 @@ class _PointsHeroCardState extends State<PointsHeroCard>
     _isDisposed = true;
     _fadeController.dispose();
     _activeProgressController?.dispose();
+    if (_stepperCompleter != null && !_stepperCompleter!.isCompleted) {
+      _stepperCompleter!.complete();
+    }
     super.dispose();
   }
 
-  /// Safely disposes and clears the active progress controller.
   void _disposeActiveController() {
     _activeProgressController?.dispose();
     _activeProgressController = null;
@@ -187,11 +131,13 @@ class _PointsHeroCardState extends State<PointsHeroCard>
   void didUpdateWidget(PointsHeroCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!oldWidget.startAnimation && widget.startAnimation) {
-      _currentLevel = _levelForPoints(widget.totalPoints);
-      _currentLevelIdx = _levelIndex(widget.totalPoints);
+      _currentLevel = pointsLevelForPoints(widget.totalPoints);
+      _currentLevelIdx = pointsLevelIndex(widget.totalPoints);
       final prevPts = widget.previousPoints;
-      final prevIdx = prevPts != null ? _levelIndex(prevPts) : _currentLevelIdx;
-      _hasLevelUp = prevPts != null && prevIdx < _currentLevelIdx;
+      _prevLevelIdx =
+          prevPts != null ? pointsLevelIndex(prevPts) : _currentLevelIdx;
+      _hasLevelUp = prevPts != null && _prevLevelIdx < _currentLevelIdx;
+      _hasLevelDown = prevPts != null && _prevLevelIdx > _currentLevelIdx;
       _triggerAnimations();
     }
   }
@@ -200,30 +146,37 @@ class _PointsHeroCardState extends State<PointsHeroCard>
     if (_isAnimating || _isDisposed) return;
 
     if (_hasLevelUp) {
-      _startLevelUpJourney(0);
+      _startLevelChangeStepper(reverse: false);
+    } else if (_hasLevelDown) {
+      _startLevelChangeStepper(reverse: true);
     } else {
       _startNormalAnimation();
     }
   }
 
-  /// Normal mode: animate from previous points to current within the level.
   Future<void> _startNormalAnimation() async {
     if (_isAnimating || _isDisposed) return;
     _isAnimating = true;
 
-    _currentLevel = _levelForPoints(widget.totalPoints);
-    _currentLevelIdx = _levelIndex(widget.totalPoints);
+    _currentLevel = pointsLevelForPoints(widget.totalPoints);
+    _currentLevelIdx = pointsLevelIndex(widget.totalPoints);
     final prevPts = widget.previousPoints ?? _currentLevel.minPoints;
-    final range = (_currentLevel.maxPoints - _currentLevel.minPoints).clamp(1, 999999);
+
+    // Same-level change may cross minPoints of current level for display;
+    // clamp progress into the destination level's range.
+    final range =
+        (_currentLevel.maxPoints - _currentLevel.minPoints).clamp(1, 999999);
     final fromProgress =
         ((prevPts - _currentLevel.minPoints) / range).clamp(0.0, 1.0);
     final targetProgress =
-        ((widget.totalPoints - _currentLevel.minPoints) / range).clamp(0.0, 1.0);
+        ((widget.totalPoints - _currentLevel.minPoints) / range)
+            .clamp(0.0, 1.0);
 
     setState(() {
+      _showStepper = false;
       _displayPoints = prevPts.toDouble();
       _displayProgress = fromProgress;
-      _displayLevelIdx = _levelIndex(prevPts);
+      _displayLevelIdx = _currentLevelIdx;
     });
 
     await _animateProgress(
@@ -240,52 +193,56 @@ class _PointsHeroCardState extends State<PointsHeroCard>
     }
   }
 
-  /// Level-up mode: full journey from previous level to current.
-  Future<void> _startLevelUpJourney(int startIdx) async {
+  /// Level-up or level-down: stepper + points tween, then settle to ring.
+  Future<void> _startLevelChangeStepper({required bool reverse}) async {
     if (_isAnimating || _isDisposed || !mounted) return;
     _isAnimating = true;
 
-    for (int i = startIdx; i <= _currentLevelIdx; i++) {
-      if (!mounted || _isDisposed) break;
+    final prevPts =
+        widget.previousPoints ?? pointsLevels[_prevLevelIdx].minPoints;
+    _stepperCompleter = Completer<void>();
 
-      final level = _levels[i];
-      final isCompleted = i < _currentLevelIdx;
+    setState(() {
+      _showStepper = true;
+      _stepperReverse = reverse;
+      _displayLevelIdx = _prevLevelIdx;
+      _displayPoints = prevPts.toDouble();
+      _displayProgress = 0.0;
+    });
 
-      setState(() {
-        _displayLevelIdx = i;
-        _displayProgress = 0.0;
-        _showCelebration = false;
-      });
+    await Future.wait<void>([
+      _animateProgress(
+        fromProgress: 0,
+        toProgress: 0,
+        fromPoints: prevPts.toDouble(),
+        toPoints: widget.totalPoints.toDouble(),
+        durationMs: 1100,
+      ),
+      _stepperCompleter!.future,
+    ]);
 
-      double targetProgress;
-      double fromPts;
-      double toPts;
+    if (!mounted || _isDisposed) return;
 
-      if (isCompleted) {
-        targetProgress = 1.0;
-        fromPts = level.minPoints.toDouble();
-        toPts = level.maxPoints.toDouble();
-      } else {
-        final range = (level.maxPoints - level.minPoints).clamp(1, 999999);
-        targetProgress = ((widget.totalPoints - level.minPoints) / range).clamp(0.0, 1.0);
-        fromPts = level.minPoints.toDouble();
-        toPts = widget.totalPoints.toDouble();
-      }
+    final range =
+        (_currentLevel.maxPoints - _currentLevel.minPoints).clamp(1, 999999);
+    final finalProgress =
+        ((widget.totalPoints - _currentLevel.minPoints) / range)
+            .clamp(0.0, 1.0);
 
-      await _animateProgress(
-        fromProgress: 0.0,
-        toProgress: targetProgress,
-        fromPoints: fromPts,
-        toPoints: toPts,
-        durationMs: isCompleted ? 1200 : 1400,
-      );
+    setState(() {
+      _showStepper = false;
+      _displayLevelIdx = _currentLevelIdx;
+      _displayPoints = widget.totalPoints.toDouble();
+      _displayProgress = reverse ? 1.0 : 0.0;
+    });
 
-      if (isCompleted) {
-        await _showLevelCelebration(level);
-        if (!mounted || _isDisposed) break;
-        await Future.delayed(const Duration(milliseconds: 400));
-      }
-    }
+    await _animateProgress(
+      fromProgress: reverse ? 1.0 : 0.0,
+      toProgress: finalProgress,
+      fromPoints: widget.totalPoints.toDouble(),
+      toPoints: widget.totalPoints.toDouble(),
+      durationMs: 700,
+    );
 
     _isAnimating = false;
     if (mounted && !_isDisposed) {
@@ -293,7 +250,13 @@ class _PointsHeroCardState extends State<PointsHeroCard>
     }
   }
 
-  /// Smoothly animates progress bar and counter.
+  void _onStepperComplete() {
+    final completer = _stepperCompleter;
+    if (completer != null && !completer.isCompleted) {
+      completer.complete();
+    }
+  }
+
   Future<void> _animateProgress({
     required double fromProgress,
     required double toProgress,
@@ -301,9 +264,7 @@ class _PointsHeroCardState extends State<PointsHeroCard>
     required double toPoints,
     required int durationMs,
   }) async {
-    // Clean up any previous active controller before starting a new one
     _disposeActiveController();
-
     if (!mounted || _isDisposed) return;
 
     _activeProgressController = AnimationController(
@@ -313,7 +274,10 @@ class _PointsHeroCardState extends State<PointsHeroCard>
 
     final progressTween = Tween<double>(begin: fromProgress, end: toProgress);
     final pointsTween = Tween<double>(begin: fromPoints, end: toPoints);
-    final curved = CurvedAnimation(parent: _activeProgressController!, curve: Curves.easeInOut);
+    final curved = CurvedAnimation(
+      parent: _activeProgressController!,
+      curve: Curves.easeInOut,
+    );
 
     void listener() {
       if (!mounted) return;
@@ -324,11 +288,11 @@ class _PointsHeroCardState extends State<PointsHeroCard>
     }
 
     _activeProgressController!.addListener(listener);
-    
+
     try {
       await _activeProgressController!.forward().orCancel;
     } catch (_) {
-      // Animation was cancelled (e.g. disposed)
+      // Cancelled on dispose.
     } finally {
       if (mounted) {
         _activeProgressController?.removeListener(listener);
@@ -338,89 +302,12 @@ class _PointsHeroCardState extends State<PointsHeroCard>
     }
   }
 
-  /// Shows a level-completed celebration overlay.
-  Future<void> _showLevelCelebration(_Level level) async {
-    if (!mounted) return;
-
-    setState(() {
-      _showCelebration = true;
-      _celebrationText = '${_localizedLevelName(context, level.name)} ✓';
-      _celebrationOpacity = 0.0;
-      _celebrationScale = 0.0;
-    });
-
-    // Zoom in
-    _activeProgressController?.dispose();
-    if (!mounted) return;
-
-    _activeProgressController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-    final showCurved = CurvedAnimation(parent: _activeProgressController!, curve: Curves.elasticOut);
-
-    void showListener() {
-      if (!mounted) return;
-      setState(() {
-        _celebrationOpacity = Curves.easeOut.transform(_activeProgressController!.value.clamp(0.0, 1.0));
-        _celebrationScale = showCurved.value.clamp(0.0, 1.5);
-      });
-    }
-
-    _activeProgressController!.addListener(showListener);
-    
-    try {
-      await _activeProgressController!.forward().orCancel;
-    } catch (_) {} finally {
-      if (mounted) {
-        _activeProgressController?.removeListener(showListener);
-        _activeProgressController?.dispose();
-        _activeProgressController = null;
-      }
-    }
-
-    if (!mounted) return;
-
-    await Future.delayed(const Duration(milliseconds: 1000));
-
-    if (!mounted) return;
-
-    // Fade out
-    _activeProgressController?.dispose();
-    if (!mounted) return;
-    
-    _activeProgressController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    );
-
-    void hideListener() {
-      if (!mounted) return;
-      setState(() {
-        _celebrationOpacity = 1.0 - _activeProgressController!.value;
-        _celebrationScale = 1.0 + (_activeProgressController!.value * 0.2);
-      });
-    }
-
-    _activeProgressController!.addListener(hideListener);
-    
-    try {
-      await _activeProgressController!.forward().orCancel;
-    } catch (_) {}
-
-    _disposeActiveController();
-
-    if (!mounted || _isDisposed) return;
-    setState(() => _showCelebration = false);
-  }
-
-
-
   @override
   Widget build(BuildContext context) {
-    final displayLevel = _levels[_displayLevelIdx];
+    final displayLevel = pointsLevels[_displayLevelIdx];
     final nextLevelIdx = _currentLevelIdx + 1;
-    final nextLevel = nextLevelIdx < _levels.length ? _levels[nextLevelIdx] : null;
+    final nextLevel =
+        nextLevelIdx < pointsLevels.length ? pointsLevels[nextLevelIdx] : null;
 
     return FadeTransition(
       opacity: _fadeAnimation,
@@ -449,7 +336,6 @@ class _PointsHeroCardState extends State<PointsHeroCard>
           children: [
             Column(
               children: [
-                // ── Nickname greeting ──
                 if (widget.nickname != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
@@ -474,16 +360,82 @@ class _PointsHeroCardState extends State<PointsHeroCard>
                       ],
                     ),
                   ),
-                _buildTopRow(displayLevel),
-                const SizedBox(height: 20),
-                _buildCircularProgress(),
-                const SizedBox(height: 16),
-                _buildBottomInfo(nextLevel),
+                if (!_showStepper) ...[
+                  _buildTopRow(displayLevel),
+                  const SizedBox(height: 20),
+                  _buildCircularProgress(),
+                  const SizedBox(height: 16),
+                  _buildBottomInfo(nextLevel),
+                ] else ...[
+                  Text(
+                    _stepperReverse
+                        ? localizedPointsLevelName(
+                            context,
+                            pointsLevels[_currentLevelIdx].name,
+                          )
+                        : AppLocalizations.of(context)!.pointsLevelUpTitle,
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white.withOpacity(0.95),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  LevelUpStepper(
+                    key: ValueKey(
+                      'stepper-$_prevLevelIdx-$_currentLevelIdx-$_stepperReverse',
+                    ),
+                    fromLevelIdx: _prevLevelIdx,
+                    toLevelIdx: _currentLevelIdx,
+                    reverse: _stepperReverse,
+                    onComplete: _onStepperComplete,
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    _displayPoints.toInt().toString(),
+                    style: const TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 36,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: -1,
+                      height: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    AppLocalizations.of(context)!.pointsUnit,
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white.withOpacity(0.8),
+                    ),
+                  ),
+                ],
               ],
             ),
-            if (_showCelebration)
-              Positioned.fill(child: _buildCelebrationOverlay()),
-            // ── Opt-out button (top-right corner) ──
+            Positioned(
+              top: 0,
+              left: 0,
+              child: GestureDetector(
+                onTap: _showLevelsSheet,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withOpacity(0.3)),
+                  ),
+                  child: Icon(
+                    Icons.info_outline_rounded,
+                    size: 14,
+                    color: Colors.white.withOpacity(0.8),
+                  ),
+                ),
+              ),
+            ),
             if (widget.onOptOut != null)
               Positioned(
                 top: 0,
@@ -511,76 +463,154 @@ class _PointsHeroCardState extends State<PointsHeroCard>
     );
   }
 
-  Widget _buildCelebrationOverlay() {
-    final level = _levels[_displayLevelIdx];
-    return IgnorePointer(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.25 * _celebrationOpacity),
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Center(
-          child: Transform.scale(
-            scale: _celebrationScale,
-            child: Opacity(
-              opacity: _celebrationOpacity.clamp(0.0, 1.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Opacity(
-                    opacity: _celebrationOpacity,
-                    child: Text(
-                      '✨',
-                      style: TextStyle(fontSize: 28 + (_celebrationScale * 8)),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+  void _showLevelsSheet() {
+    final l10n = AppLocalizations.of(context)!;
+    final currentIdx = pointsLevelIndex(widget.totalPoints);
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.95),
+                      color: AppColors.stone.withOpacity(0.35),
                       borderRadius: BorderRadius.circular(999),
-                      boxShadow: [
-                        BoxShadow(
-                          color: level.color.withOpacity(0.4),
-                          blurRadius: 20,
-                          spreadRadius: 4,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.pointsLevelsGuideTitle,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  l10n.pointsLevelsGuideSubtitle,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 13,
+                    color: AppColors.inkLight.withOpacity(0.85),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.sizeOf(ctx).height * 0.55,
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: pointsLevels.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final level = pointsLevels[index];
+                      final isCurrent = index == currentIdx;
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
                         ),
-                      ],
-                    ),
-                    child: Text(
-                      _celebrationText,
-                      style: TextStyle(
-                        fontFamily: 'Manrope',
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: level.color,
-                      ),
-                    ),
+                        decoration: BoxDecoration(
+                          color: isCurrent
+                              ? level.color.withOpacity(0.12)
+                              : AppColors.paper.withOpacity(0.6),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isCurrent
+                                ? level.color.withOpacity(0.55)
+                                : Colors.transparent,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(level.emoji,
+                                style: const TextStyle(fontSize: 22)),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    localizedPointsLevelName(
+                                        context, level.name),
+                                    style: TextStyle(
+                                      fontFamily: 'Manrope',
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: isCurrent
+                                          ? level.color
+                                          : AppColors.ink,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${pointsLevelRangeLabel(level)} ${l10n.pointsUnit}',
+                                    style: TextStyle(
+                                      fontFamily: 'Manrope',
+                                      fontSize: 12,
+                                      color:
+                                          AppColors.inkLight.withOpacity(0.8),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (isCurrent)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: level.color,
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  l10n.pointsLevelsCurrentBadge,
+                                  style: const TextStyle(
+                                    fontFamily: 'Manrope',
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                  const SizedBox(height: 8),
-                  Opacity(
-                    opacity: _celebrationOpacity,
-                    child: Text(
-                      AppLocalizations.of(context)!.pointsLevelComplete,
-                      style: TextStyle(
-                        fontFamily: 'Manrope',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildTopRow(_Level level) {
+  Widget _buildTopRow(PointsLevel level) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -602,7 +632,7 @@ class _PointsHeroCardState extends State<PointsHeroCard>
                 Text(level.emoji, style: const TextStyle(fontSize: 16)),
                 const SizedBox(width: 6),
                 Text(
-                  _localizedLevelName(context, level.name),
+                  localizedPointsLevelName(context, level.name),
                   style: const TextStyle(
                     fontFamily: 'Manrope',
                     fontSize: 14,
@@ -661,7 +691,7 @@ class _PointsHeroCardState extends State<PointsHeroCard>
               ),
               const SizedBox(height: 4),
               Text(
-                'puan',
+                AppLocalizations.of(context)!.pointsUnit,
                 style: TextStyle(
                   fontFamily: 'Manrope',
                   fontSize: 14,
@@ -676,12 +706,12 @@ class _PointsHeroCardState extends State<PointsHeroCard>
     );
   }
 
-  Widget _buildBottomInfo(_Level? nextLevel) {
+  Widget _buildBottomInfo(PointsLevel? nextLevel) {
     if (nextLevel != null) {
       return Text(
         AppLocalizations.of(context)!.pointsNextLevel(
           nextLevel.emoji,
-          _localizedLevelName(context, nextLevel.name),
+          localizedPointsLevelName(context, nextLevel.name),
           nextLevel.minPoints - widget.totalPoints,
         ),
         style: TextStyle(
@@ -705,7 +735,6 @@ class _PointsHeroCardState extends State<PointsHeroCard>
   }
 }
 
-/// Custom painter for a gradient arc (white glowing progress).
 class _BackgroundRingPainter extends CustomPainter {
   _BackgroundRingPainter({required this.strokeWidth});
 
@@ -730,7 +759,6 @@ class _BackgroundRingPainter extends CustomPainter {
   bool shouldRepaint(_BackgroundRingPainter oldDelegate) => false;
 }
 
-/// Custom painter for a gradient arc (white glowing progress).
 class _GradientArcPainter extends CustomPainter {
   _GradientArcPainter({
     required this.progress,

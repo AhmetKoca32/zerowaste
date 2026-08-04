@@ -7,15 +7,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:zerowaste/l10n/app_localizations.dart';
 import '../../../../core/providers/core_providers.dart';
+import '../../../../core/services/leave_contest_service.dart';
 import '../../../../core/services/post_image_storage_service.dart';
 import '../../../../core/shell/main_tab_shell.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../chat/presentation/providers/chat_providers.dart';
 import '../../data/models/leaderboard_doc.dart';
 import '../../data/models/post_entry.dart';
+import '../../data/models/user_stats.dart';
 import '../../data/repositories/points_repository.dart';
 import '../widgets/mission_cards.dart';
 import '../widgets/points_hero_card.dart';
+import '../utils/points_levels.dart';
 import '../widgets/recent_posts_grid.dart';
 
 /// 4. sekme: Puan toplama sayfası (dolap / yemek anı / artıklardan ne yaptım).
@@ -172,6 +175,8 @@ class _PointsPageState extends ConsumerState<PointsPage>
   /// User data
   String? _nickname;
   bool _leaderboardOptIn = false;
+  /// Bumps to force [_LeaderboardTop3] reload after opt-out / tab revisit.
+  int _leaderboardEpoch = 0;
   bool _nicknameLoaded = false;
 
   /// Posts from Firestore
@@ -180,13 +185,16 @@ class _PointsPageState extends ConsumerState<PointsPage>
   int _previousPoints = 0;
   bool _isLoading = true;
 
-  /// Level-up / overlay state
+  /// Level-up / level-down / overlay state
   bool _isLevelUp = false;
+  bool _isLevelDown = false;
   bool _journeyDone = false;
   bool _startHeroAnimation = false;
   bool _showPointsAddedOverlay = false;
   bool _showPostRejectedOverlay = false;
   bool _rejectionQueuedAfterApprove = false;
+  /// After rejection dialog, run hero countdown / level-down stepper.
+  bool _pendingDecreaseAnimation = false;
   PostEntry? _pendingRejectedPost;
   List<String> _pendingNewRejectedIds = [];
 
@@ -281,18 +289,26 @@ class _PointsPageState extends ConsumerState<PointsPage>
       await _persistSeenRejectedIds(nick, ids);
     }
     if (!mounted) return;
+    final startDecrease = _pendingDecreaseAnimation;
     setState(() {
       _showPostRejectedOverlay = false;
       _pendingNewRejectedIds = [];
       _pendingRejectedPost = null;
       _rejectionQueuedAfterApprove = false;
+      _pendingDecreaseAnimation = false;
+      if (startDecrease) {
+        // Now enter the level-down / countdown journey.
+        if (_isLevelDown) {
+          _journeyDone = false;
+        }
+        _heroAnimationNonce++;
+        _startHeroAnimation = true;
+      }
     });
   }
 
-  /// Fetch posts from Firestore once.
-  /// Compares current total with last-known points in SharedPreferences.
-  /// Animates only when [allowAnimation] is true and points increased since
-  /// the last persisted value (i.e. user is viewing the Points tab).
+  /// Plan B load: 1× user_stats + bounded posts (+ rejected overlay query).
+  /// Total points come from stats, not by summing all posts.
   Future<void> _loadPosts({bool allowAnimation = false}) async {
     if (_nickname == null) {
       setState(() => _isLoading = false);
@@ -303,26 +319,70 @@ class _PointsPageState extends ConsumerState<PointsPage>
     final nickname = _nickname!;
 
     try {
-      // Soft-delete check — authoritative signal from admin panel.
-      final profile = await _repo.getUserProfileStatus(nickname);
+      final user = await ref.read(anonymousAuthServiceProvider).ensureSignedIn();
       if (!mounted || generation != _loadGeneration) return;
 
-      if (profile != null && profile.isDeleted) {
+      UserStats? stats = await _repo.getUserStats(nickname);
+      if (!mounted || generation != _loadGeneration) return;
+
+      // Wipe (admin ban / leaveContest) removes stats. Tell the user, then clear.
+      // Do not auto-reclaim from stale prefs.
+      if (stats == null) {
+        setState(() => _isLoading = false);
+        await _showAccountDeletedDialog();
+        return;
+      }
+
+      if (stats.isDeleted) {
+        // Legacy soft-delete docs (pre-wipe ban); treat as gone.
         setState(() => _isLoading = false);
         final localeCode = Localizations.localeOf(context).languageCode;
         await _showAccountDeletedDialog(
-          reason: profile.localizedReason(localeCode),
+          reason: stats.localizedReason(localeCode),
         );
         return;
+      }
+
+      if (stats.hasOwner && !stats.isOwnedBy(user.uid)) {
+        await _clearLocalUserSession();
+        return;
+      }
+
+      if (!stats.hasOwner) {
+        final outcome = await _repo.claimNickname(
+          nickname,
+          uid: user.uid,
+          optIn: _leaderboardOptIn,
+        );
+        if (!mounted || generation != _loadGeneration) return;
+        if (!outcome.isSuccess || outcome.stats == null) {
+          await _clearLocalUserSession();
+          return;
+        }
+        stats = outcome.stats!;
       }
 
       final posts = await _repo.getPostsByNickname(nickname);
       if (!mounted || generation != _loadGeneration) return;
 
-      final approved =
-          posts.where((p) => p.status == PostStatus.approved).toList();
-      final total =
-          approved.fold(0, (sum, p) => sum + p.points).clamp(0, 999999);
+      List<PostEntry> rejected = [];
+      try {
+        rejected = await _repo.getRecentRejectedPosts(nickname);
+      } catch (e) {
+        debugPrint('getRecentRejectedPosts failed: $e');
+      }
+      // Merge with grid posts so a missing composite index still surfaces rejects.
+      final rejectedById = <String, PostEntry>{
+        for (final p in rejected)
+          if (p.id != null) p.id!: p,
+        for (final p in posts)
+          if (p.status == PostStatus.rejected && p.id != null) p.id!: p,
+      };
+      rejected = rejectedById.values.toList()
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      if (!mounted || generation != _loadGeneration) return;
+
+      final total = stats.totalPoints.clamp(0, 999999);
 
       final prefs = await SharedPreferences.getInstance();
       if (!mounted || generation != _loadGeneration) return;
@@ -331,16 +391,15 @@ class _PointsPageState extends ConsumerState<PointsPage>
           prefs.getInt('last_known_points_$nickname') ?? 0;
 
       final pointsIncreased = total > previousPoints;
-      final shouldAnimate = allowAnimation && pointsIncreased;
-      final isLevelUp = shouldAnimate &&
+      final pointsDecreased = total < previousPoints;
+      final shouldAnimateIncrease = allowAnimation && pointsIncreased;
+      final shouldAnimateDecrease = allowAnimation && pointsDecreased;
+      final isLevelUp = shouldAnimateIncrease &&
           previousPoints > 0 &&
           _getLevelName(previousPoints) != _getLevelName(total);
-
-      // ── Rejection detection ──
-      final rejected = posts
-          .where((p) => p.status == PostStatus.rejected && p.id != null)
-          .toList()
-        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      final isLevelDown = shouldAnimateDecrease &&
+          previousPoints > 0 &&
+          _getLevelName(previousPoints) != _getLevelName(total);
 
       final seenKey = _seenRejectedKey(nickname);
       final hasSeenKey = prefs.containsKey(seenKey);
@@ -350,34 +409,77 @@ class _PointsPageState extends ConsumerState<PointsPage>
       PostEntry? pendingRejectedPost;
       var showRejectionOverlay = false;
       var queueRejectionAfterApprove = false;
+      var pendingDecreaseAnimation = false;
+
+      final rejectedWithId = rejected;
 
       if (!hasSeenKey) {
-        // First run: seed existing rejections so old ones don't spam overlay.
-        await prefs.setStringList(
-          seenKey,
-          rejected.map((p) => p.id!).toList(),
-        );
+        if (allowAnimation && rejectedWithId.isNotEmpty && pointsDecreased) {
+          pendingNewRejectedIds =
+              rejectedWithId.map((p) => p.id!).toList();
+          pendingRejectedPost = rejectedWithId.first;
+          showRejectionOverlay = true;
+          pendingDecreaseAnimation = shouldAnimateDecrease;
+          await prefs.setStringList(seenKey, <String>[]);
+        } else if (allowAnimation &&
+            rejectedWithId.isNotEmpty &&
+            !pointsIncreased) {
+          // First open with unseen rejects (no point drop): show latest.
+          pendingNewRejectedIds = [rejectedWithId.first.id!];
+          pendingRejectedPost = rejectedWithId.first;
+          showRejectionOverlay = true;
+          await prefs.setStringList(
+            seenKey,
+            rejectedWithId.skip(1).map((p) => p.id!).toList(),
+          );
+        } else {
+          await prefs.setStringList(
+            seenKey,
+            rejectedWithId.map((p) => p.id!).toList(),
+          );
+        }
       } else {
         final newRejected =
-            rejected.where((p) => !seenIds.contains(p.id)).toList();
+            rejectedWithId.where((p) => !seenIds.contains(p.id)).toList();
         if (newRejected.isNotEmpty) {
           pendingNewRejectedIds = newRejected.map((p) => p.id!).toList();
           pendingRejectedPost = newRejected.first;
-          if (shouldAnimate) {
+          if (shouldAnimateIncrease) {
             queueRejectionAfterApprove = true;
           } else if (allowAnimation) {
             showRejectionOverlay = true;
+            if (shouldAnimateDecrease) {
+              pendingDecreaseAnimation = true;
+            }
           }
         }
       }
 
-      // Persist immediately when there is nothing to animate.
-      // When points increased, defer until animation completes.
-      if (!pointsIncreased) {
+      // Points dropped: always explain before countdown, even if reject
+      // query is empty or ids were already marked seen.
+      if (shouldAnimateDecrease) {
+        showRejectionOverlay = true;
+        pendingDecreaseAnimation = true;
+        if (pendingRejectedPost == null && rejectedWithId.isNotEmpty) {
+          pendingRejectedPost = rejectedWithId.first;
+          pendingNewRejectedIds = [rejectedWithId.first.id!];
+        }
+      }
+
+      // Defer persist while points changed — even if this load is off-tab
+      // (!allowAnimation). Otherwise last_known_points catches up silently and
+      // the next Points visit never sees a decrease/rejection to show.
+      if (!pointsIncreased && !pointsDecreased) {
         await _persistKnownPoints(total);
       }
 
       if (!mounted || generation != _loadGeneration) return;
+
+      debugPrint(
+        'Points load: allowAnim=$allowAnimation prev=$previousPoints '
+        'total=$total rejected=${rejectedWithId.length} '
+        'showReject=$showRejectionOverlay decrease=$shouldAnimateDecrease',
+      );
 
       setState(() {
         _posts = posts;
@@ -385,29 +487,41 @@ class _PointsPageState extends ConsumerState<PointsPage>
         _isLoading = false;
         _previousPoints = previousPoints;
         _isLevelUp = isLevelUp;
-        // Hide below-the-fold content only during level-up journey.
-        _journeyDone = !isLevelUp;
-        _pendingNewRejectedIds = pendingNewRejectedIds;
-        _pendingRejectedPost = pendingRejectedPost;
+        _isLevelDown = isLevelDown;
+        _journeyDone = !isLevelUp && !isLevelDown;
         _rejectionQueuedAfterApprove = queueRejectionAfterApprove;
-        // Overlay first; hero count/progress starts after "Harika! Devam Et".
-        if (shouldAnimate) {
+
+        if (shouldAnimateIncrease) {
+          _pendingNewRejectedIds = pendingNewRejectedIds;
+          _pendingRejectedPost = pendingRejectedPost;
+          _pendingDecreaseAnimation = false;
           _showPointsAddedOverlay = true;
           _showPostRejectedOverlay = false;
           _startHeroAnimation = false;
-          debugPrint(
-            'Points overlay: previous=$previousPoints total=$total '
-            'levelUp=$isLevelUp queuedRejection=$queueRejectionAfterApprove',
-          );
-        } else {
+        } else if (showRejectionOverlay) {
+          _pendingNewRejectedIds = pendingNewRejectedIds;
+          _pendingRejectedPost = pendingRejectedPost;
+          _pendingDecreaseAnimation = pendingDecreaseAnimation;
           _showPointsAddedOverlay = false;
-          _showPostRejectedOverlay = showRejectionOverlay;
+          _showPostRejectedOverlay = true;
           _startHeroAnimation = false;
-          if (showRejectionOverlay) {
-            debugPrint(
-              'Rejection overlay: ids=$pendingNewRejectedIds '
-              'post=${pendingRejectedPost?.id}',
-            );
+          // Keep page usable under the dialog; journey starts on dismiss.
+          if (pendingDecreaseAnimation) {
+            _journeyDone = true;
+          }
+        } else if (shouldAnimateDecrease) {
+          // Fallback — should be rare after the force-show above.
+          _pendingDecreaseAnimation = true;
+          _showPointsAddedOverlay = false;
+          _showPostRejectedOverlay = true;
+          _startHeroAnimation = false;
+          _journeyDone = true;
+        } else {
+          // Soft/background reload: refresh data but never dismiss an open
+          // rejection dialog the user hasn't acknowledged yet.
+          _showPointsAddedOverlay = false;
+          if (!_showPostRejectedOverlay) {
+            _startHeroAnimation = false;
           }
         }
       });
@@ -419,8 +533,10 @@ class _PointsPageState extends ConsumerState<PointsPage>
   }
 
   String _getLevelName(int pts) {
-    if (pts >= 600) return '_legend_plus_';
-    if (pts >= 300) return '_legend_';
+    if (pts >= 1200) return '_ikon_';
+    if (pts >= 800) return '_champion_';
+    if (pts >= 500) return '_legend_';
+    if (pts >= 300) return '_expert_';
     if (pts >= 150) return '_master_';
     if (pts >= 50) return '_curious_';
     return '_novice_';
@@ -532,12 +648,15 @@ class _PointsPageState extends ConsumerState<PointsPage>
       _isLoading = false;
       _startHeroAnimation = false;
       _isLevelUp = false;
+      _isLevelDown = false;
       _journeyDone = true;
       _showPointsAddedOverlay = false;
       _showPostRejectedOverlay = false;
       _rejectionQueuedAfterApprove = false;
+      _pendingDecreaseAnimation = false;
       _pendingNewRejectedIds = [];
       _pendingRejectedPost = null;
+      _leaderboardEpoch++;
     });
   }
 
@@ -598,37 +717,60 @@ class _PointsPageState extends ConsumerState<PointsPage>
     );
 
     if (confirmed == true && mounted) {
-      // Firestore'da tüm gönderilerini opt-out yap → leaderboard'dan kaybolur
+      final l10nConfirm = AppLocalizations.of(context)!;
       final nick = _nickname!;
-      await _repo.optOutUser(nick);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('leaderboard_opt_in', false);
-      await prefs.remove('leaderboard_nickname');
-      await prefs.remove(_seenRejectedKey(nick));
-      await prefs.remove('last_known_points_$nick');
-      await _resetDailyMissions();
-      await ref.read(chatMessagesProvider.notifier).clear();
-      setState(() {
-        _leaderboardOptIn = false;
-        _nickname = null;
-        _showPointsAddedOverlay = false;
-        _showPostRejectedOverlay = false;
-        _pendingNewRejectedIds = [];
-        _pendingRejectedPost = null;
-      });
-      _loadPosts();
+      try {
+        await ref.read(anonymousAuthServiceProvider).ensureSignedIn();
+        await ref.read(leaveContestServiceProvider).leaveContest(nick);
+        await _clearLocalUserSession();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10nConfirm.optOutSuccess),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: const Color(0xFFFFA726),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      } on LeaveContestException catch (e) {
+        if (!mounted) return;
+        final message = e.isBannedNickname
+            ? l10nConfirm.optOutBannedError
+            : e.isPermissionDenied
+                ? l10nConfirm.optOutPermissionError
+                : l10nConfirm.optOutGenericError;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red.shade700,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      } catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10nConfirm.optOutGenericError),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red.shade700,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
     }
   }
 
   Future<bool> _showNicknameDialog() async {
     final l10n = AppLocalizations.of(context)!;
     final nicknameController = TextEditingController(text: _nickname ?? '');
-    bool optIn = _leaderboardOptIn;
+    bool optIn = false;
+    String? optInError;
     final formKey = GlobalKey<FormState>();
 
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
@@ -645,22 +787,30 @@ class _PointsPageState extends ConsumerState<PointsPage>
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        l10n.pointsNicknameDialogTitle,
-                        style: const TextStyle(
-                          fontFamily: 'Manrope',
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.ink,
+                      SizedBox(
+                        width: double.infinity,
+                        child: Text(
+                          l10n.pointsNicknameDialogTitle,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        l10n.pointsNicknameDialogSubtitle,
-                        style: TextStyle(
-                          fontFamily: 'Manrope',
-                          fontSize: 14,
-                          color: AppColors.inkLight.withOpacity(0.8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: Text(
+                          l10n.pointsNicknameDialogSubtitle,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 14,
+                            color: AppColors.inkLight.withOpacity(0.8),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -724,7 +874,10 @@ class _PointsPageState extends ConsumerState<PointsPage>
                             child: Checkbox(
                               value: optIn,
                               onChanged: (v) {
-                                setDialogState(() => optIn = v ?? false);
+                                setDialogState(() {
+                                  optIn = v ?? false;
+                                  if (optIn) optInError = null;
+                                });
                               },
                               activeColor: AppColors.brandOrange,
                               shape: RoundedRectangleBorder(
@@ -746,6 +899,20 @@ class _PointsPageState extends ConsumerState<PointsPage>
                           ),
                         ],
                       ),
+                      if (optInError != null) ...[
+                        const SizedBox(height: 6),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 36),
+                          child: Text(
+                            optInError!,
+                            style: TextStyle(
+                              fontFamily: 'Manrope',
+                              fontSize: 12,
+                              color: Colors.red.shade700,
+                            ),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 4),
                       Padding(
                         padding: const EdgeInsets.only(left: 36),
@@ -760,35 +927,60 @@ class _PointsPageState extends ConsumerState<PointsPage>
                         ),
                       ),
                       const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (formKey.currentState?.validate() ?? false) {
-                              Navigator.pop(ctx, {
-                                'nickname': nicknameController.text.trim(),
-                                'optIn': optIn,
-                              });
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.brandOrange,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            l10n.pointsSave,
-                            style: const TextStyle(
-                              fontFamily: 'Manrope',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: Text(
+                                l10n.optOutCancel,
+                                style: const TextStyle(
+                                  fontFamily: 'Manrope',
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.inkLight,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                final nameOk =
+                                    formKey.currentState?.validate() ?? false;
+                                if (!optIn) {
+                                  setDialogState(() {
+                                    optInError = l10n.pointsNicknameOptInRequired;
+                                  });
+                                }
+                                if (nameOk && optIn) {
+                                  Navigator.pop(ctx, {
+                                    'nickname': nicknameController.text.trim(),
+                                    'optIn': true,
+                                  });
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.brandOrange,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                elevation: 0,
+                              ),
+                              child: Text(
+                                l10n.pointsSave,
+                                style: const TextStyle(
+                                  fontFamily: 'Manrope',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -802,12 +994,23 @@ class _PointsPageState extends ConsumerState<PointsPage>
 
     if (result != null) {
       final chosenNick = result['nickname'] as String;
-      final profile = await _repo.getUserProfileStatus(chosenNick);
-      if (profile != null && profile.isDeleted) {
+      final optIn = result['optIn'] as bool;
+
+      final user = await ref.read(anonymousAuthServiceProvider).ensureSignedIn();
+      final outcome = await _repo.claimNickname(
+        chosenNick,
+        uid: user.uid,
+        optIn: optIn,
+      );
+
+      if (!outcome.isSuccess) {
         if (mounted) {
+          final message = outcome.status == NicknameClaimStatus.deleted
+              ? l10n.pointsNicknameUnavailable
+              : l10n.pointsNicknameTaken;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(l10n.pointsNicknameUnavailable),
+              content: Text(message),
               behavior: SnackBarBehavior.floating,
               backgroundColor: Colors.red.shade700,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -817,15 +1020,24 @@ class _PointsPageState extends ConsumerState<PointsPage>
         return false;
       }
 
+      if (outcome.stats != null && outcome.stats!.optIn != optIn) {
+        try {
+          await _repo.updateOptIn(chosenNick, optIn, uid: user.uid);
+        } catch (_) {}
+      }
+
+      if (!mounted) return false;
+
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('leaderboard_nickname', chosenNick);
       await prefs.setBool(
         'leaderboard_opt_in',
-        result['optIn'] as bool,
+        optIn,
       );
+      if (!mounted) return false;
       setState(() {
         _nickname = chosenNick;
-        _leaderboardOptIn = result['optIn'] as bool;
+        _leaderboardOptIn = optIn;
       });
       _loadPosts(allowAnimation: ref.read(tabIndexProvider) == 3);
       return true;
@@ -1033,6 +1245,7 @@ class _PointsPageState extends ConsumerState<PointsPage>
         postId: postId,
       );
 
+      final owner = await ref.read(anonymousAuthServiceProvider).ensureSignedIn();
       final post = PostEntry(
         id: postId,
         nickname: _nickname ?? l10n.pointsAnonymous,
@@ -1044,7 +1257,7 @@ class _PointsPageState extends ConsumerState<PointsPage>
         leaderboardOptIn: _leaderboardOptIn,
       );
 
-      await _repo.submitPost(post, id: postId);
+      await _repo.submitPost(post, id: postId, ownerUid: owner.uid);
 
       if (!mounted) return;
 
@@ -1200,15 +1413,16 @@ class _PointsPageState extends ConsumerState<PointsPage>
         _pendingRejectedPost?.localizedAdminNote(localeCode)?.trim();
     final hasReason = reason != null && reason.isNotEmpty;
     const red = Color(0xFFEF5350);
+    final isPointsRemoved = _pendingDecreaseAnimation &&
+        _previousPoints > _totalPoints;
+    final removed = (_previousPoints - _totalPoints).clamp(0, 999999);
 
-    return IgnorePointer(
-      ignoring: !_showPostRejectedOverlay,
-      child: AnimatedOpacity(
-        opacity: _showPostRejectedOverlay ? 1.0 : 0.0,
-        duration: const Duration(milliseconds: 400),
-        child: Container(
-          color: Colors.black.withOpacity(0.5),
-          child: Center(
+    return Positioned.fill(
+      child: Material(
+        color: Colors.black54,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
             child: Dialog(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
@@ -1224,15 +1438,19 @@ class _PointsPageState extends ConsumerState<PointsPage>
                         color: red.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.cancel_rounded,
+                      child: Icon(
+                        isPointsRemoved
+                            ? Icons.remove_circle_rounded
+                            : Icons.cancel_rounded,
                         color: red,
                         size: 48,
                       ),
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      l10n.pointsRejectedTitle,
+                      isPointsRemoved
+                          ? l10n.pointsRemovedTitle
+                          : l10n.pointsRejectedTitle,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontFamily: 'Manrope',
@@ -1243,7 +1461,9 @@ class _PointsPageState extends ConsumerState<PointsPage>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      l10n.pointsRejectedDesc,
+                      isPointsRemoved
+                          ? l10n.pointsRemovedDesc(removed, _totalPoints)
+                          : l10n.pointsRejectedDesc,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: 'Manrope',
@@ -1309,7 +1529,7 @@ class _PointsPageState extends ConsumerState<PointsPage>
     );
   }
 
-  bool get _showContent => !_isLevelUp || _journeyDone;
+  bool get _showContent => (!_isLevelUp && !_isLevelDown) || _journeyDone;
 
   @override
   Widget build(BuildContext context) {
@@ -1318,6 +1538,7 @@ class _PointsPageState extends ConsumerState<PointsPage>
       if (prev != null && prev != next && next == 3 && mounted) {
         _loadPosts(allowAnimation: true);
         _loadMissions();
+        setState(() => _leaderboardEpoch++);
       }
     });
 
@@ -1335,10 +1556,14 @@ class _PointsPageState extends ConsumerState<PointsPage>
                     // ── Gamification Hero Card ──
                     PointsHeroCard(
                       key: ValueKey('hero_${_totalPoints}_$_heroAnimationNonce'),
-                      totalPoints: _totalPoints,
+                      totalPoints:
+                          (_pendingDecreaseAnimation && !_startHeroAnimation)
+                              ? _previousPoints
+                              : _totalPoints,
                       previousPoints: _previousPoints,
                       startAnimation: _startHeroAnimation,
-                      nickname: _nickname,
+                      // Show nick only after at least one post (photo upload done).
+                      nickname: _posts.isNotEmpty ? _nickname : null,
                       onAnimationComplete: () => _persistKnownPoints(_totalPoints),
                       onJourneyComplete: () async {
                         await _persistKnownPoints(_totalPoints);
@@ -1346,7 +1571,9 @@ class _PointsPageState extends ConsumerState<PointsPage>
                           setState(() => _journeyDone = true);
                         }
                       },
-                      onOptOut: _leaderboardOptIn ? () => _showOptOutDialog() : null,
+                      onOptOut: (_leaderboardOptIn && _posts.isNotEmpty)
+                          ? () => _showOptOutDialog()
+                          : null,
                     ),
                     const SizedBox(height: 16),
 
@@ -1361,7 +1588,10 @@ class _PointsPageState extends ConsumerState<PointsPage>
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             // ── Leaderboard top 3 ──
-                            _LeaderboardTop3(repo: _repo),
+                            _LeaderboardTop3(
+                              key: ValueKey(_leaderboardEpoch),
+                              repo: _repo,
+                            ),
                             const SizedBox(height: 28),
                             MissionCardsSection(
                               missions: _missions(context),
@@ -1673,7 +1903,7 @@ class _CategoryTile extends StatelessWidget {
 
 /// Inline leaderboard showing the top 3 approved opt-in users.
 class _LeaderboardTop3 extends StatefulWidget {
-  const _LeaderboardTop3({required this.repo});
+  const _LeaderboardTop3({super.key, required this.repo});
 
   final PointsRepository repo;
 
@@ -1770,6 +2000,9 @@ class _Top3Tile extends StatelessWidget {
       const Color(0xFFC0C0C0),
       const Color(0xFFCD7F32),
     ];
+    final level = pointsLevelForPoints(points);
+    final levelName = localizedPointsLevelName(context, level.name);
+    final initial = nickname.isNotEmpty ? nickname[0].toUpperCase() : '?';
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -1785,7 +2018,6 @@ class _Top3Tile extends StatelessWidget {
             color: medalColors[rank - 1],
           ),
           const SizedBox(width: 10),
-          // Avatar
           Container(
             width: 32,
             height: 32,
@@ -1795,7 +2027,7 @@ class _Top3Tile extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                nickname[0].toUpperCase(),
+                initial,
                 style: TextStyle(
                   fontFamily: 'Manrope',
                   fontSize: 14,
@@ -1807,17 +2039,36 @@ class _Top3Tile extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              nickname,
-              style: const TextStyle(
-                fontFamily: 'Manrope',
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.ink,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  nickname,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${level.emoji} $levelName',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: level.color,
+                  ),
+                ),
+              ],
             ),
           ),
-          // Points badge
+          const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(

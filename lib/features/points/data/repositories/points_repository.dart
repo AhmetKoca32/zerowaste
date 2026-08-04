@@ -2,11 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/leaderboard_doc.dart';
 import '../models/post_entry.dart';
+import '../models/user_stats.dart';
 
-/// Repository for points/posts operations against Firestore.
+/// Repository for points/posts operations against Firestore (Plan B).
 ///
-/// Firebase Spark kotasi: her post submit 1 write, pointsPage acilisi ~2 read,
-/// admin onaylama ~1 read + 2 write. Gunluk ~200 read ile kotanin cok altinda.
+/// Nicknames are unique per [UserStats.claimedByUid] (anonymous Auth uid).
+/// Leaderboard writes are admin/CF only.
 class PointsRepository {
   PointsRepository({
     FirebaseFirestore? firestore,
@@ -17,171 +18,158 @@ class PointsRepository {
   static const String _postsCollection = 'posts';
   static const String _leaderboardDoc = 'leaderboard';
   static const String _leaderboardId = 'current';
-  static const String _userProfilesCollection = 'user_profiles';
+  static const String _userStatsCollection = 'user_stats';
+
+  static const int defaultPostsLimit = 12;
+  static const int defaultRejectedLimit = 5;
+
+  DocumentReference<Map<String, dynamic>> userStatsRef(String nickname) =>
+      _firestore.collection(_userStatsCollection).doc(nickname);
 
   /// Generate a new post document ID before Storage upload.
   String newPostId() => _firestore.collection(_postsCollection).doc().id;
 
-  /// Submit a new post (1 Firestore write).
-  Future<void> submitPost(PostEntry post, {String? id}) async {
+  /// Read Plan B summary for [nickname], or null if missing.
+  Future<UserStats?> getUserStats(String nickname) async {
+    final doc = await userStatsRef(nickname).get();
+    if (!doc.exists) return null;
+    return UserStats.fromFirestore(doc);
+  }
+
+  /// Claim [nickname] for [uid] (create, legacy attach, or verify ownership).
+  ///
+  /// - Missing doc → create with [claimedByUid]
+  /// - Deleted → [NicknameClaimStatus.deleted]
+  /// - Other owner → [NicknameClaimStatus.taken]
+  /// - Same owner / legacy unclaimed → success
+  Future<NicknameClaimOutcome> claimNickname(
+    String nickname, {
+    required String uid,
+    bool optIn = true,
+  }) async {
+    final ref = userStatsRef(nickname);
+
+    return _firestore.runTransaction((transaction) async {
+      final snap = await transaction.get(ref);
+
+      if (!snap.exists) {
+        final created = UserStats(
+          nickname: nickname,
+          optIn: optIn,
+          claimedByUid: uid,
+        );
+        transaction.set(
+          ref,
+          created.toCreateFirestore(optIn: optIn, claimedByUid: uid),
+        );
+        return NicknameClaimOutcome.success(created);
+      }
+
+      final existing = UserStats.fromFirestore(snap);
+      if (existing.isDeleted) {
+        return NicknameClaimOutcome.deleted();
+      }
+
+      if (!existing.hasOwner) {
+        transaction.update(ref, {
+          'claimedByUid': uid,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        return NicknameClaimOutcome.success(
+          existing.copyWith(claimedByUid: uid),
+        );
+      }
+
+      if (existing.isOwnedBy(uid)) {
+        return NicknameClaimOutcome.success(existing);
+      }
+
+      return NicknameClaimOutcome.taken();
+    });
+  }
+
+  /// Client-safe optIn update for the owning uid only.
+  Future<void> updateOptIn(
+    String nickname,
+    bool optIn, {
+    required String uid,
+  }) async {
+    final outcome = await claimNickname(nickname, uid: uid, optIn: optIn);
+    if (!outcome.isSuccess) {
+      throw StateError('Cannot update optIn: ${outcome.status}');
+    }
+    await userStatsRef(nickname).update({
+      'optIn': optIn,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Submit a new post and bump [pendingCount] when the nick is owned by [uid].
+  Future<void> submitPost(
+    PostEntry post, {
+    String? id,
+    String? ownerUid,
+  }) async {
     final docRef = id != null
         ? _firestore.collection(_postsCollection).doc(id)
         : _firestore.collection(_postsCollection).doc();
     await docRef.set(post.copyWith(id: docRef.id).toFirestore());
+
+    if (ownerUid == null || ownerUid.isEmpty) return;
+
+    try {
+      final outcome = await claimNickname(
+        post.nickname,
+        uid: ownerUid,
+        optIn: post.leaderboardOptIn,
+      );
+      if (!outcome.isSuccess) return;
+
+      await userStatsRef(post.nickname).update({
+        'pendingCount': FieldValue.increment(1),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (_) {
+      // Non-fatal: post already persisted; pendingCount can be fixed by admin.
+    }
   }
 
-  /// Get posts for a specific nickname (1 Firestore query).
-  Future<List<PostEntry>> getPostsByNickname(String nickname) async {
+  /// Recent posts for the nickname grid (1 query, bounded reads).
+  Future<List<PostEntry>> getPostsByNickname(
+    String nickname, {
+    int limit = defaultPostsLimit,
+  }) async {
     final snapshot = await _firestore
         .collection(_postsCollection)
         .where('nickname', isEqualTo: nickname)
         .orderBy('createdAt', descending: true)
+        .limit(limit)
         .get();
     return snapshot.docs.map((doc) => PostEntry.fromFirestore(doc)).toList();
   }
 
-  /// Get all pending posts for admin review (1 Firestore query).
-  Future<List<PostEntry>> getPendingPosts() async {
-    final snapshot = await _firestore
-        .collection(_postsCollection)
-        .where('status', isEqualTo: 'pending')
-        .orderBy('createdAt', descending: true)
-        .get();
-    return snapshot.docs.map((doc) => PostEntry.fromFirestore(doc)).toList();
-  }
-
-  /// Approve a post and update leaderboard (2 writes: post + leaderboard doc).
-  Future<void> approvePost(String postId, {String? adminNote, String? adminNoteEn}) async {
-    final updateData = <String, dynamic>{
-      'status': 'approved',
-      'adminNote': adminNote,
-    };
-    if (adminNoteEn != null) updateData['adminNoteEn'] = adminNoteEn;
-    await _firestore.collection(_postsCollection).doc(postId).update(updateData);
-    await _recalculateLeaderboard();
-  }
-
-  /// Reject a post (1 write).
-  Future<void> rejectPost(String postId, {String? adminNote, String? adminNoteEn}) async {
-    final updateData = <String, dynamic>{
-      'status': 'rejected',
-      'adminNote': adminNote,
-    };
-    if (adminNoteEn != null) updateData['adminNoteEn'] = adminNoteEn;
-    await _firestore.collection(_postsCollection).doc(postId).update(updateData);
-  }
-
-  /// Return all unique nicknames and their total approved + bonus points
-  /// from the posts collection. Used by the admin panel to list users.
-  Future<List<_UserSummary>> getAllUsers() async {
-    final snapshot = await _firestore
-        .collection(_postsCollection)
-        .where('status', isEqualTo: 'approved')
-        .get();
-
-    final Map<String, _UserSummary> userMap = {};
-    for (final doc in snapshot.docs) {
-      final data = doc.data();
-      final nick = data['nickname'] as String? ?? 'Anonim';
-      final pts = data['points'] as int? ?? 0;
-      final bonus = data['isAdminBonus'] as bool? ?? false;
-      final penalty = data['isAdminPenalty'] as bool? ?? false;
-
-      if (userMap.containsKey(nick)) {
-        final existing = userMap[nick]!;
-        userMap[nick] = _UserSummary(
-          nickname: nick,
-          totalPoints: existing.totalPoints + pts,
-          postCount: existing.postCount + (penalty ? 0 : 1),
-          bonusCount: existing.bonusCount + (bonus ? 1 : 0),
-          leaderboardOptIn: existing.leaderboardOptIn,
-        );
-      } else {
-        userMap[nick] = _UserSummary(
-          nickname: nick,
-          totalPoints: pts,
-          postCount: penalty ? 0 : 1,
-          bonusCount: bonus ? 1 : 0,
-          leaderboardOptIn: data['leaderboardOptIn'] as bool? ?? false,
-        );
-      }
-    }
-
-    final users = userMap.values.toList();
-    users.sort((a, b) => b.totalPoints.compareTo(a.totalPoints));
-    return users;
-  }
-
-  /// Deduct points from a user as an admin penalty. Creates an approved
-  /// post with negative points so it automatically feeds into the leaderboard.
-  Future<void> deductPoints({
-    required String nickname,
-    required int points,
-    String? reason,
-    String? reasonEn,
+  /// Recent rejected posts for overlay detection (bounded).
+  Future<List<PostEntry>> getRecentRejectedPosts(
+    String nickname, {
+    int limit = defaultRejectedLimit,
   }) async {
-    final docRef = _firestore.collection(_postsCollection).doc();
-    await docRef.set({
-      'id': docRef.id,
-      'nickname': nickname,
-      'category': 'Puan Kesintisi',
-      'points': -points.abs(), // always negative
-      'status': 'approved',
-      'isAdminPenalty': true,
-      'adminNote': reason ?? 'Puan kesintisi',
-      'adminNoteEn': ?reasonEn,
-      'leaderboardOptIn': true,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-    await _recalculateLeaderboard();
-  }
-
-  /// Create a bonus-point post for a user. The post is created as
-  /// `approved` so it counts immediately (1 write + leaderboard recalc).
-  Future<void> addBonusPoints({
-    required String nickname,
-    required int points,
-    String? reason,
-    String? reasonEn,
-  }) async {
-    final docRef = _firestore.collection(_postsCollection).doc();
-    await docRef.set({
-      'id': docRef.id,
-      'nickname': nickname,
-      'category': 'Admin Bonusu',
-      'points': points,
-      'status': 'approved',
-      'isAdminBonus': true,
-      'adminNote': reason ?? 'Admin bonusu',
-      'adminNoteEn': ?reasonEn,
-      'leaderboardOptIn': true,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-    await _recalculateLeaderboard();
-  }
-
-  /// Soft-delete / contest profile for a nickname (`user_profiles/{nickname}`).
-  Future<UserProfileStatus?> getUserProfileStatus(String nickname) async {
-    final doc =
-        await _firestore.collection(_userProfilesCollection).doc(nickname).get();
-    if (!doc.exists) return null;
-    return UserProfileStatus.fromFirestore(doc);
-  }
-
-  /// Set all posts of a user to opt-out and recalculate leaderboard.
-  /// Used when a user voluntarily leaves the contest.
-  Future<void> optOutUser(String nickname) async {
     final snapshot = await _firestore
         .collection(_postsCollection)
         .where('nickname', isEqualTo: nickname)
+        .where('status', isEqualTo: 'rejected')
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
         .get();
+    return snapshot.docs.map((doc) => PostEntry.fromFirestore(doc)).toList();
+  }
 
-    final batch = _firestore.batch();
-    for (final doc in snapshot.docs) {
-      batch.update(doc.reference, {'leaderboardOptIn': false});
-    }
-    await batch.commit();
-    await _recalculateLeaderboard();
+  /// Voluntary opt-out: hard wipe via Cloud Function [leaveContest].
+  /// Prefer [LeaveContestService]; kept here only if callers still use repo.
+  @Deprecated('Use LeaveContestService.leaveContest')
+  Future<void> optOutUser(String nickname, {required String uid}) async {
+    throw UnsupportedError(
+      'Client-side opt-out removed. Call leaveContest Cloud Function instead.',
+    );
   }
 
   /// Get leaderboard top N (1 Firestore read).
@@ -198,109 +186,4 @@ class PointsRepository {
       return [];
     }
   }
-
-  /// Recalculate leaderboard from approved posts (1 query + 1 write).
-  Future<void> _recalculateLeaderboard() async {
-    try {
-      final snapshot = await _firestore
-          .collection(_postsCollection)
-          .where('status', isEqualTo: 'approved')
-          .where('leaderboardOptIn', isEqualTo: true)
-          .get();
-
-      final Map<String, int> pointsMap = {};
-      for (final doc in snapshot.docs) {
-        final data = doc.data();
-        final nick = data['nickname'] as String? ?? 'Anonim';
-        final pts = data['points'] as int? ?? 0;
-        pointsMap[nick] = (pointsMap[nick] ?? 0) + pts;
-      }
-
-      final entries = pointsMap.entries
-          .map((e) => LeaderboardEntry(nickname: e.key, points: e.value))
-          .toList();
-      entries.sort((a, b) => b.points.compareTo(a.points));
-
-      await _firestore
-          .collection(_leaderboardDoc)
-          .doc(_leaderboardId)
-          .set(
-            LeaderboardDoc(
-              entries: entries,
-              lastUpdated: DateTime.now(),
-            ).toFirestore(),
-          );
-    } catch (e) {
-      // Leaderboard recalculation failed silently (non-critical)
-      print('Leaderboard recalculation error: $e');
-    }
-  }
-}
-
-/// Contest user profile status from `user_profiles/{nickname}`.
-class UserProfileStatus {
-  const UserProfileStatus({
-    required this.nickname,
-    required this.status,
-    this.reason,
-    this.reasonEn,
-  });
-
-  final String nickname;
-  final String status;
-  final String? reason;
-  final String? reasonEn;
-
-  bool get isDeleted => status == 'deleted' || status == 'banned';
-
-  /// Locale-aware delete/ban reason (TR/EN with fallback).
-  String? localizedReason(String localeCode) {
-    final tr = reason?.trim();
-    final en = reasonEn?.trim();
-    final trEmpty = tr == null || tr.isEmpty;
-    final enEmpty = en == null || en.isEmpty;
-    if (localeCode == 'en') {
-      if (!enEmpty) return en;
-      if (!trEmpty) return tr;
-      return null;
-    }
-    if (!trEmpty) return tr;
-    if (!enEmpty) return en;
-    return null;
-  }
-
-  factory UserProfileStatus.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>? ?? {};
-    String? pick(List<String> keys) {
-      for (final key in keys) {
-        final value = data[key];
-        if (value is String && value.trim().isNotEmpty) return value.trim();
-      }
-      return null;
-    }
-
-    return UserProfileStatus(
-      nickname: data['nickname'] as String? ?? doc.id,
-      status: (data['status'] as String? ?? 'active').toLowerCase(),
-      reason: pick(const ['reason', 'reasonTr', 'adminNote', 'adminNoteTr']),
-      reasonEn: pick(const ['reasonEn', 'adminNoteEn']),
-    );
-  }
-}
-
-/// Lightweight user summary returned by [PointsRepository.getAllUsers].
-class _UserSummary {
-  final String nickname;
-  final int totalPoints;
-  final int postCount;
-  final int bonusCount;
-  final bool leaderboardOptIn;
-
-  const _UserSummary({
-    required this.nickname,
-    required this.totalPoints,
-    required this.postCount,
-    required this.bonusCount,
-    required this.leaderboardOptIn,
-  });
 }

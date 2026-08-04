@@ -392,7 +392,19 @@
   },
   "pointsLevelLegend": "Efsane+",
   "@pointsLevelLegend": {
+    "description": "Seviye adı (Efsane+)"
+  },
+  "pointsLevelIkon": "İkon",
+  "@pointsLevelIkon": {
     "description": "En yüksek seviye adı"
+  },
+  "pointsLevelSampiyon": "Şampiyon",
+  "@pointsLevelSampiyon": {
+    "description": "Seviye adı"
+  },
+  "pointsLevelUzman": "Uzman",
+  "@pointsLevelUzman": {
+    "description": "Seviye adı"
   },
   "pointsLevelEfsane": "Efsane",
   "@pointsLevelEfsane": {
@@ -409,6 +421,22 @@
   "pointsLevelCaylak": "Çaylak",
   "@pointsLevelCaylak": {
     "description": "Seviye adı"
+  },
+  "pointsLevelsGuideTitle": "Seviyeler",
+  "@pointsLevelsGuideTitle": {
+    "description": "Seviye rehberi bottom sheet başlığı"
+  },
+  "pointsLevelsGuideSubtitle": "Puan kazandıkça yeni rollere yükselirsin.",
+  "@pointsLevelsGuideSubtitle": {
+    "description": "Seviye rehberi alt metni"
+  },
+  "pointsLevelsCurrentBadge": "Şu an",
+  "@pointsLevelsCurrentBadge": {
+    "description": "Mevcut seviye rozeti"
+  },
+  "pointsUnit": "puan",
+  "@pointsUnit": {
+    "description": "Puan birimi etiketi"
   },
   "pointsNicknameDialogTitle": "Takma Adın Nedir?",
   "@pointsNicknameDialogTitle": {
@@ -430,9 +458,17 @@
   "@pointsNicknameValidationEmpty": {
     "description": "Boş nickname uyarısı"
   },
+  "pointsNicknameOptInRequired": "Devam etmek için sıralama iznini onaylamalısın.",
+  "@pointsNicknameOptInRequired": {
+    "description": "Leaderboard checkbox zorunlu uyarısı"
+  },
   "pointsNicknameUnavailable": "Bu takma ad kullanılamaz. Lütfen başka bir ad seç.",
   "@pointsNicknameUnavailable": {
     "description": "Silinmiş / engellenmiş takma ad uyarısı"
+  },
+  "pointsNicknameTaken": "Bu takma ad başka biri tarafından alınmış. Lütfen başka bir ad seç.",
+  "@pointsNicknameTaken": {
+    "description": "Zaten sahiplenilmiş takma ad uyarısı"
   },
   "pointsLeaderboardOptIn": "Sıralamada (leaderboard) takma adımın görüntülenmesine izin veriyorum.",
   "@pointsLeaderboardOptIn": {
@@ -599,6 +635,18 @@
   "@pointsRejectedOk": {
     "description": "Red overlay kapat butonu"
   },
+  "pointsRemovedTitle": "Puanların güncellendi",
+  "@pointsRemovedTitle": {
+    "description": "Puan düşüşü overlay başlığı"
+  },
+  "pointsRemovedDesc": "Hesabından {removed} puan silindi. Güncel puanın: {total}.",
+  "@pointsRemovedDesc": {
+    "description": "Puan düşüşü overlay açıklaması",
+    "placeholders": {
+      "removed": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
   "pointsEarned": "Kazanılan Puan:",
   "@pointsEarned": {
     "description": "Kazanılan puan etiketi"
@@ -644,9 +692,9 @@
   "@accountDeletedTitle": {
     "description": "Hesap silinme dialog başlığı"
   },
-  "accountDeletedMessage": "Yarışma hesabınız admin tarafından silindi. Takma adınız ve yerel puan bilginiz temizlenecek; yeni bir takma adla tekrar başlayabilirsiniz.",
+  "accountDeletedMessage": "Yarışma hesabınız admin tarafından silindi. Puanlarınız ve gönderileriniz kaldırıldı. Takma adınız yerel olarak temizlenecek; aynı veya yeni bir adla tekrar başlayabilirsiniz.",
   "@accountDeletedMessage": {
-    "description": "Hesap silinme dialog mesajı"
+    "description": "Hesap silinme dialog mesajı (admin wipe)"
   },
   "accountDeletedReason": "Sebep: {reason}",
   "@accountDeletedReason": {
@@ -666,9 +714,9 @@
   "@optOutTitle": {
     "description": "Opt-out dialog başlığı"
   },
-  "optOutMessage": "Yarışmadan çıkarsan tüm puanların ve sıralamadaki yerin kaybolur. Yeni bir takma adla tekrar katılabilirsin.\n\nDevam etmek istediğine emin misin?",
+  "optOutMessage": "Yarışmadan çıkarsan puanların, gönderilerin ve sıralamadaki yerin kalıcı olarak silinir. Aynı veya yeni bir takma adla sıfırdan tekrar katılabilirsin.\n\nDevam etmek istediğine emin misin?",
   "@optOutMessage": {
-    "description": "Opt-out dialog mesajı"
+    "description": "Opt-out dialog mesajı (hard wipe)"
   },
   "optOutCancel": "Vazgeç",
   "@optOutCancel": {
@@ -677,5 +725,21 @@
   "optOutConfirm": "Çık",
   "@optOutConfirm": {
     "description": "Opt-out onay butonu"
+  },
+  "optOutSuccess": "Yarışmadan çıktın. Verilerin silindi.",
+  "@optOutSuccess": {
+    "description": "Opt-out başarı snackbar"
+  },
+  "optOutGenericError": "Yarışmadan çıkılamadı. Lütfen tekrar dene.",
+  "@optOutGenericError": {
+    "description": "Opt-out genel hata"
+  },
+  "optOutPermissionError": "Bu takma ad üzerinde işlem yapamazsın.",
+  "@optOutPermissionError": {
+    "description": "Opt-out permission-denied"
+  },
+  "optOutBannedError": "Bu takma ad yönetici tarafından kapatılmış. Yarışmadan çıkış kullanılamaz.",
+  "@optOutBannedError": {
+    "description": "Opt-out failed-precondition (banned)"
   }
 }
