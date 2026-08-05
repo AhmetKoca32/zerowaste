@@ -1255,6 +1255,30 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Bu takma ad yönetici tarafından kapatılmış. Yarışmadan çıkış kullanılamaz.'**
   String get optOutBannedError;
+
+  /// Sabah bildirimi başlığı
+  ///
+  /// In tr, this message translates to:
+  /// **'Atıksız Mutfak'**
+  String get notificationMorningTitle;
+
+  /// Sabah bildirimi metni
+  ///
+  /// In tr, this message translates to:
+  /// **'Günaydın! Bugün atıksız mutfak görevlerini tamamla.'**
+  String get notificationMorningBody;
+
+  /// Akşam bildirimi başlığı
+  ///
+  /// In tr, this message translates to:
+  /// **'Atıksız Mutfak'**
+  String get notificationEveningTitle;
+
+  /// Akşam bildirimi metni
+  ///
+  /// In tr, this message translates to:
+  /// **'Akşam yemeğinden artan var mı? Fotoğraf paylaş, puan kazan.'**
+  String get notificationEveningBody;
 }
 
 class _AppLocalizationsDelegate

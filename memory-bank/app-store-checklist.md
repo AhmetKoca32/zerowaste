@@ -64,6 +64,7 @@ Beyan edilmesi gerekenler (bu app’e göre):
 - [ ] **User Content:** gönderi metni / kategori, chat mesajları (lokal + DeepSeek API)
 - [ ] **Identifiers:** Firebase Auth anonymous UID
 - [ ] **Product interaction / diagnostics:** Firebase Analytics/Crashlytics varsa işaretle
+- [ ] **Notifications (local only):** günlük 09:00 / 18:00 hatırlatma; FCM token yok; kullanıcı iOS/Android ayarlarından kapatabilir
 - [ ] “Data used to track you” — tracking yoksa **No**
 - [ ] DeepSeek / üçüncü taraf AI: privacy policy’de açıkça yaz
 
@@ -85,6 +86,7 @@ Beyan edilmesi gerekenler (bu app’e göre):
 - [ ] Puan: claim → foto → onay animasyonu; kesinti diyaloğu; leaveContest wipe
 - [ ] Offline / zayıf ağ: hata mesajları çökme yok
 - [ ] İlk açılış → splash → ana sekmeler
+- [ ] Günlük bildirim: izin → 09:00 / 18:00 (debug: `scheduleTestNotification`); tap → Puan sekmesi
 - [ ] TestFlight internal (en az 1 build) smoke test
 
 ---
@@ -92,7 +94,7 @@ Beyan edilmesi gerekenler (bu app’e göre):
 ## H. Gönderim
 
 - [ ] TestFlight → External (opsiyonel) veya doğrudan App Review
-- [ ] Review notes: demo nick yoksa “anonymous + nickname claim” anlat; admin panel review’a gerekmez
+- [ ] Review notes: demo nick yoksa “anonymous + nickname claim” anlat; admin panel review’a gerekmez; 2 yerel günlük hatırlatma (opt-out = sistem ayarları)
 - [ ] Export compliance / advertising ID soruları cevaplandı
 - [ ] Submit for Review
 

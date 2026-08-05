@@ -232,5 +232,10 @@
   "optOutSuccess": "You left the contest. Your data was deleted.",
   "optOutGenericError": "Could not leave the contest. Please try again.",
   "optOutPermissionError": "You cannot perform this action on this nickname.",
-  "optOutBannedError": "This nickname was closed by an admin. Leave contest is not available."
+  "optOutBannedError": "This nickname was closed by an admin. Leave contest is not available.",
+
+  "notificationMorningTitle": "ZeroWaste Kitchen",
+  "notificationMorningBody": "Good morning! Complete today's zero-waste missions.",
+  "notificationEveningTitle": "ZeroWaste Kitchen",
+  "notificationEveningBody": "Any leftovers from dinner? Share a photo and earn points."
 }

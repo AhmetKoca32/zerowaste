@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/services/notification_service.dart';
+
 /// Splash screen with a narrative sequence:
 /// 1. AB logo appears big at center → holds → shrinks & moves to bottom-left
 /// 2. UA logo appears big at center → holds → shrinks & moves to bottom-right
@@ -82,11 +84,17 @@ class _SplashPageState extends State<SplashPage>
 
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        context.go('/');
+        _finishSplash();
       }
     });
 
     _controller.forward();
+  }
+
+  Future<void> _finishSplash() async {
+    await NotificationService.instance.ensureScheduled();
+    if (!mounted) return;
+    context.go('/');
   }
 
   @override

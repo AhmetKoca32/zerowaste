@@ -741,5 +741,22 @@
   "optOutBannedError": "Bu takma ad yönetici tarafından kapatılmış. Yarışmadan çıkış kullanılamaz.",
   "@optOutBannedError": {
     "description": "Opt-out failed-precondition (banned)"
+  },
+
+  "notificationMorningTitle": "Atıksız Mutfak",
+  "@notificationMorningTitle": {
+    "description": "Sabah bildirimi başlığı"
+  },
+  "notificationMorningBody": "Günaydın! Bugün atıksız mutfak görevlerini tamamla.",
+  "@notificationMorningBody": {
+    "description": "Sabah bildirimi metni"
+  },
+  "notificationEveningTitle": "Atıksız Mutfak",
+  "@notificationEveningTitle": {
+    "description": "Akşam bildirimi başlığı"
+  },
+  "notificationEveningBody": "Akşam yemeğinden artan var mı? Fotoğraf paylaş, puan kazan.",
+  "@notificationEveningBody": {
+    "description": "Akşam bildirimi metni"
   }
 }

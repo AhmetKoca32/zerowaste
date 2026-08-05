@@ -156,21 +156,24 @@ class RecipeBlogCard extends StatelessWidget {
                         backgroundColor: AppColors.brandOrange,
                         disabledBackgroundColor: AppColors.brandOrange,
                         disabledForegroundColor: Colors.white,
+                        elevation: 0,
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(200, 44),
+                        fixedSize: const Size(200, 44),
+                        alignment: Alignment.center,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24),
                         ),
-                        elevation: 0,
                       ),
-                      child: Center(
-                        child: Text(
-                          l10n.recipeCardInspect,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontFamily: 'Manrope',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
+                      child: Text(
+                        l10n.recipeCardInspect,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          height: 1,
                         ),
                       ),
                     ),

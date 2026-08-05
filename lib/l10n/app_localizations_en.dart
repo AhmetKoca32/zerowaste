@@ -651,4 +651,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get optOutBannedError =>
       'This nickname was closed by an admin. Leave contest is not available.';
+
+  @override
+  String get notificationMorningTitle => 'ZeroWaste Kitchen';
+
+  @override
+  String get notificationMorningBody =>
+      'Good morning! Complete today\'s zero-waste missions.';
+
+  @override
+  String get notificationEveningTitle => 'ZeroWaste Kitchen';
+
+  @override
+  String get notificationEveningBody =>
+      'Any leftovers from dinner? Share a photo and earn points.';
 }

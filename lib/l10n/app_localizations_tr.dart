@@ -650,4 +650,18 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get optOutBannedError =>
       'Bu takma ad yönetici tarafından kapatılmış. Yarışmadan çıkış kullanılamaz.';
+
+  @override
+  String get notificationMorningTitle => 'Atıksız Mutfak';
+
+  @override
+  String get notificationMorningBody =>
+      'Günaydın! Bugün atıksız mutfak görevlerini tamamla.';
+
+  @override
+  String get notificationEveningTitle => 'Atıksız Mutfak';
+
+  @override
+  String get notificationEveningBody =>
+      'Akşam yemeğinden artan var mı? Fotoğraf paylaş, puan kazan.';
 }
