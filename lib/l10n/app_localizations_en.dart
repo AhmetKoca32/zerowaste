@@ -665,4 +665,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get notificationEveningBody =>
       'Any leftovers from dinner? Share a photo and earn points.';
+
+  @override
+  String get pointsPhotoExpand => 'Expand';
 }

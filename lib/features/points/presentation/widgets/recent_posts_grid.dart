@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:zerowaste/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/post_entry.dart';
+import 'post_image_lightbox.dart';
 import 'post_image_thumbnail.dart';
 
 /// Instagram-style 2-column grid showing recent posts.
@@ -471,38 +472,54 @@ class _PostCard extends StatelessWidget {
             // ── Header Image Section ──
             Stack(
               children: [
-                SizedBox(
-                  height: 320,
-                  width: double.infinity,
-                  child: PostImageThumbnail(
-                    imageUrl: post.imageUrl,
-                    localPreviewPath: post.localPreviewPath,
-                    placeholderColor: post.isAdminBonus
-                        ? const Color(0xFFFFD54F)
-                        : (post.isAdminPenalty
-                            ? const Color(0xFFEF9A9A)
-                            : (_imageColor ??
-                                AppColors.brandOrange.withOpacity(0.08))),
-                    placeholderIcon: post.isAdminBonus
-                        ? Icons.auto_awesome_rounded
-                        : post.isAdminPenalty
-                            ? Icons.remove_circle_outline_rounded
-                            : _categoryIcon(),
-                    placeholderIconColor: Colors.white,
-                    placeholderIconOpacity: 0.8,
+                GestureDetector(
+                  onTap: () {
+                    final hasPhoto =
+                        (post.imageUrl != null && post.imageUrl!.isNotEmpty) ||
+                        (post.localPreviewPath != null &&
+                            post.localPreviewPath!.isNotEmpty);
+                    if (!hasPhoto) return;
+                    showPostImageLightbox(
+                      context,
+                      imageUrl: post.imageUrl,
+                      localPreviewPath: post.localPreviewPath,
+                    );
+                  },
+                  child: SizedBox(
+                    height: 320,
+                    width: double.infinity,
+                    child: PostImageThumbnail(
+                      imageUrl: post.imageUrl,
+                      localPreviewPath: post.localPreviewPath,
+                      placeholderColor: post.isAdminBonus
+                          ? const Color(0xFFFFD54F)
+                          : (post.isAdminPenalty
+                              ? const Color(0xFFEF9A9A)
+                              : (_imageColor ??
+                                  AppColors.brandOrange.withOpacity(0.08))),
+                      placeholderIcon: post.isAdminBonus
+                          ? Icons.auto_awesome_rounded
+                          : post.isAdminPenalty
+                              ? Icons.remove_circle_outline_rounded
+                              : _categoryIcon(),
+                      placeholderIconColor: Colors.white,
+                      placeholderIconOpacity: 0.8,
+                    ),
                   ),
                 ),
                 // Gradient Overlay for better contrast on top icons
                 Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.center,
-                        colors: [
-                          Colors.black.withOpacity(0.3),
-                          Colors.transparent,
-                        ],
+                  child: IgnorePointer(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.center,
+                          colors: [
+                            Colors.black.withOpacity(0.3),
+                            Colors.transparent,
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -523,6 +540,45 @@ class _PostCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                if ((post.imageUrl != null && post.imageUrl!.isNotEmpty) ||
+                    (post.localPreviewPath != null &&
+                        post.localPreviewPath!.isNotEmpty))
+                  Positioned(
+                    left: 12,
+                    bottom: 12,
+                    child: IgnorePointer(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.35),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.zoom_out_map_rounded,
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              AppLocalizations.of(context)!.pointsPhotoExpand,
+                              style: const TextStyle(
+                                fontFamily: 'Manrope',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
             

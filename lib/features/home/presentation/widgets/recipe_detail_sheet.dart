@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/image_lightbox.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/models/recipe.dart';
 
@@ -201,13 +202,55 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
         return Stack(
           fit: StackFit.passthrough,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.file(
-                file,
-                height: 220,
-                width: double.infinity,
-                fit: BoxFit.cover,
+            GestureDetector(
+              onTap: () => showImageLightbox(
+                context,
+                localImagePath: path,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.file(
+                  file,
+                  height: 220,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            Positioned(
+              left: 12,
+              bottom: 12,
+              child: IgnorePointer(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.35),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.zoom_out_map_rounded,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        AppLocalizations.of(context)!.pointsPhotoExpand,
+                        style: const TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
             if (widget.canAddPhoto && widget.onImagePicked != null)
@@ -240,15 +283,83 @@ class _RecipeDetailContentState extends State<_RecipeDetailContent> {
     if (networkUrl != null &&
         networkUrl.isNotEmpty &&
         !networkUrl.startsWith('file')) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Image.network(
-          networkUrl,
-          height: 220,
-          width: double.infinity,
-          fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => _buildImageWithAddOption(),
-        ),
+      return Stack(
+        fit: StackFit.passthrough,
+        children: [
+          GestureDetector(
+            onTap: () => showImageLightbox(
+              context,
+              imageUrl: networkUrl,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.network(
+                networkUrl,
+                height: 220,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => _buildImageWithAddOption(),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 12,
+            bottom: 12,
+            child: IgnorePointer(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.35),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.zoom_out_map_rounded,
+                      size: 14,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      AppLocalizations.of(context)!.pointsPhotoExpand,
+                      style: const TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (widget.canAddPhoto && widget.onImagePicked != null)
+            Positioned(
+              right: 12,
+              bottom: 12,
+              child: Material(
+                color: AppColors.brandOrange.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(24),
+                child: InkWell(
+                  onTap: _showImageSourcePicker,
+                  borderRadius: BorderRadius.circular(24),
+                  child: const Padding(
+                    padding: EdgeInsets.all(10),
+                    child: Icon(
+                      Icons.add_a_photo,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       );
     }
     return _buildImageWithAddOption();

@@ -237,5 +237,7 @@
   "notificationMorningTitle": "ZeroWaste Kitchen",
   "notificationMorningBody": "Good morning! Complete today's zero-waste missions.",
   "notificationEveningTitle": "ZeroWaste Kitchen",
-  "notificationEveningBody": "Any leftovers from dinner? Share a photo and earn points."
+  "notificationEveningBody": "Any leftovers from dinner? Share a photo and earn points.",
+
+  "pointsPhotoExpand": "Expand"
 }

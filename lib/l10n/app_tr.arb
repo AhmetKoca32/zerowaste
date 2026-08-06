@@ -758,5 +758,10 @@
   "notificationEveningBody": "Akşam yemeğinden artan var mı? Fotoğraf paylaş, puan kazan.",
   "@notificationEveningBody": {
     "description": "Akşam bildirimi metni"
+  },
+
+  "pointsPhotoExpand": "Büyüt",
+  "@pointsPhotoExpand": {
+    "description": "Detay modalında fotoğrafı büyüt ipucu"
   }
 }

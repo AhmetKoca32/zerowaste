@@ -664,4 +664,7 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get notificationEveningBody =>
       'Akşam yemeğinden artan var mı? Fotoğraf paylaş, puan kazan.';
+
+  @override
+  String get pointsPhotoExpand => 'Büyüt';
 }

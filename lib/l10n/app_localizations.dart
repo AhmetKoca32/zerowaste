@@ -1279,6 +1279,12 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Akşam yemeğinden artan var mı? Fotoğraf paylaş, puan kazan.'**
   String get notificationEveningBody;
+
+  /// Detay modalında fotoğrafı büyüt ipucu
+  ///
+  /// In tr, this message translates to:
+  /// **'Büyüt'**
+  String get pointsPhotoExpand;
 }
 
 class _AppLocalizationsDelegate
