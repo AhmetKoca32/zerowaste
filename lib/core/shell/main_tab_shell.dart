@@ -141,7 +141,11 @@ class _LocaleToggle extends ConsumerWidget {
     final isTurkish = locale.languageCode == 'tr';
 
     return GestureDetector(
-      onTap: () => ref.read(localeProvider.notifier).toggle(),
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        FocusManager.instance.primaryFocus?.unfocus();
+        ref.read(localeProvider.notifier).toggle();
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(

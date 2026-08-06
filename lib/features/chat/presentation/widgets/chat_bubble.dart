@@ -8,17 +8,21 @@ import '../providers/chat_providers.dart';
 
 /// Pastel-themed chat bubble for user or EcoChef.
 /// EcoChef messages render Markdown; user messages render plain text.
-/// Animates in with fade + slide on first build.
+/// Animates in with fade + slide on first build when [animateEntrance] is true.
 /// When [typewriter] is true, EcoChef text appears character by character.
 class ChatBubble extends StatefulWidget {
   const ChatBubble({
     super.key,
     required this.entry,
+    this.animateEntrance = true,
     this.typewriter = false,
     this.onTypewriterComplete,
   });
 
   final ChatMessageEntry entry;
+
+  /// When false, skip fade/slide (used for older bubbles that were remounted).
+  final bool animateEntrance;
 
   /// If true, EcoChef messages appear with a typewriter (character-by-character) effect.
   final bool typewriter;
@@ -42,7 +46,7 @@ class _ChatBubbleState extends State<ChatBubble>
   bool _typewriterDone = false;
 
   @override
-  bool get wantKeepAlive => widget.typewriter && !_typewriterDone;
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -71,7 +75,11 @@ class _ChatBubbleState extends State<ChatBubble>
       curve: Curves.easeOutCubic,
     ));
 
-    _controller.forward();
+    if (widget.animateEntrance) {
+      _controller.forward();
+    } else {
+      _controller.value = 1.0;
+    }
 
     // ── Typewriter effect (EcoChef only) ──
     if (widget.typewriter && !widget.entry.isUser) {
@@ -108,7 +116,6 @@ class _ChatBubbleState extends State<ChatBubble>
           _visibleChars = totalGraphemes;
           _typewriterDone = true;
           timer.cancel();
-          updateKeepAlive();
           widget.onTypewriterComplete?.call();
         }
       });

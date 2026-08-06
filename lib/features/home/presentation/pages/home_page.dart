@@ -277,6 +277,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                   child: TextField(
                     onChanged: (value) => setState(() => _searchQuery = value),
                     style: const TextStyle(fontFamily: 'Manrope', fontSize: 14),
+                    keyboardType: TextInputType.text,
+                    textInputAction: TextInputAction.search,
                     decoration: InputDecoration(
                       hintText: l10n.homeSearchHint,
                       hintStyle: TextStyle(

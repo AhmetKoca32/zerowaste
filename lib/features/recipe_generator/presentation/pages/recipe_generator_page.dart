@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -76,9 +77,12 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
                 runSpacing: 8,
                 children: filtered.map((ingredient) {
                   return GestureDetector(
-                    onTap: () => ref
-                        .read(ingredientListProvider.notifier)
-                        .add(ingredient),
+                    onTap: () {
+                      _dismissKeyboard();
+                      ref
+                          .read(ingredientListProvider.notifier)
+                          .add(ingredient);
+                    },
                     child: Chip(
                       label: Text(
                         ingredient,
@@ -107,14 +111,27 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
     );
   }
 
+  void _dismissKeyboard() {
+    _focusNode.unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
+    // iOS sometimes keeps the soft keyboard after unfocus; force-hide.
+    SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
+  }
+
   void _addIngredient() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
     ref.read(ingredientListProvider.notifier).add(text);
     _controller.clear();
+    _dismissKeyboard();
   }
 
   void _generateRecipe() {
+    _dismissKeyboard();
+    // Let the hide land before loading overlay / rebuild.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _dismissKeyboard();
+    });
     ref.read(generatedRecipeProvider.notifier).generate();
   }
 
@@ -172,11 +189,22 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
     final isLoading = generatedAsync.isLoading;
     final locale = ref.watch(localeProvider);
 
-    final scrollBody = SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(20, 20, 20, widget.inTabs ? 170 : 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    final scrollBody = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: _dismissKeyboard,
+      child: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: EdgeInsets.fromLTRB(20, 20, 20, widget.inTabs ? 170 : 20),
+        child: ConstrainedBox(
+          // Fill the viewport so taps on empty space below content dismiss keyboard.
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.sizeOf(context).height -
+                MediaQuery.paddingOf(context).top -
+                (widget.inTabs ? 100 : 0),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           // --- Başlık ---
           Text(
             l10n.recipeGeneratorHeading,
@@ -261,6 +289,7 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
                         ),
                         textInputAction: TextInputAction.done,
                         onSubmitted: (_) => _addIngredient(),
+                        onTapOutside: (_) => _dismissKeyboard(),
                       ),
                     ),
                   ),
@@ -303,8 +332,10 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
                     size: 16,
                     color: Colors.white70,
                   ),
-                  onDeleted: () =>
-                      ref.read(ingredientListProvider.notifier).removeAt(e.key),
+                  onDeleted: () {
+                    _dismissKeyboard();
+                    ref.read(ingredientListProvider.notifier).removeAt(e.key);
+                  },
                   backgroundColor: AppColors.brandOrange,
                   side: BorderSide.none,
                   shape: RoundedRectangleBorder(
@@ -321,87 +352,96 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
 
           // --- Mutfak (isteğe bağlı) ---
           const SizedBox(height: 28),
-          Text(
-            l10n.recipeGeneratorCuisine,
-            style: TextStyle(
-              fontFamily: 'Manrope',
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppColors.ink,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(
-                color: _cuisineExpanded
-                    ? AppColors.brandOrange
-                    : const Color(0xFFE8E8E8),
-                width: _cuisineExpanded ? 1.5 : 0.5,
-              ),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(28),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.05),
-                    Colors.transparent,
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.02),
-                  ],
-                  stops: const [0.0, 0.15, 0.85, 1.0],
+          Listener(
+            behavior: HitTestBehavior.translucent,
+            onPointerDown: (_) => _dismissKeyboard(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.recipeGeneratorCuisine,
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.ink,
+                  ),
                 ),
-              ),
-              child: Column(
-                children: [
-                  // Dropdown satırı
-                  InkWell(
+                const SizedBox(height: 10),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(28),
-                    onTap: () =>
-                        setState(() => _cuisineExpanded = !_cuisineExpanded),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 14,
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              selectedCuisine != null
-                                  ? CuisineOptions.localized(
-                                      selectedCuisine,
-                                      locale.languageCode,
-                                    )
-                                  : l10n.recipeGeneratorNoCuisine,
-                              style: TextStyle(
-                                fontFamily: 'Manrope',
-                                fontSize: 15,
-                                color: selectedCuisine != null
-                                    ? AppColors.ink
-                                    : AppColors.inkLight.withOpacity(0.6),
-                              ),
-                            ),
-                          ),
-                          AnimatedRotation(
-                            turns: _cuisineExpanded ? 0.5 : 0,
-                            duration: const Duration(milliseconds: 200),
-                            child: Image.asset(
-                              'assets/images/icons/arrow_icon.png',
-                              width: 16,
-                              height: 16,
-                            ),
-                          ),
-                        ],
-                      ),
+                    border: Border.all(
+                      color: _cuisineExpanded
+                          ? AppColors.brandOrange
+                          : const Color(0xFFE8E8E8),
+                      width: _cuisineExpanded ? 1.5 : 0.5,
                     ),
                   ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(28),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withOpacity(0.05),
+                          Colors.transparent,
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.02),
+                        ],
+                        stops: const [0.0, 0.15, 0.85, 1.0],
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        // Dropdown satırı
+                        InkWell(
+                          borderRadius: BorderRadius.circular(28),
+                          onTap: () {
+                            setState(
+                              () => _cuisineExpanded = !_cuisineExpanded,
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 14,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    selectedCuisine != null
+                                        ? CuisineOptions.localized(
+                                            selectedCuisine,
+                                            locale.languageCode,
+                                          )
+                                        : l10n.recipeGeneratorNoCuisine,
+                                    style: TextStyle(
+                                      fontFamily: 'Manrope',
+                                      fontSize: 15,
+                                      color: selectedCuisine != null
+                                          ? AppColors.ink
+                                          : AppColors.inkLight.withOpacity(0.6),
+                                    ),
+                                  ),
+                                ),
+                                AnimatedRotation(
+                                  turns: _cuisineExpanded ? 0.5 : 0,
+                                  duration: const Duration(milliseconds: 200),
+                                  child: Image.asset(
+                                    'assets/images/icons/arrow_icon.png',
+                                    width: 16,
+                                    height: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
 
                   // Açılır liste
                   AnimatedCrossFade(
@@ -427,6 +467,7 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
                             ),
                             InkWell(
                               onTap: () {
+                                _dismissKeyboard();
                                 ref
                                     .read(selectedCuisineProvider.notifier)
                                     .set(isNone ? null : cuisine);
@@ -473,8 +514,11 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
                         : CrossFadeState.showFirst,
                     duration: const Duration(milliseconds: 250),
                   ),
-                ],
-              ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -503,7 +547,9 @@ class _RecipeGeneratorPageState extends ConsumerState<RecipeGeneratorPage> {
           ),
           const SizedBox(height: 32),
           _SavedRecipesSection(),
-        ],
+            ],
+          ),
+        ),
       ),
     );
     final safeBody = SafeArea(

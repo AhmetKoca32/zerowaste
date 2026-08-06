@@ -36,6 +36,9 @@ class _ChatPageState extends ConsumerState<ChatPage>
   /// Null means no typewriter (e.g. hydrated history / already finished).
   int? _typewriterForLength;
 
+  /// Chronological message indices that already played entrance animation.
+  final Set<int> _entranceAnimated = {};
+
   @override
   bool get wantKeepAlive => true; // Keep state alive across tab switches
 
@@ -64,6 +67,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
           setState(() {
             _chatStarted = false;
             _typewriterForLength = null;
+            _entranceAnimated.clear();
           });
         }
       });
@@ -106,6 +110,10 @@ class _ChatPageState extends ConsumerState<ChatPage>
     }
 
     _controller.clear();
+    // Keep keyboard open for the next message (chat UX).
+    if (!_focusNode.hasFocus) {
+      _focusNode.requestFocus();
+    }
 
     final notifier = ref.read(chatMessagesProvider.notifier);
     // Snapshot before adding the new user bubble — sent as model memory.
@@ -192,6 +200,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
     setState(() {
       _chatStarted = false;
       _typewriterForLength = null;
+      _entranceAnimated.clear();
     });
   }
 
@@ -203,8 +212,12 @@ class _ChatPageState extends ConsumerState<ChatPage>
     final l10n = AppLocalizations.of(context)!;
 
     // If messages exist (e.g. returning from another tab), auto-enter chat mode
+    // without replaying entrance animations on hydrated history.
     if (!_chatStarted && messages.isNotEmpty) {
       _chatStarted = true;
+      for (var i = 0; i < messages.length; i++) {
+        _entranceAnimated.add(i);
+      }
     }
 
     // ── Welcome Screen (chat not started) ──
@@ -276,7 +289,14 @@ class _ChatPageState extends ConsumerState<ChatPage>
                         bottom: 4,
                       ),
                       child: IconButton.filled(
-                        onPressed: _isSending ? null : _sendMessage,
+                        onPressed: _isSending
+                            ? null
+                            : () {
+                                _sendMessage();
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  if (mounted) _focusNode.requestFocus();
+                                });
+                              },
                         icon: const Icon(Icons.send_rounded, size: 18),
                         style: IconButton.styleFrom(
                           backgroundColor: AppColors.brandOrange,
@@ -287,8 +307,16 @@ class _ChatPageState extends ConsumerState<ChatPage>
                     ),
                   ),
                   textInputAction: TextInputAction.send,
-                  onSubmitted: (_) => _sendMessage(),
-                  enabled: !_isSending,
+                  onSubmitted: (_) {
+                    _sendMessage();
+                    // iOS may drop focus on send action; restore it.
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) _focusNode.requestFocus();
+                    });
+                  },
+                  // Keep field enabled while waiting so the keyboard stays open.
+                  // Only the send button is disabled via [_isSending].
+                  enabled: true,
                   style: const TextStyle(
                     fontFamily: 'Manrope',
                     fontSize: 15,
@@ -319,6 +347,7 @@ class _ChatPageState extends ConsumerState<ChatPage>
         : ListView.builder(
             controller: _scrollController,
             reverse: true,
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: EdgeInsets.fromLTRB(16, topInset, 16, listBottomInset),
             itemCount: messages.length + (_isSending ? 1 : 0),
             itemBuilder: (context, index) {
@@ -333,10 +362,14 @@ class _ChatPageState extends ConsumerState<ChatPage>
               final runTypewriter = isNewestEcoChef &&
                   _typewriterForLength == messages.length;
               final messageIndex = messages.length - 1 - actualIndex;
+              // Remember which bubbles already entered so remounts (typing row,
+              // keyboard, send) don't replay fade/slide on older messages.
+              final animateEntrance = _entranceAnimated.add(messageIndex);
 
               return ChatBubble(
                 key: ValueKey('msg-$messageIndex'),
                 entry: message,
+                animateEntrance: animateEntrance,
                 typewriter: runTypewriter,
                 onTypewriterComplete: runTypewriter
                     ? () {

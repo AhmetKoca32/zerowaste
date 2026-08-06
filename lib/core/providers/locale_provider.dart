@@ -30,10 +30,15 @@ class LocaleNotifier extends StateNotifier<Locale> {
 
   /// Toggle between Turkish and English, persists the choice.
   Future<void> toggle() async {
+    FocusManager.instance.primaryFocus?.unfocus();
     final next = state.languageCode == 'tr'
         ? const Locale('en')
         : const Locale('tr');
     state = next;
+    // Locale rebuild can restore TextField focus; clear again next frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusManager.instance.primaryFocus?.unfocus();
+    });
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kLocaleKey, next.languageCode);
     if (await NotificationService.instance.hasPermission()) {
