@@ -1,4 +1,4 @@
-package com.example.zerowaste
+package com.ahmetkoca.zerowaste
 
 import io.flutter.embedding.android.FlutterActivity
 

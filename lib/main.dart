@@ -52,7 +52,7 @@ class AtiksizApp extends ConsumerWidget {
     final locale = ref.watch(localeProvider);
 
     return MaterialApp.router(
-      title: 'Atıksız Mutfak',
+      title: locale.languageCode == 'en' ? 'Zerowaste Kitchen' : 'Atıksız Mutfak',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       locale: locale,

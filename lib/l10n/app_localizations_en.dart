@@ -657,14 +657,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationMorningBody =>
-      'Good morning! Complete today\'s zero-waste missions.';
+      'Small choice, big impact. Cut waste today.';
 
   @override
   String get notificationEveningTitle => 'ZeroWaste Kitchen';
 
   @override
   String get notificationEveningBody =>
-      'Any leftovers from dinner? Share a photo and earn points.';
+      'Don\'t bin it — share it. Post your leftover photo.';
 
   @override
   String get pointsPhotoExpand => 'Expand';

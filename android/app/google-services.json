@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:928254103218:android:5c74e2bd9a4d79ab9b83ab",
+        "android_client_info": {
+          "package_name": "com.ahmetkoca.zerowaste"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCq4Ikbn60xAS5WlEZ_qC84n6GJWzr-MGU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:928254103218:android:6ff83d0cf791a48a9b83ab",
         "android_client_info": {
           "package_name": "com.example.zerowaste"

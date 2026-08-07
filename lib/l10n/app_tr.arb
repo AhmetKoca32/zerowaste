@@ -747,7 +747,7 @@
   "@notificationMorningTitle": {
     "description": "Sabah bildirimi başlığı"
   },
-  "notificationMorningBody": "Günaydın! Bugün atıksız mutfak görevlerini tamamla.",
+  "notificationMorningBody": "Küçük bir seçim, büyük fark. Bugün israfı azalt.",
   "@notificationMorningBody": {
     "description": "Sabah bildirimi metni"
   },
@@ -755,7 +755,7 @@
   "@notificationEveningTitle": {
     "description": "Akşam bildirimi başlığı"
   },
-  "notificationEveningBody": "Akşam yemeğinden artan var mı? Fotoğraf paylaş, puan kazan.",
+  "notificationEveningBody": "Çöpe değil, uygulamaya! Artık yemek fotoğrafı gönder.",
   "@notificationEveningBody": {
     "description": "Akşam bildirimi metni"
   },

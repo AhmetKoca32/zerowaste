@@ -1265,7 +1265,7 @@ abstract class AppLocalizations {
   /// Sabah bildirimi metni
   ///
   /// In tr, this message translates to:
-  /// **'Günaydın! Bugün atıksız mutfak görevlerini tamamla.'**
+  /// **'Küçük bir seçim, büyük fark. Bugün israfı azalt.'**
   String get notificationMorningBody;
 
   /// Akşam bildirimi başlığı
@@ -1277,7 +1277,7 @@ abstract class AppLocalizations {
   /// Akşam bildirimi metni
   ///
   /// In tr, this message translates to:
-  /// **'Akşam yemeğinden artan var mı? Fotoğraf paylaş, puan kazan.'**
+  /// **'Çöpe değil, uygulamaya! Artık yemek fotoğrafı gönder.'**
   String get notificationEveningBody;
 
   /// Detay modalında fotoğrafı büyüt ipucu

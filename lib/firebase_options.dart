@@ -52,21 +52,19 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCq4Ikbn60xAS5WlEZ_qC84n6GJWzr-MGU',
-    appId: '1:928254103218:android:6ff83d0cf791a48a9b83ab',
+    appId: '1:928254103218:android:5c74e2bd9a4d79ab9b83ab',
     messagingSenderId: '928254103218',
     projectId: 'zerowaste-46d54',
     storageBucket: 'zerowaste-46d54.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBPpm0BaW3RdnVy_6HQMLYOJxMbuy0KCxE',
-    appId: '1:928254103218:ios:136e395fc0c227699b83ab',
+    appId: '1:928254103218:ios:8965fdaa91668ef99b83ab',
     messagingSenderId: '928254103218',
     projectId: 'zerowaste-46d54',
     storageBucket: 'zerowaste-46d54.firebasestorage.app',
-    iosBundleId: 'com.example.zerowaste',
+    iosBundleId: 'com.ahmetkoca.zerowaste',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyBPpm0BaW3RdnVy_6HQMLYOJxMbuy0KCxE',
     appId: '1:928254103218:ios:136e395fc0c227699b83ab',

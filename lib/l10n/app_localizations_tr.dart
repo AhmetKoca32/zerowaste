@@ -656,14 +656,14 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get notificationMorningBody =>
-      'Günaydın! Bugün atıksız mutfak görevlerini tamamla.';
+      'Küçük bir seçim, büyük fark. Bugün israfı azalt.';
 
   @override
   String get notificationEveningTitle => 'Atıksız Mutfak';
 
   @override
   String get notificationEveningBody =>
-      'Akşam yemeğinden artan var mı? Fotoğraf paylaş, puan kazan.';
+      'Çöpe değil, uygulamaya! Artık yemek fotoğrafı gönder.';
 
   @override
   String get pointsPhotoExpand => 'Büyüt';

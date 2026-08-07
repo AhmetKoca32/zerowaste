@@ -105,6 +105,11 @@ class _SplashPageState extends State<SplashPage>
 
   @override
   Widget build(BuildContext context) {
+    final isEn = Localizations.localeOf(context).languageCode == 'en';
+    final brandLogo = isEn
+        ? 'assets/images/icons/atıksız_mutfak_logo_1en.png'
+        : 'assets/images/icons/atıksız_mutfak_logo_1tr.png';
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -131,7 +136,7 @@ class _SplashPageState extends State<SplashPage>
           ),
 
           // ─────────────────────────────────────────
-          // Layer 1: Atıksız Mutfak (higher center)
+          // Layer 1: Brand logo (TR / EN asset)
           // ─────────────────────────────────────────
           Align(
             alignment: const Alignment(0, -0.30),
@@ -142,7 +147,7 @@ class _SplashPageState extends State<SplashPage>
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Image.asset(
-                    'assets/images/icons/atıksız_mutfak_logo_1tr.png',
+                    brandLogo,
                     width: double.infinity,
                     height: 140,
                     fit: BoxFit.contain,
@@ -160,7 +165,7 @@ class _SplashPageState extends State<SplashPage>
           // ─────────────────────────────────────────
           // Layer 3: EU funded icon — slides down
           // ─────────────────────────────────────────
-          _AnimatedEuLogo(listenable: _euProgress),
+          _AnimatedEuLogo(listenable: _euProgress, isEnglish: isEn),
 
           // ─────────────────────────────────────────
           // Layer 4: AB logo — hero → final
@@ -332,7 +337,12 @@ class _StaggeredPartnerLogo extends StatelessWidget {
 
 /// EU funded icon that slides down from above to its final position.
 class _AnimatedEuLogo extends AnimatedWidget {
-  const _AnimatedEuLogo({required super.listenable});
+  const _AnimatedEuLogo({
+    required super.listenable,
+    required this.isEnglish,
+  });
+
+  final bool isEnglish;
 
   Animation<double> get progress => listenable as Animation<double>;
 
@@ -343,16 +353,25 @@ class _AnimatedEuLogo extends AnimatedWidget {
 
     final dy = (1.0 - t) * -2.0;
     final opacity = t < 0.3 ? t / 0.3 : 1.0;
+    final asset = isEnglish
+        ? 'assets/images/icons/co-funded-by-eu-logo-en.png'
+        : 'assets/images/icons/co-funded-by-eu-logo-tr.png';
 
     return FractionalTranslation(
       translation: Offset(0, dy),
       child: Opacity(
         opacity: opacity,
         child: Align(
-          alignment: const Alignment(0, 0.68),
-          child: Image.asset(
-            'assets/images/icons/co-funded-by-eu-logo-tr.png',
-            height: 44,
+          alignment: const Alignment(0, 0.72),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 36),
+            child: Image.asset(
+              asset,
+              height: 48,
+              width: double.infinity,
+              fit: BoxFit.contain,
+              alignment: Alignment.center,
+            ),
           ),
         ),
       ),

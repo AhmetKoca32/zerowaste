@@ -6,8 +6,8 @@ import '../services/notification_service.dart';
 
 /// Persisted locale selection.
 ///
-/// Defaults to Turkish. User can switch to English from the AppBar button.
-/// Preference survives app restarts via [SharedPreferences].
+/// Defaults to the device language when no preference is saved.
+/// User can switch from the AppBar button; preference survives restarts.
 final localeProvider = StateNotifierProvider<LocaleNotifier, Locale>((ref) {
   return LocaleNotifier();
 });
@@ -18,14 +18,17 @@ class LocaleNotifier extends StateNotifier<Locale> {
   static const _kLocaleKey = 'app_locale';
 
   /// Call once at startup to restore the persisted locale.
+  /// No saved preference → follow device language (en → English, else Turkish).
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
     final code = prefs.getString(_kLocaleKey);
-    if (code == 'en') {
-      state = const Locale('en');
-    } else {
-      state = const Locale('tr');
+    if (code == 'en' || code == 'tr') {
+      state = Locale(code!);
+      return;
     }
+    final device =
+        WidgetsBinding.instance.platformDispatcher.locale.languageCode;
+    state = device == 'en' ? const Locale('en') : const Locale('tr');
   }
 
   /// Toggle between Turkish and English, persists the choice.

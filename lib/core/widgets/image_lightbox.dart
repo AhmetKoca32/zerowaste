@@ -48,7 +48,7 @@ Future<void> showImageLightbox(
                       ),
                       child: hasRemote
                           ? CachedNetworkImage(
-                              imageUrl: imageUrl!,
+                              imageUrl: imageUrl,
                               fit: BoxFit.contain,
                               placeholder: (_, _) => const Center(
                                 child: CircularProgressIndicator(

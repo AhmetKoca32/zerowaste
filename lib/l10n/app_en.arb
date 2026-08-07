@@ -235,9 +235,9 @@
   "optOutBannedError": "This nickname was closed by an admin. Leave contest is not available.",
 
   "notificationMorningTitle": "ZeroWaste Kitchen",
-  "notificationMorningBody": "Good morning! Complete today's zero-waste missions.",
+  "notificationMorningBody": "Small choice, big impact. Cut waste today.",
   "notificationEveningTitle": "ZeroWaste Kitchen",
-  "notificationEveningBody": "Any leftovers from dinner? Share a photo and earn points.",
+  "notificationEveningBody": "Don't bin it — share it. Post your leftover photo.",
 
   "pointsPhotoExpand": "Expand"
 }

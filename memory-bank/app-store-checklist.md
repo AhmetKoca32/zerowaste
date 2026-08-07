@@ -18,11 +18,13 @@
 ## B. Teknik hazırlık (iOS)
 
 - [ ] Apple Developer hesabı + App ID + provisioning
-- [ ] Bundle ID sabit ve unique (Xcode `PRODUCT_BUNDLE_IDENTIFIER`)
-  - **Şu an:** `com.example.zerowaste` → store için **değiştirilmeli** (örn. `com.zerowastekitchen.app`)
-- [ ] Display name: **Zerowaste Kitchen** (`Info.plist` zaten bu)
+- [x] Bundle ID sabit ve unique (Xcode `PRODUCT_BUNDLE_IDENTIFIER`)
+  - **Final:** `com.ahmetkoca.zerowaste` (Runner Debug/Release/Profile)
+  - RunnerTests: `com.ahmetkoca.zerowaste.RunnerTests`
+- [x] **Firebase:** `com.ahmetkoca.zerowaste` iOS+Android app kaydı + `flutterfire configure` tamam
+- [ ] Display name: launcher **Atıksız Mutfak** (`CFBundleDisplayName`); store listing adı ayrı karar
 - [ ] Version: `pubspec` `0.1.0` → release için örn. `1.0.0` + build number
-- [ ] `GoogleService-Info.plist` production Firebase’e bağlı (`zerowaste-46d54`)
+- [x] `GoogleService-Info.plist` / `firebase_options.dart` yeni Bundle ID ile (`zerowaste-46d54`)
 - [ ] Release build: `flutter build ipa` (veya Xcode Archive) hatasız
 - [ ] Camera / Photo Library strings mevcut (`Info.plist` TR metinler OK; EN store için dil isteğe bağlı)
 - [ ] App Tracking Transparency gerekmiyorsa IDFA kullanma; gerekirse ATT + purpose string
@@ -32,8 +34,8 @@
 
 ## C. Teknik hazırlık (Android — paralel / sonra)
 
-- [ ] Application ID unique
-- [ ] `google-services.json` production
+- [x] Application ID unique → `com.ahmetkoca.zerowaste` (`applicationId` + `namespace`)
+- [ ] `google-services.json` production (flutterfire sonrası yenilenecek)
 - [ ] Camera / storage permission metinleri
 - [ ] `flutter build appbundle` (Play)
 - [ ] Play Console signing (Play App Signing)
@@ -108,8 +110,48 @@ Beyan edilmesi gerekenler (bu app’e göre):
 
 ---
 
+## Bundle ID — netleştirme (şu an odak)
+
+**Karar:** `com.ahmetkoca.zerowaste` (Xcode + Android projede yazıldı)
+
+### 1) Projede (yapıldı)
+- iOS Runner: `PRODUCT_BUNDLE_IDENTIFIER = com.ahmetkoca.zerowaste`
+- Android: `applicationId` / `namespace` / `MainActivity` package aynı
+- macOS AppInfo + test target’lar hizalandı
+
+### 2) Firebase (senin yapman gerekiyor — CLI oturumu düşmüş)
+```bash
+npx -y firebase-tools@latest login --reauth
+dart pub global activate flutterfire_cli
+cd /Users/ahmetkoca/ZeroWaste_Kitchen/Zerowaste_Mobile_App/zerowaste
+flutterfire configure --project=zerowaste-46d54
+```
+- Platforms: **iOS + Android** seç (bundle/package `com.ahmetkoca.zerowaste` otomatik okunmalı)
+- Bu, yeni Firebase iOS/Android app kaydı + `lib/firebase_options.dart` + `google-services.json` (+ isteğe bağlı `GoogleService-Info.plist`) üretir
+- Eski `com.example.zerowaste` Firebase app’leri sonra silinebilir (şimdilik zararsız)
+
+### 3) Apple Developer / App Store Connect
+**Önemli:** Personal Team (`JSB75H8F6R`) ile **App Store / TestFlight yüklenemez**. Ücretli Apple Developer Program ($99/yıl) gerekir.
+
+1. [developer.apple.com](https://developer.apple.com/account) → **Identifiers** → **+** → App IDs → App
+2. Bundle ID: **Explicit** → `com.ahmetkoca.zerowaste` → Capabilities ihtiyaca göre (Push şimdilik local; Sign in with Apple yoksa boş bırak)
+3. [appstoreconnect.apple.com](https://appstoreconnect.apple.com) → **My Apps** → **+** → New App
+4. Platform iOS · Name (örn. Zerowaste Kitchen) · Primary Language · Bundle ID dropdown’dan **aynı ID** · SKU (örn. `zerowastekitchen`)
+5. Xcode’da Signing: Team = **ücretli** Developer hesabın (Personal Team değil) · Automatically manage signing
+
+### 4) Doğrulama
+```bash
+# Xcode project
+rg PRODUCT_BUNDLE_IDENTIFIER ios/Runner.xcodeproj/project.pbxproj
+# firebase_options iosBundleId artık com.ahmetkoca.zerowaste olmalı
+rg iosBundleId lib/firebase_options.dart
+```
+
+---
+
 ## Hızlı sıra (pratik)
 
+0. Bundle ID + Firebase flutterfire + ASC App kaydı (bu bölüm)  
 1. Tarif içeriği doldur  
 2. Privacy Policy sayfası yayınla  
 3. Version bump + `flutter build ipa`  
