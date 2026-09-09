@@ -1,26 +1,29 @@
 # Active Context: Atıksız Mutfak
 
-**Son Güncelleme:** Ağustos 2026 (4 Ağustos)  
-**Aktif Çalışma:** App Store hazırlık. Checklist: [`app-store-checklist.md`](app-store-checklist.md)
+**Son Güncelleme:** Eylül 2026 (8 Eylül)  
+**Aktif Çalışma:** App Store yolu **bloke** (Apple Developer hesabı fesih). Support appeal bekleniyor. Checklist: [`app-store-checklist.md`](app-store-checklist.md)
 
 ---
 
 ## Sıradaki Yol Haritası
 
-### 1. App Store (ana hat)
-- Checklist: [`app-store-checklist.md`](app-store-checklist.md)
-- **Bloke edici:** Bundle ID `com.example.zerowaste` → production ID
-- Version bump (`0.1.0` → örn. `1.0.0`), Privacy Policy URL, screenshots, App Privacy formu
-- TestFlight smoke → Submit for Review
-- Blaze Usage / bütçe uyarısı
+### 1. Apple Developer / iOS Store (bloke)
+- Bundle ID + Firebase **projede tamam** (`com.ahmetkoca.zerowaste`)
+- **Bloke edici:** Apple Developer Program hesabı **29 Temmuz 2026** itibarıyla feshedildi (“fraudulent conduct” / §3.2(f)); en az 1 yıl reapply reddi
+- Kullanıcı Support’a appeal yazdı → cevap bekleniyor
+- ASC App ID / TestFlight / IPA **hesap Active olmadan yapılamaz**
+- Ban delmek için yeni Apple ID + tekrar ödeme **önerilmiyor** (hesap bağlama riski)
 
-### 2. Store öncesi içerik
+### 2. Store öncesi içerik / paralel
 - [ ] 3–5 bilingual tarif Firestore’da (Coming Soon kalmasın)
+- [ ] Privacy Policy URL
+- [ ] Version bump (`0.1.0` → örn. `1.0.0`)
+- İsteğe bağlı: **Google Play** (iOS beklerken)
 
 ### 3. Düşük / sonra
 - Admin post `imageUrl` gösterimi
 - Progress bar hizalama
-- Google Play (iOS sonrası)
+- Kayıtlı tarif fotoğrafları şu an **yalnızca local** (Firebase Storage yok); cloud sync istenirse ayrı tasarım
 
 ---
 
@@ -42,25 +45,34 @@ Mobil: `isBilingualComplete` + `localized*`. Admin: TR+EN zorunlu kaydet. **Yap�
 ### Puan UI
 - 7 rol (0/50/150/300/500/800/1200); hero stepper up/down; puan silindi diyaloğu
 
+### Bundle / marka
+- **Bundle / applicationId:** `com.ahmetkoca.zerowaste`
+- Launcher: TR **Atıksız Mutfak** / EN **Zerowaste Kitchen** (`InfoPlist.strings` + Android `values` / `values-tr`)
+- Locale: kayıtlı tercih yoksa cihaz dili (`en` → EN, else TR)
+
 ---
 
-## Son Yapılan (4 Ağustos)
+## Son Yapılan (7–8 Ağustos 2026 + bellek güncelleme 8 Eyl)
 
-- [x] Plan B mobil + admin; leaveContest wipe; claimedByUid
-- [x] Puan roller, level stepper, puan silindi / red diyalogları, leaderboard rol
-- [x] Tarif TR/EN mobil + admin CRUD
-- [x] Plan B E2E (+ foto / wipe / bilingual)
-- [x] App Store checklist dokümanı
+- [x] Bundle ID `com.ahmetkoca.zerowaste` (iOS + Android + macOS hizası)
+- [x] `flutterfire configure` → yeni iOS/Android Firebase app’ler + `firebase_options` / `google-services.json` / `GoogleService-Info.plist`
+- [x] Splash: marka + EU logo dil bazlı (EN lockup asset; TR mevcut asset)
+- [x] Günlük local bildirim metinleri: sabah D + akşam 3 (l10n)
+- [x] Apple hesabı durumu teşhis: ödeme 16/05/2026 var; fesih 29/07/2026; appeal metni hazırlandı
 
 ---
 
 ## Bilinen Sorunlar / açık işler
 
-### Yüksek (store)
-- [ ] Bundle ID production’a çevir
+### Kritik (store)
+- [ ] Apple Developer hesabı **Active** değil (termination) — Support appeal
 - [ ] Privacy Policy sayfası
-- [ ] App Store Connect listing + screenshots + submit
+- [ ] App Store Connect listing + screenshots + submit (hesap açılınca)
 - [ ] Bilingual tarif içeriği (yeterli adet)
+
+### Orta
+- [ ] Kayıtlı tarif foto: local OK; `flutter run`/reinstall data siler → kullanıcı “kayboldu” sanabilir (beklenen)
+- [ ] google-services.json checklist satırı: flutterfire sonrası güncel (işaretlenebilir)
 
 ### Düşük
 - [ ] Progress bar hizalama
@@ -73,6 +85,10 @@ Mobil: `isBilingualComplete` + `localized*`. Admin: TR+EN zorunlu kaydet. **Yap�
 
 | Tarih | Karar | Gerekçe |
 |-------|-------|---------|
+| 8 Eylül | Memory-bank: Apple termination + Bundle/Firebase/splash/bildirim durumu | Gerçek bloker net |
+| 7–8 Ağ | Bundle `com.ahmetkoca.zerowaste`; yeni Apple ID ile ban delme yok | Fraud ban + hesap bağlama |
+| 7–8 Ağ | Splash/launcher TR/EN ayrı asset + InfoPlist | Global Zerowaste Kitchen / yerel Atıksız Mutfak |
+| 8 Ağ | Bildirim sabah D / akşam 3 | Kullanıcı seçimi |
 | 4 Ağustos | App Store checklist; bundle `com.example.*` bloke | Store kabul etmez |
 | 4 Ağustos | recipes zorunlu TR+EN | Dil toggle uyumu |
 | 4 Ağustos | Level stepper hero içi; puan düşüşü ayrı diyalog | UX |

@@ -3,8 +3,8 @@
 **Proje Adı:** Atıksız Mutfak / Zerowaste Kitchen  
 **Versiyon:** 0.1.0 (pubspec; store hedefi 1.0.0)  
 **Oluşturulma Tarihi:** Şubat 2025  
-**Son Güncelleme:** Ağustos 2026 (4 Ağustos)  
-**Durum:** Feature-complete → **App Store hazırlık** (checklist: `memory-bank/app-store-checklist.md`)
+**Son Güncelleme:** Eylül 2026 (8 Eylül)  
+**Durum:** Feature-complete → **iOS App Store bloke** (Apple Developer hesabı fesih / appeal). Bundle `com.ahmetkoca.zerowaste` + Firebase hazır. Checklist: `memory-bank/app-store-checklist.md`
 
 ---
 
@@ -100,8 +100,11 @@ Atıksız Mutfak, kullanıcıların elindeki malzemelerle atıksız prensiplerin
 
 ### App Store (sıradaki)
 - Checklist: `memory-bank/app-store-checklist.md`
-- Bundle ID production, Privacy Policy, TestFlight, Submit
+- **Bloker:** Apple Developer Program Active değil (termination 29/07/2026) — Support appeal
+- Bundle ID `com.ahmetkoca.zerowaste` (projede + Firebase tamam); ASC App / IPA hesap açılınca
+- Privacy Policy, TestFlight, Submit
 - Yayın öncesi yeterli bilingual tarif içeriği
+- Paralel: Google Play düşünülebilir
 
 ### Opsiyonel / düşük
 - Admin gönderi `imageUrl` UI

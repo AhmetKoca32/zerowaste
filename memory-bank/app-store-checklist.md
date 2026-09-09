@@ -18,14 +18,15 @@
 ## B. Teknik hazırlık (iOS)
 
 - [ ] Apple Developer hesabı + App ID + provisioning
+  - **Durum (Ağustos–Eylül 2026):** Üyelik satın alınmış (16/05/2026) ancak **29/07/2026 Notice of Termination** (fraud / §3.2(f)); Developer app “This account is not active”. Support appeal gönderildi — cevap bekleniyor. Yeni Apple ID ile ban aşma önerilmez.
 - [x] Bundle ID sabit ve unique (Xcode `PRODUCT_BUNDLE_IDENTIFIER`)
   - **Final:** `com.ahmetkoca.zerowaste` (Runner Debug/Release/Profile)
   - RunnerTests: `com.ahmetkoca.zerowaste.RunnerTests`
 - [x] **Firebase:** `com.ahmetkoca.zerowaste` iOS+Android app kaydı + `flutterfire configure` tamam
-- [ ] Display name: launcher **Atıksız Mutfak** (`CFBundleDisplayName`); store listing adı ayrı karar
+- [x] Display name lokalize: launcher **Atıksız Mutfak** (tr) / **Zerowaste Kitchen** (en) — `InfoPlist.strings` + Android strings
 - [ ] Version: `pubspec` `0.1.0` → release için örn. `1.0.0` + build number
 - [x] `GoogleService-Info.plist` / `firebase_options.dart` yeni Bundle ID ile (`zerowaste-46d54`)
-- [ ] Release build: `flutter build ipa` (veya Xcode Archive) hatasız
+- [ ] Release build: `flutter build ipa` (veya Xcode Archive) hatasız — **Apple hesabı Active olunca**
 - [ ] Camera / Photo Library strings mevcut (`Info.plist` TR metinler OK; EN store için dil isteğe bağlı)
 - [ ] App Tracking Transparency gerekmiyorsa IDFA kullanma; gerekirse ATT + purpose string
 - [ ] Privacy Manifest (`PrivacyInfo.xcprivacy`) — Flutter/plugin gereklerine göre
@@ -35,7 +36,7 @@
 ## C. Teknik hazırlık (Android — paralel / sonra)
 
 - [x] Application ID unique → `com.ahmetkoca.zerowaste` (`applicationId` + `namespace`)
-- [ ] `google-services.json` production (flutterfire sonrası yenilenecek)
+- [x] `google-services.json` production (`com.ahmetkoca.zerowaste` client; flutterfire)
 - [ ] Camera / storage permission metinleri
 - [ ] `flutter build appbundle` (Play)
 - [ ] Play Console signing (Play App Signing)
@@ -110,40 +111,33 @@ Beyan edilmesi gerekenler (bu app’e göre):
 
 ---
 
-## Bundle ID — netleştirme (şu an odak)
+## Bundle ID — netleştirme
 
-**Karar:** `com.ahmetkoca.zerowaste` (Xcode + Android projede yazıldı)
+**Karar:** `com.ahmetkoca.zerowaste` (Xcode + Android + Firebase yazıldı)
 
 ### 1) Projede (yapıldı)
 - iOS Runner: `PRODUCT_BUNDLE_IDENTIFIER = com.ahmetkoca.zerowaste`
 - Android: `applicationId` / `namespace` / `MainActivity` package aynı
 - macOS AppInfo + test target’lar hizalandı
+- FlutterFire: iOS `…:ios:8965fdaa91668ef99b83ab` · Android `…:android:5c74e2bd9a4d79ab9b83ab`
 
-### 2) Firebase (senin yapman gerekiyor — CLI oturumu düşmüş)
-```bash
-npx -y firebase-tools@latest login --reauth
-dart pub global activate flutterfire_cli
-cd /Users/ahmetkoca/ZeroWaste_Kitchen/Zerowaste_Mobile_App/zerowaste
-flutterfire configure --project=zerowaste-46d54
-```
-- Platforms: **iOS + Android** seç (bundle/package `com.ahmetkoca.zerowaste` otomatik okunmalı)
-- Bu, yeni Firebase iOS/Android app kaydı + `lib/firebase_options.dart` + `google-services.json` (+ isteğe bağlı `GoogleService-Info.plist`) üretir
-- Eski `com.example.zerowaste` Firebase app’leri sonra silinebilir (şimdilik zararsız)
+### 2) Firebase (yapıldı)
+- `flutterfire configure --project=zerowaste-46d54` (iOS+Android)
+- Eski `com.example.zerowaste` Firebase app’leri Console’da kalabilir (zararsız); istenirse sonra silinir
 
-### 3) Apple Developer / App Store Connect
-**Önemli:** Personal Team (`JSB75H8F6R`) ile **App Store / TestFlight yüklenemez**. Ücretli Apple Developer Program ($99/yıl) gerekir.
+### 3) Apple Developer / App Store Connect — **BLOKE**
+**Önemli:** Personal Team (`JSB75H8F6R`) ile **App Store / TestFlight yüklenemez**.
 
-1. [developer.apple.com](https://developer.apple.com/account) → **Identifiers** → **+** → App IDs → App
-2. Bundle ID: **Explicit** → `com.ahmetkoca.zerowaste` → Capabilities ihtiyaca göre (Push şimdilik local; Sign in with Apple yoksa boş bırak)
-3. [appstoreconnect.apple.com](https://appstoreconnect.apple.com) → **My Apps** → **+** → New App
-4. Platform iOS · Name (örn. Zerowaste Kitchen) · Primary Language · Bundle ID dropdown’dan **aynı ID** · SKU (örn. `zerowastekitchen`)
-5. Xcode’da Signing: Team = **ücretli** Developer hesabın (Personal Team değil) · Automatically manage signing
+**Hesap durumu:** `akoca@zerotech.company` — Program aboneliği 16/05/2026 alınmış; **29/07/2026 Notice of Termination** (fraudulent conduct / ADP §3.2(f)); Developer app “This account is not active”; Enroll disabled; `/account` → contact form. Support appeal gönderildi. Yeni Apple ID ile yeniden enroll **önerilmez**.
+
+Hesap Active olunca:
+1. developer.apple.com → Identifiers → Explicit `com.ahmetkoca.zerowaste`
+2. appstoreconnect.apple.com → New App → aynı Bundle ID
+3. Xcode Signing → ücretli Team (Personal Team değil)
 
 ### 4) Doğrulama
 ```bash
-# Xcode project
 rg PRODUCT_BUNDLE_IDENTIFIER ios/Runner.xcodeproj/project.pbxproj
-# firebase_options iosBundleId artık com.ahmetkoca.zerowaste olmalı
 rg iosBundleId lib/firebase_options.dart
 ```
 
@@ -151,7 +145,7 @@ rg iosBundleId lib/firebase_options.dart
 
 ## Hızlı sıra (pratik)
 
-0. Bundle ID + Firebase flutterfire + ASC App kaydı (bu bölüm)  
+0. **Apple hesabı Active** (appeal) + Bundle ID ASC kaydı  
 1. Tarif içeriği doldur  
 2. Privacy Policy sayfası yayınla  
 3. Version bump + `flutter build ipa`  

@@ -1,6 +1,6 @@
 # System Patterns: Atıksız Mutfak
 
-**Son Güncelleme:** Ağustos 2026 (4 Ağustos)
+**Son Güncelleme:** Eylül 2026 (8 Eylül)
 
 ---
 
@@ -18,11 +18,11 @@ lib/
 ├── core/
 │   ├── theme/
 │   ├── shell/              # MainTabShell (extendBody), CustomBottomNav
-│   ├── services/           # DeepSeek, AnonymousAuth, PostImageStorage
+│   ├── services/           # DeepSeek, AnonymousAuth, PostImageStorage, NotificationService
 │   ├── network/
 │   ├── router/
 │   ├── constants/
-│   ├── providers/
+│   ├── providers/          # localeProvider (prefs veya cihaz dili)
 │   └── widgets/
 │
 └── features/
@@ -74,9 +74,29 @@ chatMessagesProvider          // keepAlive + SharedPreferences session
 anon auth → putData(bytes) → PostEntry(imageUrl) → Firestore
 ```
 
+### 4b. Saved recipe photo (Create tab) — local only
+```
+XFile → bytes → Documents/recipe_images/{id}_{ts}.jpg
+  → SharedPreferences zerowaste_saved_recipes.local_image_path
+(No Firebase Storage; wipe on reinstall / flutter reinstall)
+```
+
 ### 5. AI Language
 - **Chat:** user message language + `[LANGUAGE RULE]` on latest turn only
 - **Create:** app localeProvider
+
+### 5b. Daily local notifications
+```
+NotificationService → 09:00 + 18:00 (device TZ)
+  titles/bodies from AppLocalizations (TR/EN)
+  splash ensureScheduled; locale toggle → reschedule
+```
+
+### 5c. Splash branding by locale
+```
+isEn → atıksız_mutfak_logo_1en + co-funded-by-eu-logo-en
+else → _1tr + co-funded-by-eu-logo-tr
+```
 
 ### 6. EcoChef Chat Session & Layout
 ```
