@@ -9,6 +9,6 @@ Bu klasör, Google Play için yayımlanacak bağımsız ve statik gizlilik polit
 3. **Root Directory** alanını `privacy-policy` olarak ayarlayın.
 4. Framework Preset olarak **Other** seçin; build komutu ve çıktı klasörü boş kalabilir.
 5. **Deploy** seçeneğiyle yayına alın.
-6. Vercel'in verdiği `https://...vercel.app` adresini Play Console'daki Gizlilik Politikası alanına yapıştırın.
+6. Vercel'in verdiği `https://...vercel.app` adresini Play Console'daki Gizlilik Politikası alanına yapıştırın. Veri silme talebi alanı için `https://...vercel.app/delete-data.html` adresini kullanın.
 
 Bu sayfa statiktir; sunucu, takip çerezi veya analiz aracı kullanmaz.
