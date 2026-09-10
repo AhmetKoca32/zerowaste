@@ -1,1 +1,49 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"zerowaste-46d54","appId":"1:928254103218:android:5c74e2bd9a4d79ab9b83ab","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"zerowaste-46d54","configurations":{"android":"1:928254103218:android:5c74e2bd9a4d79ab9b83ab","ios":"1:928254103218:ios:8965fdaa91668ef99b83ab"}}},"ios":{"default":{"projectId":"zerowaste-46d54","appId":"1:928254103218:ios:8965fdaa91668ef99b83ab","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}}}},"firestore":{"database":"(default)","location":"eur3","rules":"firestore.rules","indexes":"firestore.indexes.json"},"storage":{"rules":"storage.rules"}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "zerowaste-46d54",
+          "appId": "1:928254103218:android:5c74e2bd9a4d79ab9b83ab",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "zerowaste-46d54",
+          "configurations": {
+            "android": "1:928254103218:android:5c74e2bd9a4d79ab9b83ab",
+            "ios": "1:928254103218:ios:8965fdaa91668ef99b83ab"
+          }
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "zerowaste-46d54",
+          "appId": "1:928254103218:ios:8965fdaa91668ef99b83ab",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions-ai",
+      "codebase": "ai",
+      "runtime": "nodejs22",
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    }
+  ],
+  "firestore": {
+    "database": "(default)",
+    "location": "eur3",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  }
+}

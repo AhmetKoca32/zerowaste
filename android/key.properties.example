@@ -1,0 +1,6 @@
+# Copy this file to android/key.properties and replace every placeholder.
+# Never commit android/key.properties or share its passwords.
+storePassword=YOUR_KEYSTORE_PASSWORD
+keyPassword=YOUR_KEY_PASSWORD
+keyAlias=zerowaste-upload
+storeFile=/Users/ahmetkoca/Library/Application Support/AtiksizMutfak/zerowaste-upload-key.jks
